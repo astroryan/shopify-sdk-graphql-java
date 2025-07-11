@@ -5,7 +5,10 @@
       "WebFetch(domain:shopify.dev)",
       "Bash(find:*)",
       "Bash(mv:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(./gradlew:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

@@ -50,7 +50,7 @@ dependencies {
 
     // GraphQL
     implementation "com.graphql-java:graphql-java:${graphqlJavaVersion}"
-    implementation "com.graphql-java:graphql-java-extended-scalars:21.3"
+    implementation "com.graphql-java:graphql-java-extended-scalars:21.0"
     
     // HTTP Client
     implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
