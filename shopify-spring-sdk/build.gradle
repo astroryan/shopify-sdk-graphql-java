@@ -1,0 +1,194 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'java-library'
+    id 'jacoco'
+    id 'maven-publish'
+}
+
+group = 'com.shopify'
+version = '1.1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withJavadocJar()
+    withSourcesJar()
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    graphqlJavaVersion = '21.3'
+    okhttpVersion = '4.12.0'
+    jacksonVersion = '2.16.0'
+    junitVersion = '5.10.1'
+    mockitoVersion = '5.7.0'
+    slf4jVersion = '2.0.9'
+}
+
+dependencies {
+    // Test fixtures
+    testImplementation 'com.github.javafaker:javafaker:1.0.2'
+    testImplementation 'org.skyscreamer:jsonassert:1.5.1'
+    
+
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    // GraphQL
+    implementation "com.graphql-java:graphql-java:${graphqlJavaVersion}"
+    implementation "com.graphql-java:graphql-java-extended-scalars:21.3"
+    
+    // HTTP Client
+    implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
+    
+    // JSON Processing
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // Logging
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        // 기본 테스트에서는 integration 태그 제외
+        excludeTags 'integration'
+    }
+    finalizedBy jacocoTestReport
+}
+
+// 통합 테스트 태스크 (Shopify Store 필요)
+task integrationTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    
+    // 환경변수 체크
+    doFirst {
+        if (!System.getenv('SHOPIFY_TEST_STORE_DOMAIN')) {
+            println 'Skipping integration tests: SHOPIFY_TEST_STORE_DOMAIN not set'
+            throw new StopExecutionException('Integration tests require Shopify store credentials')
+        }
+    }
+    
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+    }
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+bootJar {
+    enabled = false
+}
+
+// Test fixture resources
+sourceSets {
+    test {
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+// Publishing configuration
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+    
+    publications {
+        shopifySdk(MavenPublication) {
+            from components.java
+            
+            pom {
+                name = 'Shopify Spring SDK'
+                description = 'A comprehensive Spring Boot SDK for Shopify Admin GraphQL API'
+                url = 'https://github.com/astroryan/shopify-sdk-graphql-java'
+                
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id = 'astroryan'
+                        name = 'Ryan Kim'
+                        email = 'ryan@example.com'
+                    }
+                }
+                
+                scm {
+                    connection = 'scm:git:git://github.com/astroryan/shopify-sdk-graphql-java.git'
+                    developerConnection = 'scm:git:ssh://github.com:astroryan/shopify-sdk-graphql-java.git'
+                    url = 'https://github.com/astroryan/shopify-sdk-graphql-java'
+                }
+            }
+        }
+    }
+}
+
+// Task to display publish info
+task publishInfo {
+    doLast {
+        println "Publishing ${project.group}:${project.name}:${project.version}"
+        println "To GitHub Packages: https://github.com/astroryan/shopify-sdk-graphql-java"
+    }
+}

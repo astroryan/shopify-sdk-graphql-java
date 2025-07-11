@@ -1,0 +1,491 @@
+package com.shopify.sdk.model.webhook;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.shopify.sdk.model.common.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookSubscription {
+    
+    @JsonProperty("id")
+    private ID id;
+    
+    @JsonProperty("apiVersion")
+    private String apiVersion;
+    
+    @JsonProperty("callbackUrl")
+    private String callbackUrl;
+    
+    @JsonProperty("createdAt")
+    private DateTime createdAt;
+    
+    @JsonProperty("endpoint")
+    private WebhookSubscriptionEndpoint endpoint;
+    
+    @JsonProperty("format")
+    private WebhookSubscriptionFormat format;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("legacyResourceId")
+    private String legacyResourceId;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+    
+    @JsonProperty("privateMetafieldNamespaces")
+    private List<String> privateMetafieldNamespaces;
+    
+    @JsonProperty("topic")
+    private WebhookSubscriptionTopic topic;
+    
+    @JsonProperty("updatedAt")
+    private DateTime updatedAt;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookSubscriptionEndpoint {
+    
+    @JsonProperty("__typename")
+    private String typename;
+    
+    // For WebhookHttpEndpoint
+    @JsonProperty("callbackUrl")
+    private String callbackUrl;
+    
+    // For WebhookEventBridgeEndpoint
+    @JsonProperty("arn")
+    private String arn;
+    
+    // For WebhookPubSubEndpoint
+    @JsonProperty("pubSubProject")
+    private String pubSubProject;
+    
+    @JsonProperty("pubSubTopic")
+    private String pubSubTopic;
+}
+
+public enum WebhookSubscriptionFormat {
+    JSON,
+    XML
+}
+
+public enum WebhookSubscriptionTopic {
+    APP_INSTALLATIONS_UPDATE,
+    APP_SUBSCRIPTIONS_APPROACHING_CAPPED_AMOUNT,
+    APP_SUBSCRIPTIONS_UPDATE,
+    APP_UNINSTALLED,
+    ATTRIBUTED_SESSIONS_FIRST,
+    ATTRIBUTED_SESSIONS_LAST,
+    BULK_OPERATIONS_FINISH,
+    CARTS_CREATE,
+    CARTS_UPDATE,
+    CHANNELS_DELETE,
+    CHECKOUTS_CREATE,
+    CHECKOUTS_DELETE,
+    CHECKOUTS_UPDATE,
+    COLLECTION_LISTINGS_ADD,
+    COLLECTION_LISTINGS_REMOVE,
+    COLLECTION_LISTINGS_UPDATE,
+    COLLECTION_PUBLICATIONS_CREATE,
+    COLLECTION_PUBLICATIONS_DELETE,
+    COLLECTION_PUBLICATIONS_UPDATE,
+    COLLECTIONS_CREATE,
+    COLLECTIONS_DELETE,
+    COLLECTIONS_UPDATE,
+    COMPANIES_CREATE,
+    COMPANIES_DELETE,
+    COMPANIES_UPDATE,
+    COMPANY_CONTACT_ROLES_ASSIGN,
+    COMPANY_CONTACT_ROLES_REVOKE,
+    COMPANY_CONTACTS_CREATE,
+    COMPANY_CONTACTS_DELETE,
+    COMPANY_CONTACTS_UPDATE,
+    COMPANY_LOCATIONS_CREATE,
+    COMPANY_LOCATIONS_DELETE,
+    COMPANY_LOCATIONS_UPDATE,
+    CUSTOMER_GROUPS_CREATE,
+    CUSTOMER_GROUPS_DELETE,
+    CUSTOMER_GROUPS_UPDATE,
+    CUSTOMER_PAYMENT_METHODS_CREATE,
+    CUSTOMER_PAYMENT_METHODS_REVOKE,
+    CUSTOMER_PAYMENT_METHODS_UPDATE,
+    CUSTOMERS_CREATE,
+    CUSTOMERS_DELETE,
+    CUSTOMERS_DISABLE,
+    CUSTOMERS_ENABLE,
+    CUSTOMERS_MARKETING_CONSENT_UPDATE,
+    CUSTOMERS_UPDATE,
+    DISPUTES_CREATE,
+    DISPUTES_UPDATE,
+    DOMAINS_CREATE,
+    DOMAINS_DESTROY,
+    DOMAINS_UPDATE,
+    DRAFT_ORDERS_CREATE,
+    DRAFT_ORDERS_DELETE,
+    DRAFT_ORDERS_UPDATE,
+    FULFILLMENT_EVENTS_CREATE,
+    FULFILLMENT_EVENTS_DELETE,
+    FULFILLMENT_ORDERS_CANCELLED,
+    FULFILLMENT_ORDERS_FULFILLMENT_REQUEST_REJECTED,
+    FULFILLMENT_ORDERS_FULFILLMENT_REQUEST_SUBMITTED,
+    FULFILLMENT_ORDERS_FULFILLMENT_SERVICE_FAILED_TO_COMPLETE,
+    FULFILLMENT_ORDERS_LINE_ITEMS_PREPARED_FOR_LOCAL_DELIVERY,
+    FULFILLMENT_ORDERS_LINE_ITEMS_PREPARED_FOR_PICKUP,
+    FULFILLMENT_ORDERS_MOVED,
+    FULFILLMENT_ORDERS_ORDER_ROUTING_COMPLETE,
+    FULFILLMENT_ORDERS_PLACED_ON_HOLD,
+    FULFILLMENT_ORDERS_RELEASED_FROM_HOLD,
+    FULFILLMENT_ORDERS_RESCHEDULED,
+    FULFILLMENT_ORDERS_SCHEDULED_FULFILLMENT_ORDER_READY,
+    FULFILLMENTS_CREATE,
+    FULFILLMENTS_UPDATE,
+    INVENTORY_ITEMS_CREATE,
+    INVENTORY_ITEMS_DELETE,
+    INVENTORY_ITEMS_UPDATE,
+    INVENTORY_LEVELS_CONNECT,
+    INVENTORY_LEVELS_DISCONNECT,
+    INVENTORY_LEVELS_UPDATE,
+    LOCALES_CREATE,
+    LOCALES_UPDATE,
+    LOCATIONS_ACTIVATE,
+    LOCATIONS_CREATE,
+    LOCATIONS_DEACTIVATE,
+    LOCATIONS_DELETE,
+    LOCATIONS_UPDATE,
+    MARKETS_CREATE,
+    MARKETS_DELETE,
+    MARKETS_UPDATE,
+    ORDER_TRANSACTIONS_CREATE,
+    ORDERS_CANCELLED,
+    ORDERS_CREATE,
+    ORDERS_DELETE,
+    ORDERS_EDITED,
+    ORDERS_FULFILLED,
+    ORDERS_PAID,
+    ORDERS_PARTIALLY_FULFILLED,
+    ORDERS_UPDATED,
+    PRODUCT_FEEDS_CREATE,
+    PRODUCT_FEEDS_FULL_SYNC,
+    PRODUCT_FEEDS_INCREMENTAL_SYNC,
+    PRODUCT_FEEDS_UPDATE,
+    PRODUCT_LISTINGS_ADD,
+    PRODUCT_LISTINGS_REMOVE,
+    PRODUCT_LISTINGS_UPDATE,
+    PRODUCT_PUBLICATIONS_CREATE,
+    PRODUCT_PUBLICATIONS_DELETE,
+    PRODUCT_PUBLICATIONS_UPDATE,
+    PRODUCTS_CREATE,
+    PRODUCTS_DELETE,
+    PRODUCTS_UPDATE,
+    PROFILES_CREATE,
+    PROFILES_DELETE,
+    PROFILES_UPDATE,
+    REFUNDS_CREATE,
+    RETURNS_APPROVE,
+    RETURNS_CANCEL,
+    RETURNS_CLOSE,
+    RETURNS_DECLINE,
+    RETURNS_REOPEN,
+    RETURNS_REQUEST,
+    SCHEDULED_PRODUCT_LISTINGS_ADD,
+    SCHEDULED_PRODUCT_LISTINGS_REMOVE,
+    SCHEDULED_PRODUCT_LISTINGS_UPDATE,
+    SEGMENTS_CREATE,
+    SEGMENTS_DELETE,
+    SEGMENTS_UPDATE,
+    SELLING_PLAN_GROUPS_CREATE,
+    SELLING_PLAN_GROUPS_DELETE,
+    SELLING_PLAN_GROUPS_UPDATE,
+    SHOP_UPDATE,
+    SUBSCRIPTION_BILLING_ATTEMPTS_CHALLENGED,
+    SUBSCRIPTION_BILLING_ATTEMPTS_FAILURE,
+    SUBSCRIPTION_BILLING_ATTEMPTS_SUCCESS,
+    SUBSCRIPTION_BILLING_CYCLE_EDITS_CREATE,
+    SUBSCRIPTION_BILLING_CYCLE_EDITS_DELETE,
+    SUBSCRIPTION_BILLING_CYCLE_EDITS_UPDATE,
+    SUBSCRIPTION_CONTRACTS_CREATE,
+    SUBSCRIPTION_CONTRACTS_EXPIRE,
+    SUBSCRIPTION_CONTRACTS_FAIL,
+    SUBSCRIPTION_CONTRACTS_PAUSE,
+    SUBSCRIPTION_CONTRACTS_RESUME,
+    SUBSCRIPTION_CONTRACTS_UPDATE,
+    TAX_SERVICES_CREATE,
+    TAX_SERVICES_UPDATE,
+    TENDER_TRANSACTIONS_CREATE,
+    THEMES_CREATE,
+    THEMES_DELETE,
+    THEMES_PUBLISH,
+    THEMES_UPDATE,
+    VARIANTS_IN_STOCK,
+    VARIANTS_OUT_OF_STOCK
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ApiVersion {
+    
+    @JsonProperty("displayName")
+    private String displayName;
+    
+    @JsonProperty("handle")
+    private String handle;
+    
+    @JsonProperty("supported")
+    private Boolean supported;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookSubscriptionConnection {
+    
+    @JsonProperty("edges")
+    private List<WebhookSubscriptionEdge> edges;
+    
+    @JsonProperty("pageInfo")
+    private PageInfo pageInfo;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookSubscriptionEdge {
+    
+    @JsonProperty("node")
+    private WebhookSubscription node;
+    
+    @JsonProperty("cursor")
+    private String cursor;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class EventBridgeWebhookSubscriptionCreateInput {
+    
+    @JsonProperty("arn")
+    private String arn;
+    
+    @JsonProperty("format")
+    private WebhookSubscriptionFormat format;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+    
+    @JsonProperty("privateMetafieldNamespaces")
+    private List<String> privateMetafieldNamespaces;
+    
+    @JsonProperty("topic")
+    private WebhookSubscriptionTopic topic;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class EventBridgeWebhookSubscriptionUpdateInput {
+    
+    @JsonProperty("arn")
+    private String arn;
+    
+    @JsonProperty("format")
+    private WebhookSubscriptionFormat format;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+    
+    @JsonProperty("privateMetafieldNamespaces")
+    private List<String> privateMetafieldNamespaces;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PubSubWebhookSubscriptionCreateInput {
+    
+    @JsonProperty("pubSubProject")
+    private String pubSubProject;
+    
+    @JsonProperty("pubSubTopic")
+    private String pubSubTopic;
+    
+    @JsonProperty("format")
+    private WebhookSubscriptionFormat format;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+    
+    @JsonProperty("privateMetafieldNamespaces")
+    private List<String> privateMetafieldNamespaces;
+    
+    @JsonProperty("topic")
+    private WebhookSubscriptionTopic topic;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PubSubWebhookSubscriptionUpdateInput {
+    
+    @JsonProperty("pubSubProject")
+    private String pubSubProject;
+    
+    @JsonProperty("pubSubTopic")
+    private String pubSubTopic;
+    
+    @JsonProperty("format")
+    private WebhookSubscriptionFormat format;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+    
+    @JsonProperty("privateMetafieldNamespaces")
+    private List<String> privateMetafieldNamespaces;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookSubscriptionInput {
+    
+    @JsonProperty("callbackUrl")
+    private String callbackUrl;
+    
+    @JsonProperty("format")
+    private WebhookSubscriptionFormat format;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+    
+    @JsonProperty("privateMetafieldNamespaces")
+    private List<String> privateMetafieldNamespaces;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookHttpEndpointInput {
+    
+    @JsonProperty("callbackUrl")
+    private String callbackUrl;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookEventBridgeEndpointInput {
+    
+    @JsonProperty("arn")
+    private String arn;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookPubSubEndpointInput {
+    
+    @JsonProperty("pubSubProject")
+    private String pubSubProject;
+    
+    @JsonProperty("pubSubTopic")
+    private String pubSubTopic;
+    
+    @JsonProperty("includeFields")
+    private List<String> includeFields;
+    
+    @JsonProperty("metafieldNamespaces")
+    private List<String> metafieldNamespaces;
+}
+
+// Webhook notification payload structures
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookNotification {
+    
+    @JsonProperty("apiVersion")
+    private String apiVersion;
+    
+    @JsonProperty("createdAt")
+    private String createdAt;
+    
+    @JsonProperty("id")
+    private String id;
+    
+    @JsonProperty("topic")
+    private String topic;
+    
+    @JsonProperty("data")
+    private Object data;
+}
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WebhookVerification {
+    
+    @JsonProperty("hmacHeader")
+    private String hmacHeader;
+    
+    @JsonProperty("data")
+    private String data;
+    
+    @JsonProperty("secret")
+    private String secret;
+    
+    @JsonProperty("verified")
+    private Boolean verified;
+}

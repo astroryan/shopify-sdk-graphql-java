@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "WebFetch(domain:shopify.dev)",
+      "Bash(find:*)",
+      "Bash(mv:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": []
+  }
+}

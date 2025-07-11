@@ -1,0 +1,40 @@
+shopify:
+  sdk:
+    api:
+      version: "2025-07"
+      timeout:
+        connect: 10000
+        read: 30000
+        write: 30000
+      retry:
+        max-attempts: 3
+        backoff-delay: 1000
+    graphql:
+      endpoint: "https://{shop}.myshopify.com/admin/api/{version}/graphql.json"
+      max-query-depth: 10
+      max-query-complexity: 1000
+    rate-limit:
+      enabled: true
+      max-calls-per-second: 2
+      bucket-size: 40
+    logging:
+      level: INFO
+      log-requests: false
+      log-responses: false
+
+spring:
+  application:
+    name: shopify-spring-sdk
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: NON_NULL
+    deserialization:
+      fail-on-unknown-properties: false
+    serialization:
+      write-dates-as-timestamps: false
+      write-enums-using-to-string: true
+
+logging:
+  level:
+    com.shopify.sdk: INFO
+    org.springframework: INFO

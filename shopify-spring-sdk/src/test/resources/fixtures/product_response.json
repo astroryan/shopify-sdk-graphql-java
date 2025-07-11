@@ -1,0 +1,196 @@
+{
+  "data": {
+    "product": {
+      "id": "gid://shopify/Product/7234567890123",
+      "title": "The Collection Snowboard: Liquid",
+      "handle": "the-collection-snowboard-liquid",
+      "description": "This COLLECTION board is a limited edition release. The Collection Snowboard: Liquid is a high-performance board perfect for intermediate to advanced riders.",
+      "descriptionHtml": "<p>This COLLECTION board is a limited edition release. The Collection Snowboard: Liquid is a high-performance board perfect for intermediate to advanced riders.</p>",
+      "vendor": "Hydrogen Vendor",
+      "productType": "Snowboards",
+      "status": "ACTIVE",
+      "tags": ["Premium", "Snow", "Winter", "Limited Edition"],
+      "publishedAt": "2024-01-01T00:00:00Z",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-15T10:30:00Z",
+      "totalInventory": 150,
+      "tracksInventory": true,
+      "requiresSellingPlan": false,
+      "giftCard": false,
+      "featuredImage": {
+        "id": "gid://shopify/ProductImage/1234567890",
+        "url": "https://cdn.shopify.com/s/files/1/0000/0001/products/snowboard-liquid.jpg",
+        "altText": "The Collection Snowboard: Liquid",
+        "width": 1200,
+        "height": 1200
+      },
+      "priceRange": {
+        "minVariantPrice": {
+          "amount": "699.99",
+          "currencyCode": "USD"
+        },
+        "maxVariantPrice": {
+          "amount": "899.99",
+          "currencyCode": "USD"
+        }
+      },
+      "seo": {
+        "title": "Collection Snowboard | Premium Winter Sports Equipment",
+        "description": "Limited edition COLLECTION snowboard perfect for winter sports enthusiasts. High-performance board for intermediate to advanced riders."
+      },
+      "variants": {
+        "edges": [
+          {
+            "node": {
+              "id": "gid://shopify/ProductVariant/41234567890123",
+              "title": "156cm",
+              "sku": "SNOW-LIQUID-156",
+              "barcode": "123456789012",
+              "price": {
+                "amount": "699.99",
+                "currencyCode": "USD"
+              },
+              "compareAtPrice": {
+                "amount": "899.99",
+                "currencyCode": "USD"
+              },
+              "weight": 5.2,
+              "weightUnit": "POUNDS",
+              "availableForSale": true,
+              "inventoryQuantity": 50,
+              "selectedOptions": [
+                {
+                  "name": "Size",
+                  "value": "156cm"
+                }
+              ],
+              "image": {
+                "id": "gid://shopify/ProductImage/1234567891",
+                "url": "https://cdn.shopify.com/s/files/1/0000/0001/products/snowboard-liquid-156.jpg",
+                "altText": "156cm variant"
+              },
+              "requiresShipping": true,
+              "taxable": true,
+              "position": 1,
+              "createdAt": "2024-01-01T00:00:00Z",
+              "updatedAt": "2024-01-15T10:30:00Z"
+            },
+            "cursor": "eyJsYXN0X2lkIjo0MTIzNDU2Nzg5MDEyM30="
+          },
+          {
+            "node": {
+              "id": "gid://shopify/ProductVariant/41234567890124",
+              "title": "159cm",
+              "sku": "SNOW-LIQUID-159",
+              "barcode": "123456789013",
+              "price": {
+                "amount": "749.99",
+                "currencyCode": "USD"
+              },
+              "compareAtPrice": {
+                "amount": "899.99",
+                "currencyCode": "USD"
+              },
+              "weight": 5.4,
+              "weightUnit": "POUNDS",
+              "availableForSale": true,
+              "inventoryQuantity": 75,
+              "selectedOptions": [
+                {
+                  "name": "Size",
+                  "value": "159cm"
+                }
+              ],
+              "requiresShipping": true,
+              "taxable": true,
+              "position": 2,
+              "createdAt": "2024-01-01T00:00:00Z",
+              "updatedAt": "2024-01-15T10:30:00Z"
+            },
+            "cursor": "eyJsYXN0X2lkIjo0MTIzNDU2Nzg5MDEyNH0="
+          },
+          {
+            "node": {
+              "id": "gid://shopify/ProductVariant/41234567890125",
+              "title": "162cm",
+              "sku": "SNOW-LIQUID-162",
+              "barcode": "123456789014",
+              "price": {
+                "amount": "799.99",
+                "currencyCode": "USD"
+              },
+              "compareAtPrice": null,
+              "weight": 5.6,
+              "weightUnit": "POUNDS",
+              "availableForSale": true,
+              "inventoryQuantity": 25,
+              "selectedOptions": [
+                {
+                  "name": "Size",
+                  "value": "162cm"
+                }
+              ],
+              "requiresShipping": true,
+              "taxable": true,
+              "position": 3,
+              "createdAt": "2024-01-01T00:00:00Z",
+              "updatedAt": "2024-01-15T10:30:00Z"
+            },
+            "cursor": "eyJsYXN0X2lkIjo0MTIzNDU2Nzg5MDEyNX0="
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": false,
+          "hasPreviousPage": false,
+          "startCursor": "eyJsYXN0X2lkIjo0MTIzNDU2Nzg5MDEyM30=",
+          "endCursor": "eyJsYXN0X2lkIjo0MTIzNDU2Nzg5MDEyNX0="
+        }
+      },
+      "options": [
+        {
+          "id": "gid://shopify/ProductOption/9234567890123",
+          "name": "Size",
+          "position": 1,
+          "values": ["156cm", "159cm", "162cm"]
+        }
+      ],
+      "images": {
+        "edges": [
+          {
+            "node": {
+              "id": "gid://shopify/ProductImage/1234567890",
+              "url": "https://cdn.shopify.com/s/files/1/0000/0001/products/snowboard-liquid-main.jpg",
+              "altText": "Main product image",
+              "width": 1200,
+              "height": 1200
+            }
+          },
+          {
+            "node": {
+              "id": "gid://shopify/ProductImage/1234567891",
+              "url": "https://cdn.shopify.com/s/files/1/0000/0001/products/snowboard-liquid-detail.jpg",
+              "altText": "Detail shot",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        ],
+        "pageInfo": {
+          "hasNextPage": false,
+          "hasPreviousPage": false
+        }
+      }
+    }
+  },
+  "extensions": {
+    "cost": {
+      "requestedQueryCost": 15,
+      "actualQueryCost": 12,
+      "throttleStatus": {
+        "maximumAvailable": 2000,
+        "currentlyAvailable": 1988,
+        "restoreRate": 100
+      }
+    }
+  }
+}
