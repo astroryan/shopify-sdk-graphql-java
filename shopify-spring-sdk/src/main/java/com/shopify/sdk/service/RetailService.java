@@ -1332,10 +1332,4 @@ public class RetailService {
         private List<UserError> userErrors;
     }
     
-    // Enums
-    public enum StaffMemberStatus {
-        ACTIVE,
-        INACTIVE,
-        ALL
-    }
 }
