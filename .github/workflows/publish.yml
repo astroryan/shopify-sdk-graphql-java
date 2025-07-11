@@ -52,14 +52,14 @@ jobs:
         
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results
         path: shopify-spring-sdk/build/reports/tests/test/
         
     - name: Upload coverage reports
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-reports
         path: shopify-spring-sdk/build/reports/jacoco/test/
@@ -97,7 +97,7 @@ jobs:
         
     - name: Update release
       if: github.event_name == 'release'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: release-notes.md
         append_body: true

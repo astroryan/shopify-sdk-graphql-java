@@ -40,13 +40,13 @@ jobs:
         
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results
         path: shopify-spring-sdk/build/reports/tests/test/
         
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         directory: ./shopify-spring-sdk/build/reports/jacoco/test/
         flags: unittests
