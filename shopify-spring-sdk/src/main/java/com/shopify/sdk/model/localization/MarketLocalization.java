@@ -12,3 +12,17 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class MarketLocalization {
+    
+    @JsonProperty("id")
+    private String id;
+    
+    @JsonProperty("locale")
+    private String locale;
+    
+    @JsonProperty("isVisible")
+    private Boolean isVisible;
+    
+    @JsonProperty("isPrimary")
+    private Boolean isPrimary;
+}

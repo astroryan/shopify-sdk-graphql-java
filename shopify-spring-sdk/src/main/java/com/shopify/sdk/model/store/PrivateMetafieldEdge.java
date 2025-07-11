@@ -12,3 +12,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class PrivateMetafieldEdge {
+    
+    @JsonProperty("cursor")
+    private String cursor;
+    
+    @JsonProperty("node")
+    private PrivateMetafield node;
+}

@@ -6,11 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class GraphQLError {
-        private String message;
-        private List<Location> locations;
-        private List<String> path;
-        private Map<String, Object> extensions;
-        
-        @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class GraphQLError {
+    private String message;
+    private List<Location> locations;
+    private List<String> path;
+    private Map<String, Object> extensions;
+    
+    @Data
+    public static class Location {
+        private int line;
+        private int column;
+    }
+}

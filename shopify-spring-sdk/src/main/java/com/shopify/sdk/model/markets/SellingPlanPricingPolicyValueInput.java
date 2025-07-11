@@ -12,3 +12,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class SellingPlanPricingPolicyValueInput {
+    
+    @JsonProperty("percentage")
+    private Double percentage;
+    
+    @JsonProperty("fixedAmount")
+    private MoneyInput fixedAmount;
+}

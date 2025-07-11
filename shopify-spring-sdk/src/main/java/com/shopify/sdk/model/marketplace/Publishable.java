@@ -12,3 +12,17 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class Publishable {
+    
+    @JsonProperty("publicationCount")
+    private Integer publicationCount;
+    
+    @JsonProperty("publishedOnCurrentPublication")
+    private Boolean publishedOnCurrentPublication;
+    
+    @JsonProperty("unpublishedPublications")
+    private PublicationConnection unpublishedPublications;
+    
+    @JsonProperty("publications")
+    private PublicationConnection publications;
+}

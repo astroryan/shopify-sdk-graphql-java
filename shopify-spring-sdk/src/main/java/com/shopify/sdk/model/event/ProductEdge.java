@@ -12,3 +12,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class ProductEdge {
+    
+    @JsonProperty("cursor")
+    private String cursor;
+    
+    @JsonProperty("node")
+    private Product node;
+}

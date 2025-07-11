@@ -12,3 +12,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class MoneyV2 {
+    
+    @JsonProperty("amount")
+    private String amount;
+    
+    @JsonProperty("currencyCode")
+    private String currencyCode;
+}

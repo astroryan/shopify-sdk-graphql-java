@@ -12,3 +12,23 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class ArticleAuthor {
+    
+    @JsonProperty("displayName")
+    private String displayName;
+    
+    @JsonProperty("email")
+    private String email;
+    
+    @JsonProperty("firstName")
+    private String firstName;
+    
+    @JsonProperty("lastName")
+    private String lastName;
+    
+    @JsonProperty("bio")
+    private String bio;
+    
+    @JsonProperty("image")
+    private Image image;
+}

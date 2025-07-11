@@ -12,3 +12,14 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class MetaobjectDefinitionCreatedBy {
+    
+    @JsonProperty("id")
+    private String id;
+    
+    @JsonProperty("displayName")
+    private String displayName;
+    
+    @JsonProperty("type")
+    private String type;
+}

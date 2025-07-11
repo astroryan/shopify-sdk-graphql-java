@@ -12,3 +12,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class UrlRedirectInput {
+    
+    @JsonProperty("path")
+    private String path;
+    
+    @JsonProperty("target")
+    private String target;
+}

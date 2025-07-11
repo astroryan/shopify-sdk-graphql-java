@@ -12,3 +12,14 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+public class MetafieldDefinitionValidation {
+    
+    @JsonProperty("name")
+    private String name;
+    
+    @JsonProperty("type")
+    private String type;
+    
+    @JsonProperty("value")
+    private String value;
+}
