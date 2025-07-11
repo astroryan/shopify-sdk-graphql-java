@@ -8,9 +8,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
 
-public enum CommentPolicy {
-    NONE,
-    MODERATE,
-    OPEN,
-    CLOSED
+/**
+ * Represents a comment in the online store
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Comment {
+    private ID id;
+    private String author;
+    private String content;
+    private DateTime createdAt;
+    private DateTime updatedAt;
+    private CommentPolicy policy;
 }

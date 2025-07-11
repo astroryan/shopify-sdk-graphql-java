@@ -8,7 +8,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
 
-public enum CheckoutBrandingBorderStyle {
-    NONE,
-    SOLID
+/**
+ * Represents checkout branding border configuration
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CheckoutBrandingBorder {
+    private CheckoutBrandingBorderStyle style;
+    private String color;
+    private Integer width;
 }

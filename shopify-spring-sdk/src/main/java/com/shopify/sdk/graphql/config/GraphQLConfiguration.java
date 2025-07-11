@@ -5,7 +5,7 @@ import graphql.schema.GraphQLScalarType;
 import graphql.schema.idl.RuntimeWiring;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.graphql.execution.RuntimeWiringConfigurer;
+// import org.springframework.graphql.execution.RuntimeWiringConfigurer;
 
 /**
  * GraphQL configuration for Shopify SDK.
@@ -18,7 +18,9 @@ public class GraphQLConfiguration {
     /**
      * Configures runtime wiring for GraphQL with custom scalar types.
      * These scalars handle the conversion between Java types and GraphQL types.
+     * Note: Uncomment and adjust based on your Spring GraphQL version
      */
+    /*
     @Bean
     public RuntimeWiringConfigurer runtimeWiringConfigurer() {
         return wiringBuilder -> wiringBuilder
@@ -31,6 +33,26 @@ public class GraphQLConfiguration {
                 .scalar(createHTMLScalar())
                 .scalar(createFormattedStringScalar())
                 .scalar(createUnsignedInt64Scalar());
+    }
+    */
+    
+    /**
+     * Alternative configuration for GraphQL scalar types
+     * Use this if not using Spring GraphQL
+     */
+    @Bean
+    public RuntimeWiring runtimeWiring() {
+        return RuntimeWiring.newRuntimeWiring()
+                .scalar(IDScalar.INSTANCE)
+                .scalar(DateTimeScalar.INSTANCE)
+                .scalar(MoneyScalar.INSTANCE)
+                .scalar(DecimalScalar.INSTANCE)
+                .scalar(URLScalar.INSTANCE)
+                .scalar(JSONScalar.INSTANCE)
+                .scalar(createHTMLScalar())
+                .scalar(createFormattedStringScalar())
+                .scalar(createUnsignedInt64Scalar())
+                .build();
     }
     
     /**

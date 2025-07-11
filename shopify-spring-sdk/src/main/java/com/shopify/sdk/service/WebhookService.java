@@ -1,8 +1,8 @@
 package com.shopify.sdk.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.shopify.sdk.client.GraphQLRequest;
-import com.shopify.sdk.client.GraphQLResponse;
+import com.shopify.sdk.model.graphql.GraphQLRequest;
+import com.shopify.sdk.model.graphql.GraphQLResponse;
 import com.shopify.sdk.client.ShopifyGraphQLClient;
 import com.shopify.sdk.config.ShopifyAuthContext;
 import com.shopify.sdk.exception.ShopifyApiException;
