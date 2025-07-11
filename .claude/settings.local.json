@@ -8,7 +8,10 @@
       "Bash(ls:*)",
       "Bash(./gradlew:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(chmod:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }
