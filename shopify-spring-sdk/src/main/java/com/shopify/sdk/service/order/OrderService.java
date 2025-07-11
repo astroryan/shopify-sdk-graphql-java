@@ -2,7 +2,9 @@ package com.shopify.sdk.service.order;
 
 import com.shopify.sdk.auth.ShopifyAuthContext;
 import com.shopify.sdk.client.GraphQLClient;
-import com.shopify.sdk.model.order.Order;
+import com.shopify.sdk.model.order.*;
+import com.shopify.sdk.model.order.input.*;
+import com.shopify.sdk.model.order.response.*;
 import com.shopify.sdk.model.graphql.GraphQLRequest;
 import com.shopify.sdk.model.graphql.GraphQLResponse;
 import lombok.Data;
@@ -957,7 +959,7 @@ public class OrderService {
     public static class OrderTransactionInput {
         private String amount;
         private String gateway;
-        private TransactionKind kind;
+        private OrderTransaction.OrderTransactionKind kind;
         private String orderId;
         private String parentId;
     }

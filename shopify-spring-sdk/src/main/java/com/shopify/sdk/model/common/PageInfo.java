@@ -1,40 +1,27 @@
 package com.shopify.sdk.model.common;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import lombok.*;
 
 /**
- * Information about pagination in a connection
+ * Information about pagination in a connection.
+ * Used for cursor-based pagination in GraphQL connections.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageInfo {
-    /**
-     * Whether there are more pages to fetch following the current page
-     */
-    @JsonProperty("hasNextPage")
+    
+    @GraphQLQuery(name = "hasNextPage", description = "Whether there are more pages to fetch following the current page")
     private Boolean hasNextPage;
     
-    /**
-     * Whether there are more pages to fetch prior to the current page
-     */
-    @JsonProperty("hasPreviousPage")
+    @GraphQLQuery(name = "hasPreviousPage", description = "Whether there are more pages to fetch prior to the current page")
     private Boolean hasPreviousPage;
     
-    /**
-     * The cursor for the first item in the current page
-     */
-    @JsonProperty("startCursor")
+    @GraphQLQuery(name = "startCursor", description = "The cursor corresponding to the first node in edges")
     private String startCursor;
     
-    /**
-     * The cursor for the last item in the current page
-     */
-    @JsonProperty("endCursor")
+    @GraphQLQuery(name = "endCursor", description = "The cursor corresponding to the last node in edges")
     private String endCursor;
 }

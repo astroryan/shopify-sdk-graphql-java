@@ -51,6 +51,7 @@ dependencies {
     // GraphQL
     implementation "com.graphql-java:graphql-java:${graphqlJavaVersion}"
     implementation "com.graphql-java:graphql-java-extended-scalars:21.0"
+    implementation "io.leangen.graphql:spqr:0.12.0"
     
     // HTTP Client
     implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"

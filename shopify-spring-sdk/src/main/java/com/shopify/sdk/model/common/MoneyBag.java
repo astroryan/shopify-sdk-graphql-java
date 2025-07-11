@@ -1,28 +1,21 @@
 package com.shopify.sdk.model.common;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import lombok.*;
 
 /**
- * Represents a collection of monetary values in their respective currencies
+ * Represents a collection of monetary values in their respective currencies.
+ * Used for multi-currency support where amounts are shown in both shop and presentment currencies.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class MoneyBag {
-    /**
-     * The shop money amount
-     */
-    @JsonProperty("shopMoney")
-    private Money shopMoney;
     
-    /**
-     * The presentment money amount (customer's currency)
-     */
-    @JsonProperty("presentmentMoney")
-    private Money presentmentMoney;
+    @GraphQLQuery(name = "presentmentMoney", description = "The amount in presentment currency")
+    private MoneyV2 presentmentMoney;
+    
+    @GraphQLQuery(name = "shopMoney", description = "The amount in shop currency")
+    private MoneyV2 shopMoney;
 }
