@@ -70,10 +70,17 @@ jobs:
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2
       
+    - name: Clean Gradle cache
+      run: |
+        rm -rf ~/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents.client5/
+        rm -rf ~/.gradle/caches/modules-2/files-2.1/org.wiremock/
+        
     - name: Debug Dependencies
       run: |
-        echo "🔍 Checking Jetty dependencies..."
-        ./gradlew dependencies --configuration testRuntimeClasspath | grep -i jetty || true
+        echo "🔍 Checking HttpClient dependencies..."
+        ./gradlew dependencies --configuration testRuntimeClasspath | grep -A 5 -B 5 httpclient5 || true
+        echo "🔍 Checking WireMock dependencies..."
+        ./gradlew dependencies --configuration testRuntimeClasspath | grep -A 5 -B 5 wiremock || true
         
     - name: Run integration tests
       run: |

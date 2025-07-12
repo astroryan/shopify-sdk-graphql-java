@@ -39,11 +39,6 @@ configurations.all {
     resolutionStrategy {
         // Force a specific version of snakeyaml
         force 'org.yaml:snakeyaml:2.2'
-        
-        // Force Apache HttpClient 5.4.2 for WireMock compatibility (setProtocolUpgradeEnabled added in 5.4)
-        force 'org.apache.httpcomponents.client5:httpclient5:5.4.2'
-        force 'org.apache.httpcomponents.core5:httpcore5:5.3.2'
-        force 'org.apache.httpcomponents.core5:httpcore5-h2:5.3.2'
     }
 }
 
@@ -102,7 +97,8 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
-    testImplementation 'org.wiremock:wiremock-jetty12:3.13.1'
+    // Use WireMock with Jetty 11 instead of Jetty 12 to avoid conflicts
+    testImplementation 'org.wiremock:wiremock:3.9.2'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.awaitility:awaitility:4.2.0'
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
