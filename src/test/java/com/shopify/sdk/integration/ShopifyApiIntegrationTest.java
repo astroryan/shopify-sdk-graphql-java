@@ -37,13 +37,16 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@SpringBootTest(classes = {
+    com.shopify.sdk.config.ShopifyAutoConfiguration.class,
+    com.shopify.sdk.config.ShopifyTestConfiguration.class
+})
 @TestPropertySource(properties = {
-    "shopify.api.key=test-api-key",
-    "shopify.api.secret=test-api-secret",
+    "shopify.api-key=test-api-key",
+    "shopify.api-secret-key=test-api-secret",
     "shopify.scopes=read_products,write_orders,read_orders",
-    "shopify.host.name=test-app.example.com",
-    "shopify.api.version=2024-01"
+    "shopify.host-name=test-app.example.com",
+    "shopify.api-version=2025-07"
 })
 @Tag("integration")
 public class ShopifyApiIntegrationTest {

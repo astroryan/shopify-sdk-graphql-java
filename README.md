@@ -5,7 +5,7 @@ A comprehensive, enterprise-grade Java Spring SDK for the Shopify Admin GraphQL 
 [![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2+-green.svg)](https://spring.io/projects/spring-boot)
 [![Gradle](https://img.shields.io/badge/Gradle-8.0+-blue.svg)](https://gradle.org/)
-[![GitHub Packages](https://img.shields.io/badge/Published%20on-GitHub%20Packages-blue.svg)](https://github.com/astroryan/shopify-sdk-graphql-java/packages)
+[![GitHub Packages](https://img.shields.io/badge/Published%20on-GitHub%20Packages-blue.svg)](https://github.com/astroryan/shopify-sdk-java/packages)
 
 ## 🚀 Features
 
@@ -53,7 +53,7 @@ Add the following to your `build.gradle`:
 repositories {
     mavenCentral()
     maven {
-        url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java")
+        url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
         credentials {
             username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
             password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
@@ -169,8 +169,8 @@ dependencies {
 ```
 
 **Latest Available Versions**:
-- 🚀 Latest stable: [`1.1.1-RELEASE`](https://github.com/astroryan/shopify-sdk-graphql-java/packages)
-- 🔄 Latest snapshot: Check [GitHub Packages](https://github.com/astroryan/shopify-sdk-graphql-java/packages) for newest SNAPSHOT
+- 🚀 Latest stable: [`1.1.1-RELEASE`](https://github.com/astroryan/shopify-sdk-java/packages)
+- 🔄 Latest snapshot: Check [GitHub Packages](https://github.com/astroryan/shopify-sdk-java/packages) for newest SNAPSHOT
 - ✅ GitHub Actions now properly trigger on both `develop` and `release` branch PRs
 
 ## 🚀 Quick Start
@@ -667,8 +667,8 @@ We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING
 
 ```bash
 # Clone the repository
-git clone https://github.com/astroryan/shopify-sdk-graphql-java.git
-cd shopify-sdk-graphql-java
+git clone https://github.com/astroryan/shopify-sdk-java.git
+cd shopify-sdk-java
 
 # Build the project
 ./gradlew build
@@ -692,8 +692,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🛟 Support
 
-- **GitHub Issues**: [Report bugs and request features](https://github.com/astroryan/shopify-sdk-graphql-java/issues)
-- **Discussions**: [Community support and questions](https://github.com/astroryan/shopify-sdk-graphql-java/discussions)
+- **GitHub Issues**: [Report bugs and request features](https://github.com/astroryan/shopify-sdk-java/issues)
+- **Discussions**: [Community support and questions](https://github.com/astroryan/shopify-sdk-java/discussions)
 - **Shopify Documentation**: [Official API documentation](https://shopify.dev/docs)
 
 ## 🚦 Roadmap

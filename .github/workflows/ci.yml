@@ -71,7 +71,14 @@ jobs:
       uses: gradle/gradle-build-action@v2
       
     - name: Run integration tests
-      run: ./gradlew integrationTest
+      run: |
+        if [ -z "${{ secrets.SHOPIFY_TEST_STORE_DOMAIN }}" ]; then
+          echo "⚠️ Skipping integration tests - SHOPIFY_TEST_STORE_DOMAIN secret not configured"
+          echo "Set up secrets in repository settings to enable integration tests"
+          exit 0
+        else
+          ./gradlew integrationTest
+        fi
       env:
         SHOPIFY_TEST_STORE_DOMAIN: ${{ secrets.SHOPIFY_TEST_STORE_DOMAIN }}
         SHOPIFY_TEST_ACCESS_TOKEN: ${{ secrets.SHOPIFY_TEST_ACCESS_TOKEN }}
@@ -174,6 +181,28 @@ jobs:
       run: ./gradlew publish
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create GitHub Release for production
+      if: github.event.pull_request.base.ref == 'release'
+      run: |
+        # Make release script executable
+        chmod +x .github/scripts/generate-release-notes.sh
+        
+        # Generate release notes
+        .github/scripts/generate-release-notes.sh $VERSION
+        
+        # Create git tag
+        git tag v$VERSION
+        git push origin v$VERSION
+        
+        # Create GitHub release
+        gh release create v$VERSION \
+          --title "Shopify Spring SDK v$VERSION" \
+          --notes-file release_notes.md \
+          --target release \
+          --verify-tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Create release notes
       if: github.event_name == 'release'
@@ -186,7 +215,7 @@ jobs:
         echo "\`\`\`gradle" >> release-notes.md
         echo "repositories {" >> release-notes.md
         echo "    maven {" >> release-notes.md
-        echo "        url = uri(\"https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java\")" >> release-notes.md
+        echo "        url = uri(\"https://maven.pkg.github.com/astroryan/shopify-sdk-java\")" >> release-notes.md
         echo "        credentials {" >> release-notes.md
         echo "            username = project.findProperty(\"gpr.user\") ?: System.getenv(\"USERNAME\")" >> release-notes.md
         echo "            password = project.findProperty(\"gpr.key\") ?: System.getenv(\"TOKEN\")" >> release-notes.md
