@@ -529,7 +529,7 @@ public class RetailService {
             int first,
             String after,
             String query) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("first", first);
@@ -563,7 +563,7 @@ public class RetailService {
     }
     
     public Device getDevice(ShopifyAuthContext context, String id) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("id", id);
@@ -591,7 +591,7 @@ public class RetailService {
             String after,
             String deviceId,
             String staffMemberId) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("first", first);
@@ -633,7 +633,7 @@ public class RetailService {
             String after,
             String query,
             StaffMemberStatus status) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("first", first);
@@ -674,7 +674,7 @@ public class RetailService {
             int first,
             String after,
             String locationId) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("first", first);
@@ -713,7 +713,7 @@ public class RetailService {
             String after,
             String locationId,
             RetailSessionState state) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("first", first);
@@ -755,7 +755,7 @@ public class RetailService {
             String after,
             String locationId,
             CashTrackingSessionState state) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("first", first);
@@ -792,7 +792,7 @@ public class RetailService {
     }
     
     public Device createDevice(ShopifyAuthContext context, DeviceCreateInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
@@ -823,7 +823,7 @@ public class RetailService {
     }
     
     public Device updateDevice(ShopifyAuthContext context, String id, DeviceUpdateInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("id", id);
@@ -855,7 +855,7 @@ public class RetailService {
     }
     
     public String deleteDevice(ShopifyAuthContext context, String id) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("id", id);
@@ -886,7 +886,7 @@ public class RetailService {
     }
     
     public DeviceCredential createDeviceCredential(ShopifyAuthContext context, DeviceCredentialCreateInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
@@ -917,7 +917,7 @@ public class RetailService {
     }
     
     public DeviceCredential revokeDeviceCredential(ShopifyAuthContext context, String id) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("id", id);
@@ -948,7 +948,7 @@ public class RetailService {
     }
     
     public PosExternalDevice createPosExternalDevice(ShopifyAuthContext context, PosExternalDeviceCreateInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
@@ -979,7 +979,7 @@ public class RetailService {
     }
     
     public String deletePosExternalDevice(ShopifyAuthContext context, String id) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("id", id);
@@ -1010,7 +1010,7 @@ public class RetailService {
     }
     
     public RetailSession openRetailSession(ShopifyAuthContext context, RetailSessionOpenInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
@@ -1041,7 +1041,7 @@ public class RetailService {
     }
     
     public RetailSession closeRetailSession(ShopifyAuthContext context, RetailSessionCloseInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
@@ -1072,7 +1072,7 @@ public class RetailService {
     }
     
     public CashTrackingSession openCashTrackingSession(ShopifyAuthContext context, CashTrackingSessionOpenInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
@@ -1103,7 +1103,7 @@ public class RetailService {
     }
     
     public CashTrackingSession closeCashTrackingSession(ShopifyAuthContext context, CashTrackingSessionCloseInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
@@ -1134,7 +1134,7 @@ public class RetailService {
     }
     
     public CashAdjustment createCashAdjustment(ShopifyAuthContext context, CashAdjustmentCreateInput input) {
-        ShopifyGraphQLClient.setAuthContext(context);
+        graphQLClient.setAuthContext(context);
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("input", input);
