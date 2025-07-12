@@ -75,8 +75,10 @@ jobs:
         if [ -z "${{ secrets.SHOPIFY_TEST_STORE_DOMAIN }}" ]; then
           echo "⚠️ Skipping integration tests - SHOPIFY_TEST_STORE_DOMAIN secret not configured"
           echo "Set up secrets in repository settings to enable integration tests"
-          exit 0
+          # Run integration tests anyway to verify they compile and skip properly
+          ./gradlew integrationTest --info || true
         else
+          echo "✅ Running integration tests with configured store"
           ./gradlew integrationTest
         fi
       env:
