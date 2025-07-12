@@ -8,6 +8,7 @@ import com.shopify.sdk.model.graphql.GraphQLResponse;
 import com.shopify.sdk.model.product.Product;
 import com.shopify.sdk.model.product.ProductConnection;
 import com.shopify.sdk.model.product.ProductStatus;
+import com.shopify.sdk.model.product.ProductInput;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

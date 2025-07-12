@@ -7,6 +7,8 @@ import com.shopify.sdk.client.ShopifyGraphQLClient;
 import com.shopify.sdk.auth.ShopifyAuthContext;
 import com.shopify.sdk.exception.ShopifyApiException;
 import com.shopify.sdk.model.common.UserError;
+import com.shopify.sdk.model.common.Country;
+import com.shopify.sdk.model.common.Language;
 import com.shopify.sdk.model.localization.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

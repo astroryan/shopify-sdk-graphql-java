@@ -10,6 +10,7 @@ import com.shopify.sdk.model.common.UserError;
 import com.shopify.sdk.model.shop.*;
 import com.shopify.sdk.model.storefront.StorefrontAccessTokenInput;
 import com.shopify.sdk.model.storefront.StorefrontAccessToken;
+import com.shopify.sdk.model.store.StorefrontAccessTokenConnection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -7,6 +7,7 @@ import com.shopify.sdk.model.billing.AppUsageRecord;
 import com.shopify.sdk.model.graphql.GraphQLRequest;
 import com.shopify.sdk.model.graphql.GraphQLResponse;
 import lombok.Data;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

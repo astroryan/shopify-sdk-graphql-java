@@ -8,6 +8,7 @@ import com.shopify.sdk.auth.ShopifyAuthContext;
 import com.shopify.sdk.exception.ShopifyApiException;
 import com.shopify.sdk.model.common.UserError;
 import com.shopify.sdk.model.privacy.*;
+import com.shopify.sdk.model.customer.Customer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

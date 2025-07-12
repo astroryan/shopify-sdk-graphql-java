@@ -9,6 +9,8 @@ import com.shopify.sdk.exception.ShopifyApiException;
 import com.shopify.sdk.model.common.PageInfo;
 import com.shopify.sdk.model.common.UserError;
 import com.shopify.sdk.model.event.*;
+import com.shopify.sdk.model.marketing.MarketingEvent;
+import com.shopify.sdk.model.marketing.MarketingActivity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

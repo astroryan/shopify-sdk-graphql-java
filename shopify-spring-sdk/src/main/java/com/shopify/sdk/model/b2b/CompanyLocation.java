@@ -3,6 +3,7 @@ package com.shopify.sdk.model.b2b;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.shopify.sdk.model.common.Node;
 import com.shopify.sdk.model.common.Address;
+import com.shopify.sdk.model.market.Market;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

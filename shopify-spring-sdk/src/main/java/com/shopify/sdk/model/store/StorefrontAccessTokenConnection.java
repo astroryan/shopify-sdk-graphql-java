@@ -1,5 +1,6 @@
 package com.shopify.sdk.model.store;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.shopify.sdk.model.common.PageInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,10 +21,12 @@ public class StorefrontAccessTokenConnection {
     /**
      * A list of edges containing storefront access token nodes and cursors
      */
+    @JsonProperty("edges")
     private List<StorefrontAccessTokenEdge> edges;
     
     /**
      * Information about pagination in the connection
      */
+    @JsonProperty("pageInfo")
     private PageInfo pageInfo;
 }

@@ -1,5 +1,6 @@
 package com.shopify.sdk.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.shopify.sdk.model.graphql.GraphQLRequest;
 import com.shopify.sdk.model.graphql.GraphQLResponse;
@@ -7,7 +8,12 @@ import com.shopify.sdk.client.ShopifyGraphQLClient;
 import com.shopify.sdk.auth.ShopifyAuthContext;
 import com.shopify.sdk.exception.ShopifyApiException;
 import com.shopify.sdk.model.common.UserError;
+import com.shopify.sdk.model.common.ID;
 import com.shopify.sdk.model.markets.*;
+import com.shopify.sdk.model.market.*;
+import com.shopify.sdk.model.selling.SellingPlanGroup;
+import com.shopify.sdk.model.selling.SellingPlanGroupInput;
+import com.shopify.sdk.model.selling.SellingPlanGroupConnection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

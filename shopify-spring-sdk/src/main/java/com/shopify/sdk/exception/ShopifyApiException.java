@@ -13,8 +13,4 @@ public class ShopifyApiException extends RuntimeException {
     public ShopifyApiException(String message, Throwable cause) {
         super(message, cause);
     }
-
-    public ShopifyApiException(String string, List<GraphQLError> errors) {
-        //TODO Auto-generated constructor stub
-    }
 }
