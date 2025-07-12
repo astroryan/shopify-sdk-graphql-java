@@ -18,7 +18,8 @@ A comprehensive, enterprise-grade Java Spring SDK for the Shopify Admin GraphQL 
 - **📊 GraphQL & REST**: Support for both GraphQL and REST API endpoints
 
 ### Advanced Features
-- **🔐 OAuth 2.0 Flow**: Complete OAuth implementation with JWT validation
+- **🔑 Private App Token Support**: Simple and secure token-based authentication (Recommended)
+- **🔐 OAuth 2.0 Flow**: Complete OAuth implementation for public apps (Optional)
 - **🌐 Session Management**: Thread-safe session handling with multiple store support
 - **📈 Rate Limiting**: Built-in rate limit handling with exponential backoff
 - **🔍 Monitoring**: Comprehensive metrics and logging for API operations
@@ -81,35 +82,65 @@ gpr.key=your-personal-access-token
 
 ## ⚙️ Configuration
 
-Configure the SDK in your `application.yml`:
+### Recommended: Private App Access Token (Simple & Secure)
+
+For most use cases, Shopify recommends using Private App Access Tokens:
 
 ```yaml
 shopify:
-  api-key: ${SHOPIFY_API_KEY}
-  api-secret-key: ${SHOPIFY_API_SECRET}
-  scopes: 
-    - read_products
-    - write_products
-    - read_orders
-    - write_orders
-  host-name: ${SHOPIFY_APP_HOST}
+  # Simple token-based configuration (Recommended)
+  admin-api-access-token: ${SHOPIFY_ACCESS_TOKEN}
   api-version: "2025-07"
-  is-embedded-app: true
+  
+  # Optional logging configuration
   logging:
     level: INFO
     http-requests: false
     timestamps: true
 ```
 
+### Alternative: OAuth Configuration (For Public Apps)
+
+Only needed if building a public app distributed to multiple stores:
+
+```yaml
+shopify:
+  # OAuth configuration (only for public apps)
+  api-key: ${SHOPIFY_API_KEY}
+  api-secret-key: ${SHOPIFY_API_SECRET}
+  host-name: ${SHOPIFY_APP_HOST}
+  api-version: "2025-07"
+  is-embedded-app: true
+  
+  logging:
+    level: INFO
+    http-requests: false
+    timestamps: true
+```
+
+### How to Get Access Token
+
+1. **Create Private App** in your Shopify admin:
+   - Go to Settings → Apps and sales channels → Develop apps
+   - Click "Create an app" → "Create an app for custom use"
+   - Configure Admin API access scopes (e.g., `read_products`, `write_products`)
+   - Install the app and copy the Admin API access token
+
+2. **Set Environment Variable**:
+   ```bash
+   export SHOPIFY_ACCESS_TOKEN="shpat_your-access-token-here"
+   ```
+
 ## 🚀 Quick Start
 
-### Basic Usage with Spring Dependency Injection
+### Basic Usage with Private App Token (Recommended)
 
 ```java
-import com.shopify.sdk.ShopifyApi;
 import com.shopify.sdk.service.product.ProductService;
 import com.shopify.sdk.model.product.Product;
+import com.shopify.sdk.model.product.ProductConnection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -117,12 +148,19 @@ import reactor.core.publisher.Mono;
 public class ShopifyIntegrationService {
     
     @Autowired
-    private ShopifyApi shopifyApi;
+    private ProductService productService;
     
-    public Mono<Product> getProduct(String shop, String accessToken, String productId) {
-        return shopifyApi.forShop(shop, accessToken)
-            .products()
-            .getProduct(shop, accessToken, productId);
+    @Value("${shopify.admin-api-access-token}")
+    private String accessToken;
+    
+    private final String shopDomain = "your-store.myshopify.com";
+    
+    public Mono<Product> getProduct(String productId) {
+        return productService.getProduct(shopDomain, accessToken, productId);
+    }
+    
+    public Mono<ProductConnection> listProducts() {
+        return productService.getProducts(shopDomain, accessToken, 10, null, null);
     }
 }
 ```
@@ -130,13 +168,28 @@ public class ShopifyIntegrationService {
 ### Product Management Example
 
 ```java
+import com.shopify.sdk.service.product.ProductService;
+import com.shopify.sdk.model.product.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import lombok.extern.slf4j.Slf4j;
+import java.util.Arrays;
+
+@Slf4j
 @Service
 public class ProductManagementService {
     
     @Autowired
     private ProductService productService;
     
-    public Mono<Product> createProduct(String shop, String accessToken) {
+    @Value("${shopify.admin-api-access-token}")
+    private String accessToken;
+    
+    private final String shopDomain = "your-store.myshopify.com";
+    
+    public Mono<Product> createProduct() {
         ProductInput input = ProductInput.builder()
             .title("Amazing Product")
             .handle("amazing-product")
@@ -147,7 +200,7 @@ public class ProductManagementService {
             .status(ProductStatus.ACTIVE)
             .build();
         
-        return productService.createProduct(shop, accessToken, input)
+        return productService.createProduct(shopDomain, accessToken, input)
             .doOnSuccess(product -> 
                 log.info("Created product: {} with ID: {}", 
                     product.getTitle(), product.getId())
@@ -157,66 +210,12 @@ public class ProductManagementService {
             );
     }
     
-    public Mono<ProductConnection> listProducts(String shop, String accessToken) {
-        return productService.getProducts(shop, accessToken, 50, null, "status:active")
+    public Mono<ProductConnection> listActiveProducts() {
+        return productService.getProducts(shopDomain, accessToken, 50, null, "status:active")
             .doOnSuccess(connection -> 
                 log.info("Retrieved {} products", 
                     connection.getEdges().size())
             );
-    }
-}
-```
-
-### OAuth Authentication Flow
-
-```java
-@RestController
-@RequestMapping("/auth")
-public class ShopifyAuthController {
-    
-    @Autowired
-    private ShopifyApi shopifyApi;
-    
-    @GetMapping("/install")
-    public String initiateOAuth(@RequestParam String shop) {
-        String authUrl = shopifyApi.getOAuth().buildAuthorizationUrl(
-            shop,
-            "your-client-id",
-            "https://yourapp.com/auth/callback",
-            Arrays.asList("read_products", "write_products", "read_orders"),
-            "secure-random-state"
-        );
-        
-        return "redirect:" + authUrl;
-    }
-    
-    @GetMapping("/callback")
-    public ResponseEntity<Map<String, String>> handleCallback(
-            @RequestParam String code,
-            @RequestParam String shop,
-            @RequestParam String state) {
-        
-        try {
-            AccessTokenResponse tokenResponse = shopifyApi.getOAuth()
-                .exchangeCodeForToken(shop, code, "your-client-id", "your-client-secret");
-            
-            // Store the access token securely
-            String accessToken = tokenResponse.getAccessToken();
-            
-            Map<String, String> response = Map.of(
-                "status", "success",
-                "shop", shop,
-                "message", "App installed successfully"
-            );
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> error = Map.of(
-                "status", "error",
-                "message", "OAuth flow failed: " + e.getMessage()
-            );
-            return ResponseEntity.badRequest().body(error);
-        }
     }
 }
 ```
@@ -422,6 +421,68 @@ public class WebhookController {
 }
 ```
 
+### OAuth Authentication Flow (Advanced - For Public Apps Only)
+
+Most developers should use Private App tokens instead. OAuth is only needed for public apps:
+
+```java
+@RestController
+@RequestMapping("/auth")
+public class ShopifyAuthController {
+    
+    @Autowired
+    private ShopifyApi shopifyApi;
+    
+    @GetMapping("/install")
+    public String initiateOAuth(@RequestParam String shop) {
+        // Scopes are defined here during OAuth flow
+        List<String> requiredScopes = Arrays.asList(
+            "read_products", "write_products", 
+            "read_orders", "write_orders"
+        );
+        
+        String authUrl = shopifyApi.getOAuth().buildAuthorizationUrl(
+            shop,
+            "your-client-id",
+            "https://yourapp.com/auth/callback",
+            requiredScopes,
+            "secure-random-state"
+        );
+        
+        return "redirect:" + authUrl;
+    }
+    
+    @GetMapping("/callback")
+    public ResponseEntity<Map<String, String>> handleCallback(
+            @RequestParam String code,
+            @RequestParam String shop,
+            @RequestParam String state) {
+        
+        try {
+            AccessTokenResponse tokenResponse = shopifyApi.getOAuth()
+                .exchangeCodeForToken(shop, code, "your-client-id", "your-client-secret");
+            
+            // Store the access token securely for future API calls
+            String accessToken = tokenResponse.getAccessToken();
+            
+            Map<String, String> response = Map.of(
+                "status", "success",
+                "shop", shop,
+                "token", accessToken  // Store this securely in database
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = Map.of(
+                "status", "error",
+                "message", "OAuth flow failed: " + e.getMessage()
+            );
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+}
+```
+
 ## 🧪 Testing
 
 ### Unit Tests
@@ -442,12 +503,15 @@ open build/reports/jacoco/test/html/index.html
 Set up environment variables for integration testing:
 
 ```bash
+# Set your test store domain and access token
 export SHOPIFY_TEST_STORE_DOMAIN="your-dev-store.myshopify.com"
-export SHOPIFY_TEST_ACCESS_TOKEN="your-private-app-token"
+export SHOPIFY_ACCESS_TOKEN="shpat_your-private-app-access-token"
 
 # Run integration tests
 ./gradlew integrationTest
 ```
+
+**Note**: Use a development store and a test Private App token, never production credentials for testing.
 
 ### Test Configuration
 
@@ -499,16 +563,24 @@ public class SecurityConfig {
 ```yaml
 # application-prod.yml
 shopify:
-  api-key: ${SHOPIFY_API_KEY}
-  api-secret-key: ${SHOPIFY_API_SECRET}
+  admin-api-access-token: ${SHOPIFY_PROD_ACCESS_TOKEN}
+  api-version: "2025-07"
   logging:
     http-requests: false
     level: WARN
 
-# application-dev.yml
+# application-dev.yml  
 shopify:
-  api-key: ${SHOPIFY_DEV_API_KEY}
-  api-secret-key: ${SHOPIFY_DEV_API_SECRET}
+  admin-api-access-token: ${SHOPIFY_DEV_ACCESS_TOKEN}
+  api-version: "2025-07"
+  logging:
+    http-requests: true
+    level: DEBUG
+
+# application-test.yml
+shopify:
+  admin-api-access-token: ${SHOPIFY_TEST_ACCESS_TOKEN}
+  api-version: "2025-07"
   logging:
     http-requests: true
     level: DEBUG
@@ -584,12 +656,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🚦 Roadmap
 
+- [ ] Enhanced Private App Token management and rotation
 - [ ] Shopify Functions support
-- [ ] Enhanced TypeScript definitions generation
+- [ ] Multi-store configuration management
 - [ ] Automated API version updates
 - [ ] Performance optimization for large-scale operations
 - [ ] Extended monitoring and analytics features
+- [ ] GraphQL query builder for complex operations
 
 ---
 
-**Made with ❤️ for the Shopify developer community**
+Made with ❤️ for the Shopify developer community
