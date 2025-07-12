@@ -171,6 +171,7 @@ dependencies {
 **Latest Available Versions**:
 - 🚀 Latest stable: [`1.1.1-RELEASE`](https://github.com/astroryan/shopify-sdk-graphql-java/packages)
 - 🔄 Latest snapshot: Check [GitHub Packages](https://github.com/astroryan/shopify-sdk-graphql-java/packages) for newest SNAPSHOT
+- ✅ GitHub Actions now properly trigger on both `develop` and `release` branch PRs
 
 ## 🚀 Quick Start
 
