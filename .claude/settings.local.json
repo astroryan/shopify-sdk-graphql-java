@@ -12,7 +12,8 @@
       "WebFetch(domain:github.com)",
       "Bash(chmod:*)",
       "Bash(python3:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

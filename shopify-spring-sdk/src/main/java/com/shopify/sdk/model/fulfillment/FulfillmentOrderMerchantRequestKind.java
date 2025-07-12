@@ -1,13 +1,14 @@
 package com.shopify.sdk.model.fulfillment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 
+/**
+ * The kind of merchant request.
+ */
 public enum FulfillmentOrderMerchantRequestKind {
+    @JsonProperty("FULFILLMENT_REQUEST")
     FULFILLMENT_REQUEST,
+    
+    @JsonProperty("CANCELLATION_REQUEST")
     CANCELLATION_REQUEST
 }

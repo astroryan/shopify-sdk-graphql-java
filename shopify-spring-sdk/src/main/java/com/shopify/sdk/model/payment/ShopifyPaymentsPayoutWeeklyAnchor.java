@@ -1,20 +1,29 @@
 package com.shopify.sdk.model.payment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 
-
+/**
+ * The weekly anchor day for payouts.
+ */
 public enum ShopifyPaymentsPayoutWeeklyAnchor {
-    FRIDAY,
+    @JsonProperty("MONDAY")
     MONDAY,
-    SATURDAY,
-    SUNDAY,
-    THURSDAY,
+    
+    @JsonProperty("TUESDAY")
     TUESDAY,
-    WEDNESDAY
+    
+    @JsonProperty("WEDNESDAY")
+    WEDNESDAY,
+    
+    @JsonProperty("THURSDAY")
+    THURSDAY,
+    
+    @JsonProperty("FRIDAY")
+    FRIDAY,
+    
+    @JsonProperty("SATURDAY")
+    SATURDAY,
+    
+    @JsonProperty("SUNDAY")
+    SUNDAY
 }

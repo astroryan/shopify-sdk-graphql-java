@@ -390,10 +390,10 @@ public class ShopifyPaymentsService {
         """;
     
     // Input classes
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
     public static class ShopifyPaymentsDisputeEvidenceUpdateInput {
         private String accessActivityLog;
         private String cancellationPolicyDisclosure;
@@ -408,10 +408,10 @@ public class ShopifyPaymentsService {
         private String uncategorizedText;
     }
     
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
     public static class PayoutScheduleInput {
         private ShopifyPaymentsPayoutInterval interval;
         private Integer monthlyAnchor;
@@ -634,72 +634,72 @@ public class ShopifyPaymentsService {
     }
     
     // Response classes
-    @Data
+    @lombok.Data
     private static class ShopifyPaymentsAccountResponse {
         private ShopifyPaymentsAccount shopifyPaymentsAccount;
     }
     
-    @Data
+    @lombok.Data
     private static class NodeResponse<T> {
         private T node;
     }
     
-    @Data
+    @lombok.Data
     private static class ShopifyPaymentsAccountPayoutsResponse {
         private ShopifyPaymentsAccountPayouts shopifyPaymentsAccount;
     }
     
-    @Data
+    @lombok.Data
     private static class ShopifyPaymentsAccountPayouts {
         private PayoutsConnection payouts;
     }
     
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
     public static class PayoutsConnection {
         private List<PayoutEdge> edges;
         private PageInfo pageInfo;
     }
     
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
     private static class PayoutEdge {
         private ShopifyPaymentsPayout node;
         private String cursor;
     }
     
-    @Data
+    @lombok.Data
     private static class DisputeEvidenceUpdateResponse {
         private DisputeEvidenceUpdateResult disputeEvidenceUpdate;
     }
     
-    @Data
+    @lombok.Data
     private static class DisputeEvidenceUpdateResult {
         private ShopifyPaymentsDisputeEvidence disputeEvidence;
         private List<UserError> userErrors;
     }
     
-    @Data
+    @lombok.Data
     private static class DisputeEvidenceSubmitResponse {
         private DisputeEvidenceSubmitResult disputeEvidenceSubmit;
     }
     
-    @Data
+    @lombok.Data
     private static class DisputeEvidenceSubmitResult {
         private ShopifyPaymentsDisputeEvidence disputeEvidence;
         private List<UserError> userErrors;
     }
     
-    @Data
+    @lombok.Data
     private static class PayoutScheduleManageResponse {
         private PayoutScheduleManageResult payoutScheduleManage;
     }
     
-    @Data
+    @lombok.Data
     private static class PayoutScheduleManageResult {
         private ShopifyPaymentsAccount shopifyPaymentsAccount;
         private List<UserError> userErrors;

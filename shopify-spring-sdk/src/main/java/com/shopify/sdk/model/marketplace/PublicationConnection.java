@@ -50,21 +50,3 @@ class PublicationEdge {
     @JsonProperty("node")
     private Publication node;
 }
-
-/**
- * Represents a publication channel
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-class Publication {
-    @JsonProperty("id")
-    private ID id;
-    
-    @JsonProperty("name")
-    private String name;
-    
-    @JsonProperty("app")
-    private App app;
-}

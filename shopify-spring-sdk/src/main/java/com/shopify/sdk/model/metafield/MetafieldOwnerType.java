@@ -1,34 +1,47 @@
 package com.shopify.sdk.model.metafield;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 
-
+/**
+ * The type of resource that owns a metafield.
+ */
 public enum MetafieldOwnerType {
+    @JsonProperty("ARTICLE")
     ARTICLE,
+    
+    @JsonProperty("BLOG")
     BLOG,
+    
+    @JsonProperty("COLLECTION")
     COLLECTION,
-    COMPANY,
-    COMPANY_LOCATION,
+    
+    @JsonProperty("CUSTOMER")
     CUSTOMER,
-    DELIVERY_CUSTOMIZATION,
-    DISCOUNT_NODE,
+    
+    @JsonProperty("DISCOUNT")
+    DISCOUNT,
+    
+    @JsonProperty("DRAFTORDER")
     DRAFTORDER,
-    GENERIC_FILE,
+    
+    @JsonProperty("LOCATION")
     LOCATION,
-    MARKET,
-    MEDIA_IMAGE,
+    
+    @JsonProperty("ORDER")
     ORDER,
+    
+    @JsonProperty("PAGE")
     PAGE,
-    PAYMENT_CUSTOMIZATION,
+    
+    @JsonProperty("PRODUCT")
     PRODUCT,
+    
+    @JsonProperty("PRODUCTIMAGE")
     PRODUCTIMAGE,
+    
+    @JsonProperty("PRODUCTVARIANT")
     PRODUCTVARIANT,
-    SHOP,
-    VALIDATION
+    
+    @JsonProperty("SHOP")
+    SHOP
 }

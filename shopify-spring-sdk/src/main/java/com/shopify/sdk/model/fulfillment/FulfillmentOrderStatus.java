@@ -1,23 +1,26 @@
 package com.shopify.sdk.model.fulfillment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.*;
-import com.shopify.sdk.model.order.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 
+/**
+ * The status of a fulfillment order.
+ */
 public enum FulfillmentOrderStatus {
+    @JsonProperty("CANCELLED")
     CANCELLED,
+    
+    @JsonProperty("CLOSED")
     CLOSED,
-    ERROR,
-    FULFILLED,
+    
+    @JsonProperty("IN_PROGRESS")
     IN_PROGRESS,
+    
+    @JsonProperty("ON_HOLD")
     ON_HOLD,
+    
+    @JsonProperty("OPEN")
     OPEN,
-    PARTIALLY_FULFILLED,
-    PENDING_FULFILLMENT,
+    
+    @JsonProperty("SCHEDULED")
     SCHEDULED
 }

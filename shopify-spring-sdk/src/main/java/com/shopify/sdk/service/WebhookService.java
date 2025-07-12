@@ -502,71 +502,71 @@ public class WebhookService {
     }
     
     // Response classes
-    @Data
+    @lombok.Data
     private static class WebhookSubscriptionsResponse {
         private WebhookSubscriptionConnection webhookSubscriptions;
     }
     
-    @Data
+    @lombok.Data
     private static class NodeResponse<T> {
         private T node;
     }
     
-    @Data
+    @lombok.Data
     private static class ApiVersionsResponse {
         private List<ApiVersion> publicApiVersions;
     }
     
-    @Data
+    @lombok.Data
     private static class WebhookSubscriptionCreateResponse {
         private WebhookSubscriptionCreateResult webhookSubscriptionCreate;
     }
     
-    @Data
+    @lombok.Data
     private static class WebhookSubscriptionCreateResult {
         private WebhookSubscription webhookSubscription;
         private List<UserError> userErrors;
     }
     
-    @Data
+    @lombok.Data
     private static class EventBridgeWebhookSubscriptionCreateResponse {
         private EventBridgeWebhookSubscriptionCreateResult eventBridgeWebhookSubscriptionCreate;
     }
     
-    @Data
+    @lombok.Data
     private static class EventBridgeWebhookSubscriptionCreateResult {
         private WebhookSubscription webhookSubscription;
         private List<UserError> userErrors;
     }
     
-    @Data
+    @lombok.Data
     private static class PubSubWebhookSubscriptionCreateResponse {
         private PubSubWebhookSubscriptionCreateResult pubSubWebhookSubscriptionCreate;
     }
     
-    @Data
+    @lombok.Data
     private static class PubSubWebhookSubscriptionCreateResult {
         private WebhookSubscription webhookSubscription;
         private List<UserError> userErrors;
     }
     
-    @Data
+    @lombok.Data
     private static class WebhookSubscriptionUpdateResponse {
         private WebhookSubscriptionUpdateResult webhookSubscriptionUpdate;
     }
     
-    @Data
+    @lombok.Data
     private static class WebhookSubscriptionUpdateResult {
         private WebhookSubscription webhookSubscription;
         private List<UserError> userErrors;
     }
     
-    @Data
+    @lombok.Data
     private static class WebhookSubscriptionDeleteResponse {
         private WebhookSubscriptionDeleteResult webhookSubscriptionDelete;
     }
     
-    @Data
+    @lombok.Data
     private static class WebhookSubscriptionDeleteResult {
         private String deletedWebhookSubscriptionId;
         private List<UserError> userErrors;

@@ -1,15 +1,17 @@
 package com.shopify.sdk.model.discount;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 
+/**
+ * The status of a discount.
+ */
 public enum DiscountStatus {
+    @JsonProperty("ACTIVE")
     ACTIVE,
+    
+    @JsonProperty("EXPIRED")
     EXPIRED,
+    
+    @JsonProperty("SCHEDULED")
     SCHEDULED
 }

@@ -1,18 +1,23 @@
 package com.shopify.sdk.model.fulfillment;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 
+/**
+ * The reason for a fulfillment hold.
+ */
 public enum FulfillmentHoldReason {
+    @JsonProperty("AWAITING_PAYMENT")
     AWAITING_PAYMENT,
+    
+    @JsonProperty("HIGH_RISK_OF_FRAUD")
     HIGH_RISK_OF_FRAUD,
+    
+    @JsonProperty("INCORRECT_ADDRESS")
     INCORRECT_ADDRESS,
+    
+    @JsonProperty("INVENTORY_OUT_OF_STOCK")
     INVENTORY_OUT_OF_STOCK,
-    OTHER,
-    REGULATORY_CLEARANCE,
-    UNFULFILLABLE_PRODUCT
+    
+    @JsonProperty("OTHER")
+    OTHER
 }
