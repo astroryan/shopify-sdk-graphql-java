@@ -38,7 +38,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = {
-    com.shopify.sdk.config.ShopifyAutoConfiguration.class,
     com.shopify.sdk.config.ShopifyTestConfiguration.class
 })
 @TestPropertySource(properties = {
