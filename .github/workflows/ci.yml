@@ -181,6 +181,28 @@ jobs:
       run: ./gradlew publish
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create GitHub Release for production
+      if: github.event.pull_request.base.ref == 'release'
+      run: |
+        # Make release script executable
+        chmod +x .github/scripts/generate-release-notes.sh
+        
+        # Generate release notes
+        .github/scripts/generate-release-notes.sh $VERSION
+        
+        # Create git tag
+        git tag v$VERSION
+        git push origin v$VERSION
+        
+        # Create GitHub release
+        gh release create v$VERSION \
+          --title "Shopify Spring SDK v$VERSION" \
+          --notes-file release_notes.md \
+          --target release \
+          --verify-tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Create release notes
       if: github.event_name == 'release'
