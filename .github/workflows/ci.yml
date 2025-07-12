@@ -215,7 +215,7 @@ jobs:
         echo "\`\`\`gradle" >> release-notes.md
         echo "repositories {" >> release-notes.md
         echo "    maven {" >> release-notes.md
-        echo "        url = uri(\"https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java\")" >> release-notes.md
+        echo "        url = uri(\"https://maven.pkg.github.com/astroryan/shopify-sdk-java\")" >> release-notes.md
         echo "        credentials {" >> release-notes.md
         echo "            username = project.findProperty(\"gpr.user\") ?: System.getenv(\"USERNAME\")" >> release-notes.md
         echo "            password = project.findProperty(\"gpr.key\") ?: System.getenv(\"TOKEN\")" >> release-notes.md

@@ -5,7 +5,7 @@
 
 VERSION=${1:-"1.0.0"}
 PREVIOUS_VERSION=${2:-""}
-REPO="astroryan/shopify-sdk-graphql-java"
+REPO="astroryan/shopify-sdk-java"
 
 # Colors for output
 RED='\033[0;31m'
@@ -26,7 +26,7 @@ Add to your \`build.gradle\`:
 \`\`\`gradle
 repositories {
     maven {
-        url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java")
+        url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
         credentials {
             username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
             password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")

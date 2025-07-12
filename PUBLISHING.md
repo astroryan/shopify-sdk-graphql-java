@@ -6,7 +6,7 @@ Complete guide for publishing the Shopify Spring SDK to GitHub Packages and mana
 
 ### Required Access & Tools
 
-- **GitHub Repository Access**: Write access to [astroryan/shopify-sdk-graphql-java](https://github.com/astroryan/shopify-sdk-graphql-java)
+- **GitHub Repository Access**: Write access to [astroryan/shopify-sdk-java](https://github.com/astroryan/shopify-sdk-java)
 - **GitHub Personal Access Token**: Token with `write:packages` and `repo` scopes
 - **Java Development Kit**: JDK 17 or higher
 - **Gradle**: Version 8.0 or higher (wrapper included)
@@ -334,7 +334,7 @@ For testing and development:
 ### Verify Published Package
 
 1. **Check GitHub Packages**: 
-   - Visit: `https://github.com/astroryan/shopify-sdk-graphql-java/packages`
+   - Visit: `https://github.com/astroryan/shopify-sdk-java/packages`
    - Verify new version is listed and accessible
 
 2. **Test Package Download**:
@@ -347,7 +347,7 @@ For testing and development:
    cat >> build.gradle << EOF
    repositories {
        maven {
-           url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java")
+           url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
            credentials {
                username = System.getenv("GITHUB_ACTOR")
                password = System.getenv("GITHUB_TOKEN")
@@ -508,7 +508,7 @@ If a published version has critical issues:
 
 For publishing issues:
 
-1. **Check existing issues**: [GitHub Issues](https://github.com/astroryan/shopify-sdk-graphql-java/issues)
+1. **Check existing issues**: [GitHub Issues](https://github.com/astroryan/shopify-sdk-java/issues)
 2. **GitHub Actions logs**: Review workflow execution details
 3. **Gradle build logs**: Run with `--info` or `--debug` flags
 4. **Create new issue**: Include logs, environment details, and reproduction steps

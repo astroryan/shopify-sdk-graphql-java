@@ -277,4 +277,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-**Note**: This changelog is automatically updated during the release process. For detailed commit history, see the [Git log](https://github.com/astroryan/shopify-sdk-graphql-java/commits).
+**Note**: This changelog is automatically updated during the release process. For detailed commit history, see the [Git log](https://github.com/astroryan/shopify-sdk-java/commits).

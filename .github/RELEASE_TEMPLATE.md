@@ -23,7 +23,7 @@ Add to your `build.gradle`:
 ```gradle
 repositories {
     maven {
-        url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java")
+        url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
         credentials {
             username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
             password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
@@ -75,9 +75,9 @@ This release has been tested with:
 
 ### 📚 Documentation
 
-- 📖 [README](https://github.com/astroryan/shopify-sdk-graphql-java/blob/main/README.md)
-- 📘 [Publishing Guide](https://github.com/astroryan/shopify-sdk-graphql-java/blob/main/PUBLISHING.md)
-- 📝 [Full Changelog](https://github.com/astroryan/shopify-sdk-graphql-java/blob/main/CHANGELOG.md)
+- 📖 [README](https://github.com/astroryan/shopify-sdk-java/blob/main/README.md)
+- 📘 [Publishing Guide](https://github.com/astroryan/shopify-sdk-java/blob/main/PUBLISHING.md)
+- 📝 [Full Changelog](https://github.com/astroryan/shopify-sdk-java/blob/main/CHANGELOG.md)
 - 🔗 [API Documentation](https://shopify.dev/docs/api/admin-graphql)
 
 ### 🙏 Contributors
@@ -86,8 +86,8 @@ Special thanks to all contributors who made this release possible!
 
 ### 📞 Support
 
-- 🐛 [Report Issues](https://github.com/astroryan/shopify-sdk-graphql-java/issues)
-- 💬 [Discussions](https://github.com/astroryan/shopify-sdk-graphql-java/discussions)
+- 🐛 [Report Issues](https://github.com/astroryan/shopify-sdk-java/issues)
+- 💬 [Discussions](https://github.com/astroryan/shopify-sdk-java/discussions)
 - 📧 [Email Support](mailto:support@example.com)
 
 ---
