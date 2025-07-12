@@ -40,10 +40,10 @@ configurations.all {
         // Force a specific version of snakeyaml
         force 'org.yaml:snakeyaml:2.2'
         
-        // Force Apache HttpClient 5.5 for WireMock compatibility
-        force 'org.apache.httpcomponents.client5:httpclient5:5.5'
-        force 'org.apache.httpcomponents.core5:httpcore5:5.5'
-        force 'org.apache.httpcomponents.core5:httpcore5-h2:5.5'
+        // Force Apache HttpClient 5.4.2 for WireMock compatibility (setProtocolUpgradeEnabled added in 5.4)
+        force 'org.apache.httpcomponents.client5:httpclient5:5.4.2'
+        force 'org.apache.httpcomponents.core5:httpcore5:5.3.2'
+        force 'org.apache.httpcomponents.core5:httpcore5-h2:5.3.2'
     }
 }
 
