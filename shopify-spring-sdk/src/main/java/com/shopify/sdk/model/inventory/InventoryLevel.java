@@ -1,56 +1,43 @@
 package com.shopify.sdk.model.inventory;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.Node;
-import com.shopify.sdk.model.location.Location;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
-/**
- * Represents the inventory quantity of an inventory item at a specific location.
- */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InventoryLevel implements Node {
-    /**
-     * A globally unique identifier.
-     */
-    @JsonProperty("id")
-    private String id;
+@Builder
+public class InventoryLevel {
     
-    /**
-     * The available quantity of the inventory item at the location.
-     */
+    @JsonProperty("inventory_item_id")
+    private String inventoryItemId;
+    
+    @JsonProperty("location_id")
+    private String locationId;
+    
     @JsonProperty("available")
     private Integer available;
     
-    /**
-     * The incoming quantity of the inventory item at the location.
-     */
-    @JsonProperty("incoming")
-    private Integer incoming;
+    @JsonProperty("updated_at")
+    private Instant updatedAt;
     
-    /**
-     * The inventory item.
-     */
-    @JsonProperty("item")
-    private InventoryItem item;
+    @JsonProperty("admin_graphql_api_id")
+    private String adminGraphqlApiId;
     
-    /**
-     * The location.
-     */
-    @JsonProperty("location")
-    private Location location;
+    public boolean hasStock() {
+        return available != null && available > 0;
+    }
     
-    /**
-     * The date and time when the inventory level was last modified.
-     */
-    @JsonProperty("updatedAt")
-    private OffsetDateTime updatedAt;
+    public boolean isOutOfStock() {
+        return available == null || available <= 0;
+    }
+    
+    public boolean isLowStock(int threshold) {
+        return available != null && available > 0 && available <= threshold;
+    }
 }

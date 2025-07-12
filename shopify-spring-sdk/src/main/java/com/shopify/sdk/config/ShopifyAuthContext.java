@@ -1,97 +1,150 @@
 package com.shopify.sdk.config;
 
-import lombok.AllArgsConstructor;
+import com.shopify.sdk.model.common.ApiVersion;
+import com.shopify.sdk.model.common.LogFunction;
+import com.shopify.sdk.model.common.LogSeverity;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
- * Authentication context for Shopify API requests
- * Contains the necessary credentials and shop information
+ * Configuration context for Shopify SDK.
+ * Maps to Node.js ConfigInterface and ConfigParams.
  */
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder(toBuilder = true)
 public class ShopifyAuthContext {
-    /**
-     * The shop domain (e.g., "myshop.myshopify.com")
-     */
-    private String shopDomain;
     
     /**
-     * The access token for API authentication
+     * The API key for your app (Client ID).
      */
-    private String accessToken;
+    private final String apiKey;
     
     /**
-     * The API version to use (e.g., "2024-01")
-     * If not specified, the default version will be used
+     * The API secret key for your app (Client Secret).
      */
-    private String apiVersion;
+    private final String apiSecretKey;
     
     /**
-     * Whether this is a private app authentication
+     * The scopes your app needs to access the API.
      */
-    private boolean privateApp;
+    private final List<String> scopes;
     
     /**
-     * The API key (for OAuth flow)
+     * The host name of your app.
      */
-    private String apiKey;
+    private final String hostName;
     
     /**
-     * The API secret key (for OAuth flow and webhook verification)
+     * The scheme to use for the app host.
      */
-    private String apiSecretKey;
+    @Builder.Default
+    private final String hostScheme = "https";
     
     /**
-     * Create an auth context for a private app
-     * @param shopDomain The shop domain
-     * @param accessToken The private app access token
-     * @return A new ShopifyAuthContext instance
+     * The API version to use.
      */
-    public static ShopifyAuthContext privateApp(String shopDomain, String accessToken) {
-        return ShopifyAuthContext.builder()
-                .shopDomain(shopDomain)
-                .accessToken(accessToken)
-                .privateApp(true)
-                .build();
+    @Builder.Default
+    private final ApiVersion apiVersion = ApiVersion.LATEST;
+    
+    /**
+     * Whether the app is embedded in the Shopify admin.
+     */
+    @Builder.Default
+    private final boolean isEmbeddedApp = true;
+    
+    /**
+     * Whether the app is a Shopify admin custom store app.
+     */
+    @Builder.Default
+    private final boolean isCustomStoreApp = false;
+    
+    /**
+     * An app-wide API access token (for custom apps).
+     */
+    private final String adminApiAccessToken;
+    
+    /**
+     * The user agent prefix to use for API requests.
+     */
+    private final String userAgentPrefix;
+    
+    /**
+     * An app-wide API access token for the storefront API (for custom apps).
+     */
+    private final String privateAppStorefrontAccessToken;
+    
+    /**
+     * Override values for Shopify shop domains.
+     */
+    private final List<Pattern> customShopDomains;
+    
+    /**
+     * Custom log function.
+     */
+    private final LogFunction logFunction;
+    
+    /**
+     * The minimum severity level to log.
+     */
+    @Builder.Default
+    private final LogSeverity logLevel = LogSeverity.INFO;
+    
+    /**
+     * Whether to log HTTP requests.
+     */
+    @Builder.Default
+    private final boolean logHttpRequests = false;
+    
+    /**
+     * Whether to log timestamps.
+     */
+    @Builder.Default
+    private final boolean logTimestamps = false;
+    
+    /**
+     * Whether the app is initialized for local testing.
+     */
+    @Builder.Default
+    private final boolean isTesting = false;
+    
+    /**
+     * The webhook secret key for verifying webhook signatures.
+     */
+    private final String webhookSecret;
+    
+    public String getFullHostName() {
+        return hostScheme + "://" + hostName;
+    }
+    
+    public boolean hasValidApiCredentials() {
+        if (isCustomStoreApp) {
+            return apiSecretKey != null && !apiSecretKey.trim().isEmpty() &&
+                   adminApiAccessToken != null && !adminApiAccessToken.trim().isEmpty();
+        } else {
+            return apiKey != null && !apiKey.trim().isEmpty() &&
+                   apiSecretKey != null && !apiSecretKey.trim().isEmpty();
+        }
     }
     
     /**
-     * Create an auth context for a public app
-     * @param shopDomain The shop domain
-     * @param accessToken The OAuth access token
-     * @param apiKey The app's API key
-     * @param apiSecretKey The app's API secret key
-     * @return A new ShopifyAuthContext instance
+     * Gets the API secret for authentication.
+     * This is a convenience method that returns apiSecretKey.
+     *
+     * @return the API secret
      */
-    public static ShopifyAuthContext publicApp(String shopDomain, String accessToken, 
-                                              String apiKey, String apiSecretKey) {
-        return ShopifyAuthContext.builder()
-                .shopDomain(shopDomain)
-                .accessToken(accessToken)
-                .apiKey(apiKey)
-                .apiSecretKey(apiSecretKey)
-                .privateApp(false)
-                .build();
+    public String getApiSecret() {
+        return apiSecretKey;
     }
     
     /**
-     * Get the base URL for the shop
-     * @return The shop's base URL
+     * Checks if webhook verification is enabled.
+     *
+     * @return true if webhook secret is configured
      */
-    public String getShopUrl() {
-        return "https://" + shopDomain;
-    }
-    
-    /**
-     * Check if the auth context has valid credentials
-     * @return true if valid, false otherwise
-     */
-    public boolean isValid() {
-        return shopDomain != null && !shopDomain.isEmpty() 
-            && accessToken != null && !accessToken.isEmpty();
+    public boolean hasWebhookSecret() {
+        return webhookSecret != null && !webhookSecret.trim().isEmpty();
     }
 }

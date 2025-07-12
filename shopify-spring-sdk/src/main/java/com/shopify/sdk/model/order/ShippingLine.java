@@ -1,91 +1,98 @@
 package com.shopify.sdk.model.order;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.*;
+import com.shopify.sdk.model.common.Decimal;
+import com.shopify.sdk.model.common.ID;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * Represents a shipping line for an order
+ * Represents a shipping line for an order.
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShippingLine {
+    
     /**
-     * The ID of the shipping line
+     * The unique identifier of the shipping line.
      */
     @JsonProperty("id")
     private ID id;
     
     /**
-     * The carrier identifier
+     * The price of the shipping line.
      */
-    @JsonProperty("carrierIdentifier")
-    private String carrierIdentifier;
+    @JsonProperty("price")
+    private Decimal price;
     
     /**
-     * The code for the shipping line
+     * The price of the shipping line in the shop's default currency.
+     */
+    @JsonProperty("price_set")
+    private Map<String, Object> priceSet;
+    
+    /**
+     * The title of the shipping method.
+     */
+    @JsonProperty("title")
+    private String title;
+    
+    /**
+     * The code of the shipping method.
      */
     @JsonProperty("code")
     private String code;
     
     /**
-     * The delivery category
+     * The carrier identifier for the shipping method.
      */
-    @JsonProperty("deliveryCategory")
-    private String deliveryCategory;
+    @JsonProperty("carrier_identifier")
+    private String carrierIdentifier;
     
     /**
-     * The discount allocations for the shipping line
-     */
-    @JsonProperty("discountAllocations")
-    private List<DiscountAllocation> discountAllocations;
-    
-    /**
-     * The discounted price of the shipping line
-     */
-    @JsonProperty("discountedPriceSet")
-    private MoneyBag discountedPriceSet;
-    
-    /**
-     * The original price of the shipping line
-     */
-    @JsonProperty("originalPriceSet")
-    private MoneyBag originalPriceSet;
-    
-    /**
-     * The phone number for the shipping line
-     */
-    @JsonProperty("phone")
-    private String phone;
-    
-    /**
-     * The requested fulfillment service
-     */
-    @JsonProperty("requestedFulfillmentService")
-    private String requestedFulfillmentService;
-    
-    /**
-     * The source of the shipping line
+     * The source of the shipping method.
      */
     @JsonProperty("source")
     private String source;
     
     /**
-     * The tax lines for the shipping line
+     * Whether the shipping line was discounted.
      */
-    @JsonProperty("taxLines")
+    @JsonProperty("discounted_price")
+    private Decimal discountedPrice;
+    
+    /**
+     * The discounted price set of the shipping line.
+     */
+    @JsonProperty("discounted_price_set")
+    private Map<String, Object> discountedPriceSet;
+    
+    /**
+     * Tax lines for the shipping line.
+     */
+    @JsonProperty("tax_lines")
     private List<TaxLine> taxLines;
     
     /**
-     * The title of the shipping line
+     * The requested fulfillment service for the shipping line.
      */
-    @JsonProperty("title")
-    private String title;
+    @JsonProperty("requested_fulfillment_service_id")
+    private String requestedFulfillmentServiceId;
+    
+    /**
+     * The delivery category for the shipping line.
+     */
+    @JsonProperty("delivery_category")
+    private String deliveryCategory;
+    
+    /**
+     * Custom attributes associated with the shipping line.
+     */
+    @JsonProperty("custom_attributes")
+    private List<Map<String, String>> customAttributes;
 }

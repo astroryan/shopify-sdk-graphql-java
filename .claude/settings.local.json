@@ -13,7 +13,16 @@
       "Bash(chmod:*)",
       "Bash(python3:*)",
       "Bash(grep:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(rm:*)",
+      "Bash(sed:*)",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_file",
+      "mcp__fetch__fetch",
+      "mcp__github__get_file_contents",
+      "Bash(gemini:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }

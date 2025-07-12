@@ -1,73 +1,72 @@
 package com.shopify.sdk.graphql.scalar;
 
-import graphql.GraphQLContext;
-import graphql.execution.CoercedVariables;
-import graphql.language.StringValue;
-import graphql.language.Value;
-import graphql.schema.*;
-import com.shopify.sdk.model.common.Money;
-import org.jetbrains.annotations.NotNull;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import java.math.BigDecimal;
-import java.util.Locale;
 
-public class MoneyScalar implements Coercing<Money, String> {
+/**
+ * Shopify Money scalar type.
+ * Represents a monetary amount as a decimal string.
+ */
+@Getter
+@EqualsAndHashCode
+public class MoneyScalar {
     
-    public static final GraphQLScalarType INSTANCE = GraphQLScalarType.newScalar()
-            .name("Money")
-            .description("Represents an amount of money in a specific currency")
-            .coercing(new MoneyScalar())
-            .build();
-    
-    @Override
-    public String serialize(@NotNull Object dataFetcherResult, @NotNull GraphQLContext graphQLContext, @NotNull Locale locale) throws CoercingSerializeException {
-        if (dataFetcherResult instanceof Money) {
-            return ((Money) dataFetcherResult).getAmount();
-        } else if (dataFetcherResult instanceof String) {
-            // Validate the string is a valid decimal
-            try {
-                new BigDecimal((String) dataFetcherResult);
-                return (String) dataFetcherResult;
-            } catch (NumberFormatException e) {
-                throw new CoercingSerializeException("Invalid Money format: " + dataFetcherResult);
-            }
-        } else if (dataFetcherResult instanceof BigDecimal) {
-            return dataFetcherResult.toString();
-        } else {
-            throw new CoercingSerializeException("Expected Money, String or BigDecimal but was " + dataFetcherResult.getClass().getSimpleName());
-        }
+    private final BigDecimal amount;
+
+    public MoneyScalar(BigDecimal amount) {
+        this.amount = amount != null ? amount : BigDecimal.ZERO;
     }
-    
-    @Override
-    public Money parseValue(@NotNull Object input, @NotNull GraphQLContext graphQLContext, @NotNull Locale locale) throws CoercingParseValueException {
-        if (input instanceof String) {
-            try {
-                new BigDecimal((String) input);
-                return Money.builder()
-                        .amount((String) input)
-                        .build();
-            } catch (NumberFormatException e) {
-                throw new CoercingParseValueException("Invalid Money format: " + input);
-            }
-        } else {
-            throw new CoercingParseValueException("Expected String but was " + input.getClass().getSimpleName());
+
+    @JsonCreator
+    public static MoneyScalar of(String moneyString) {
+        if (moneyString == null || moneyString.trim().isEmpty()) {
+            return new MoneyScalar(BigDecimal.ZERO);
         }
+        return new MoneyScalar(new BigDecimal(moneyString));
     }
-    
-    @Override
-    public Money parseLiteral(@NotNull Value<?> input, @NotNull CoercedVariables variables, @NotNull GraphQLContext graphQLContext, @NotNull Locale locale) throws CoercingParseLiteralException {
-        if (input instanceof StringValue) {
-            String value = ((StringValue) input).getValue();
-            try {
-                new BigDecimal(value);
-                return Money.builder()
-                        .amount(value)
-                        .build();
-            } catch (NumberFormatException e) {
-                throw new CoercingParseLiteralException("Invalid Money format: " + value);
-            }
-        } else {
-            throw new CoercingParseLiteralException("Expected StringValue but was " + input.getClass().getSimpleName());
-        }
+
+    public static MoneyScalar of(BigDecimal amount) {
+        return new MoneyScalar(amount);
+    }
+
+    public static MoneyScalar of(double amount) {
+        return new MoneyScalar(BigDecimal.valueOf(amount));
+    }
+
+    public static MoneyScalar zero() {
+        return new MoneyScalar(BigDecimal.ZERO);
+    }
+
+    @JsonValue
+    public String toString() {
+        return amount.toPlainString();
+    }
+
+    public BigDecimal toBigDecimal() {
+        return amount;
+    }
+
+    public double toDouble() {
+        return amount.doubleValue();
+    }
+
+    public MoneyScalar add(MoneyScalar other) {
+        return new MoneyScalar(this.amount.add(other.amount));
+    }
+
+    public MoneyScalar subtract(MoneyScalar other) {
+        return new MoneyScalar(this.amount.subtract(other.amount));
+    }
+
+    public MoneyScalar multiply(MoneyScalar other) {
+        return new MoneyScalar(this.amount.multiply(other.amount));
+    }
+
+    public MoneyScalar divide(MoneyScalar other) {
+        return new MoneyScalar(this.amount.divide(other.amount));
     }
 }

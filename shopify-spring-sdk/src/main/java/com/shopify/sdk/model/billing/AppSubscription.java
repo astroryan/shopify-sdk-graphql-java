@@ -1,73 +1,99 @@
 package com.shopify.sdk.model.billing;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.Node;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
-import java.time.OffsetDateTime;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
 
-/**
- * Represents an app subscription.
- */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AppSubscription implements Node {
-    /**
-     * The unique identifier for the app subscription.
-     */
-    @JsonProperty("id")
+@Builder
+public class AppSubscription {
+    
     private String id;
-    
-    /**
-     * The name of the subscription.
-     */
-    @JsonProperty("name")
     private String name;
+    private String status;
+    private BigDecimal price;
+    private String currencyCode;
     
-    /**
-     * The return URL.
-     */
-    @JsonProperty("returnUrl")
+    @JsonProperty("created_at")
+    private Instant createdAt;
+    
+    @JsonProperty("updated_at")
+    private Instant updatedAt;
+    
+    @JsonProperty("activated_on")
+    private Instant activatedOn;
+    
+    @JsonProperty("cancelled_on")
+    private Instant cancelledOn;
+    
+    @JsonProperty("expires_on")
+    private Instant expiresOn;
+    
+    @JsonProperty("trial_ends_on")
+    private Instant trialEndsOn;
+    
+    @JsonProperty("trial_days")
+    private Integer trialDays;
+    
+    @JsonProperty("capped_amount")
+    private BigDecimal cappedAmount;
+    
+    @JsonProperty("terms")
+    private String terms;
+    
+    @JsonProperty("return_url")
     private String returnUrl;
     
-    /**
-     * The status of the subscription.
-     */
-    @JsonProperty("status")
-    private String status;
+    @JsonProperty("confirmation_url")
+    private String confirmationUrl;
     
-    /**
-     * The test flag.
-     */
     @JsonProperty("test")
     private Boolean test;
     
-    /**
-     * The created at timestamp.
-     */
-    @JsonProperty("createdAt")
-    private OffsetDateTime createdAt;
+    @JsonProperty("line_items")
+    private List<AppSubscriptionLineItem> lineItems;
     
-    /**
-     * The current period end timestamp.
-     */
-    @JsonProperty("currentPeriodEnd")
-    private OffsetDateTime currentPeriodEnd;
+    public boolean isActive() {
+        return "active".equals(status);
+    }
     
-    /**
-     * The trial days.
-     */
-    @JsonProperty("trialDays")
-    private Integer trialDays;
+    public boolean isCancelled() {
+        return "cancelled".equals(status);
+    }
     
-    /**
-     * The line items.
-     */
-    @JsonProperty("lineItems")
-    private String lineItems;
+    public boolean isPending() {
+        return "pending".equals(status);
+    }
+    
+    public boolean isDeclined() {
+        return "declined".equals(status);
+    }
+    
+    public boolean isExpired() {
+        return "expired".equals(status);
+    }
+    
+    public boolean isFrozen() {
+        return "frozen".equals(status);
+    }
+    
+    public boolean hasTrialPeriod() {
+        return trialDays != null && trialDays > 0;
+    }
+    
+    public boolean isCapped() {
+        return cappedAmount != null && cappedAmount.compareTo(BigDecimal.ZERO) > 0;
+    }
+    
+    public boolean isTest() {
+        return test != null && test;
+    }
 }

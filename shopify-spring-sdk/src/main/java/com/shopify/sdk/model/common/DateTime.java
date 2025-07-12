@@ -1,79 +1,47 @@
 package com.shopify.sdk.model.common;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Represents a date and time in ISO 8601 format
- * Shopify uses ISO 8601 format for all date/time values
+ * Shopify DateTime scalar type wrapper.
+ * Represents an ISO 8601 formatted date and time string.
  */
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
 @EqualsAndHashCode
 public class DateTime {
-    private OffsetDateTime value;
     
-    /**
-     * Create a DateTime from an OffsetDateTime
-     * @param value The OffsetDateTime value
-     * @return A new DateTime instance
-     */
-    public static DateTime of(OffsetDateTime value) {
-        return new DateTime(value);
-    }
-    
-    /**
-     * Create a DateTime from an Instant
-     * @param instant The Instant value
-     * @return A new DateTime instance
-     */
-    public static DateTime of(Instant instant) {
-        return new DateTime(instant.atOffset(ZoneOffset.UTC));
-    }
-    
-    /**
-     * Create a DateTime from an ISO 8601 string
-     * @param value The ISO 8601 formatted string
-     * @return A new DateTime instance
-     */
-    public static DateTime parse(String value) {
-        return new DateTime(OffsetDateTime.parse(value));
-    }
-    
-    /**
-     * Get the current date and time
-     * @return A new DateTime instance with the current time
-     */
-    public static DateTime now() {
-        return new DateTime(OffsetDateTime.now(ZoneOffset.UTC));
-    }
-    
-    @JsonValue
-    public String getValue() {
-        return value != null ? value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) : null;
-    }
-    
-    public OffsetDateTime getOffsetDateTime() {
-        return value;
-    }
-    
-    public void setValue(OffsetDateTime value) {
+    private final OffsetDateTime value;
+
+    public DateTime(OffsetDateTime value) {
         this.value = value;
     }
-    
-    public void setValue(String value) {
-        this.value = OffsetDateTime.parse(value);
+
+    @JsonCreator
+    public static DateTime of(String isoString) {
+        return new DateTime(OffsetDateTime.parse(isoString, DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
-    
+
+    public static DateTime of(OffsetDateTime dateTime) {
+        return new DateTime(dateTime);
+    }
+
+    public static DateTime now() {
+        return new DateTime(OffsetDateTime.now());
+    }
+
+    @JsonValue
+    public String toIsoString() {
+        return value.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
     @Override
     public String toString() {
-        return getValue();
+        return toIsoString();
     }
 }

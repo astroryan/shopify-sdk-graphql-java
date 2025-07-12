@@ -1,28 +1,58 @@
 package com.shopify.sdk.webhook;
 
-import com.shopify.sdk.model.webhook.WebhookNotification;
-import com.shopify.sdk.model.webhook.WebhookSubscriptionTopic;
-
-import java.util.function.Consumer;
+import reactor.core.publisher.Mono;
 
 /**
- * Interface for handling Shopify webhooks
+ * Interface for handling webhook events.
+ * Implementations should be annotated with @Component to be automatically detected.
  */
 public interface WebhookHandler {
     
     /**
-     * Register a handler for a specific webhook topic
-     * @param topic The webhook topic to handle
-     * @param handler The handler function that processes the webhook data
+     * Checks if this handler can process the given webhook event.
+     *
+     * @param event the webhook event
+     * @return true if this handler can process the event
      */
-    void registerHandler(WebhookSubscriptionTopic topic, Consumer<WebhookNotification> handler);
+    boolean canHandle(WebhookEvent event);
     
     /**
-     * Process an incoming webhook
-     * @param hmacHeader The HMAC header from the webhook request
-     * @param rawBody The raw request body
-     * @param secret The webhook secret for verification
-     * @return true if the webhook was processed successfully, false otherwise
+     * Processes the webhook event.
+     *
+     * @param event the webhook event to process
+     * @return Mono that completes when processing is done
      */
-    boolean processWebhook(String hmacHeader, String rawBody, String secret);
+    Mono<Void> handle(WebhookEvent event);
+    
+    /**
+     * Gets the priority of this handler (lower numbers = higher priority).
+     * Default is 100. Handlers with higher priority will be processed first.
+     *
+     * @return the handler priority
+     */
+    default int getPriority() {
+        return 100;
+    }
+    
+    /**
+     * Gets the supported event types for this handler.
+     * Return null or empty array to handle all event types (based on canHandle method).
+     *
+     * @return array of supported event types
+     */
+    default WebhookEventType[] getSupportedEventTypes() {
+        return null;
+    }
+    
+    /**
+     * Called when an error occurs during event processing.
+     * Default implementation does nothing.
+     *
+     * @param event the webhook event that failed
+     * @param error the error that occurred
+     * @return Mono that completes when error handling is done
+     */
+    default Mono<Void> onError(WebhookEvent event, Throwable error) {
+        return Mono.empty();
+    }
 }

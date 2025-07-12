@@ -1,171 +1,84 @@
 package com.shopify.sdk.model.metafield;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.Node;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
-import java.time.OffsetDateTime;
-import java.util.List;
+import java.time.Instant;
 
-/**
- * Represents a metafield, which is a custom field that extends Shopify resources.
- */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Metafield implements Node {
-    /**
-     * A globally unique identifier.
-     */
-    @JsonProperty("id")
+@Builder
+public class Metafield {
+    
     private String id;
-    
-    /**
-     * The namespace of the metafield.
-     */
-    @JsonProperty("namespace")
     private String namespace;
-    
-    /**
-     * The key of the metafield.
-     */
-    @JsonProperty("key")
     private String key;
-    
-    /**
-     * The value of the metafield.
-     */
-    @JsonProperty("value")
     private String value;
-    
-    /**
-     * The type of the metafield value.
-     */
-    @JsonProperty("type")
-    private String type;
-    
-    /**
-     * The description of the metafield.
-     */
-    @JsonProperty("description")
     private String description;
     
-    /**
-     * The date and time when the metafield was created.
-     */
-    @JsonProperty("createdAt")
-    private OffsetDateTime createdAt;
+    @JsonProperty("owner_id")
+    private String ownerId;
     
-    /**
-     * The date and time when the metafield was last updated.
-     */
-    @JsonProperty("updatedAt")
-    private OffsetDateTime updatedAt;
+    @JsonProperty("owner_resource")
+    private String ownerResource;
     
-    /**
-     * The definition of the metafield.
-     */
-    @JsonProperty("definition")
-    private MetafieldDefinition definition;
+    @JsonProperty("created_at")
+    private Instant createdAt;
     
-    /**
-     * The owner resource of the metafield.
-     */
-    @JsonProperty("owner")
-    private MetafieldOwner owner;
+    @JsonProperty("updated_at")
+    private Instant updatedAt;
     
-    /**
-     * The owner type of the metafield.
-     */
-    @JsonProperty("ownerType")
-    private MetafieldOwnerType ownerType;
+    @JsonProperty("type")
+    private MetafieldType type;
     
-    /**
-     * The legacy resource ID of the metafield.
-     */
-    @JsonProperty("legacyResourceId")
-    private String legacyResourceId;
+    @JsonProperty("admin_graphql_api_id")
+    private String adminGraphqlApiId;
     
-    /**
-     * References to other resources.
-     */
-    @JsonProperty("references")
-    private MetafieldReferenceConnection references;
-}
-
-/**
- * The owner of a metafield.
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-class MetafieldOwner {
-    /**
-     * The globally unique identifier of the owner.
-     */
-    @JsonProperty("id")
-    private String id;
-}
-
-
-/**
- * A connection to metafield references.
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-class MetafieldReferenceConnection {
-    /**
-     * The edges in the connection.
-     */
-    @JsonProperty("edges")
-    private List<MetafieldReferenceEdge> edges;
+    public String getNamespaceKey() {
+        return namespace + "." + key;
+    }
     
-    /**
-     * The nodes in the connection.
-     */
-    @JsonProperty("nodes")
-    private List<MetafieldReference> nodes;
-}
-
-/**
- * An edge in a metafield reference connection.
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-class MetafieldReferenceEdge {
-    /**
-     * The cursor for pagination.
-     */
-    @JsonProperty("cursor")
-    private String cursor;
+    public boolean isProductMetafield() {
+        return "product".equals(ownerResource);
+    }
     
-    /**
-     * The metafield reference node.
-     */
-    @JsonProperty("node")
-    private MetafieldReference node;
-}
-
-/**
- * A reference from a metafield to another resource.
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-class MetafieldReference {
-    /**
-     * The globally unique identifier of the referenced resource.
-     */
-    @JsonProperty("id")
-    private String id;
+    public boolean isVariantMetafield() {
+        return "variant".equals(ownerResource);
+    }
+    
+    public boolean isOrderMetafield() {
+        return "order".equals(ownerResource);
+    }
+    
+    public boolean isCustomerMetafield() {
+        return "customer".equals(ownerResource);
+    }
+    
+    public boolean isShopMetafield() {
+        return "shop".equals(ownerResource);
+    }
+    
+    public boolean isCollectionMetafield() {
+        return "collection".equals(ownerResource);
+    }
+    
+    public boolean isPageMetafield() {
+        return "page".equals(ownerResource);
+    }
+    
+    public boolean isBlogMetafield() {
+        return "blog".equals(ownerResource);
+    }
+    
+    public boolean isArticleMetafield() {
+        return "article".equals(ownerResource);
+    }
+    
+    public boolean hasValue() {
+        return value != null && !value.trim().isEmpty();
+    }
 }

@@ -1,65 +1,72 @@
 package com.shopify.sdk.model.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.shopify.sdk.model.common.Connection;
+import com.shopify.sdk.model.common.Edge;
 import com.shopify.sdk.model.common.PageInfo;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
- * Represents a connection to a list of products.
- * Implements the Relay connection pattern for pagination.
+ * An auto-generated type for paginating through multiple Products.
  */
-@Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductConnection {
+@EqualsAndHashCode(callSuper = true)
+public class ProductConnection extends Connection<Product> {
+    
     /**
-     * A list of edges containing the nodes
+     * A list of edges.
      */
     @JsonProperty("edges")
     private List<ProductEdge> edges;
     
     /**
-     * A list of the nodes contained in ProductEdge
+     * A list of the nodes contained in ProductEdge.
      */
     @JsonProperty("nodes")
     private List<Product> nodes;
     
     /**
-     * Information to aid in pagination
+     * Information to aid in pagination.
      */
     @JsonProperty("pageInfo")
     private PageInfo pageInfo;
     
-    /**
-     * The total count of products in the connection
-     */
-    @JsonProperty("totalCount")
-    private Integer totalCount;
-}
-
-/**
- * An edge in a connection to a Product
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-class ProductEdge {
-    /**
-     * A cursor for use in pagination
-     */
-    @JsonProperty("cursor")
-    private String cursor;
+    @Override
+    @JsonIgnore
+    public List<Edge<Product>> getEdges() {
+        return edges != null ? List.copyOf(edges) : List.of();
+    }
     
-    /**
-     * The item at the end of ProductEdge
-     */
-    @JsonProperty("node")
-    private Product node;
+    public List<ProductEdge> getProductEdges() {
+        return edges;
+    }
+    
+    @JsonSetter("edges")
+    public void setProductEdges(List<ProductEdge> edges) {
+        this.edges = edges;
+    }
+    
+    public List<Product> getNodes() {
+        return nodes;
+    }
+    
+    public void setNodes(List<Product> nodes) {
+        this.nodes = nodes;
+    }
+    
+    public PageInfo getPageInfo() {
+        return pageInfo;
+    }
+    
+    public void setPageInfo(PageInfo pageInfo) {
+        this.pageInfo = pageInfo;
+    }
 }

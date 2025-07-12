@@ -1,59 +1,107 @@
 package com.shopify.sdk.config;
 
+import com.shopify.sdk.model.common.ApiVersion;
+import com.shopify.sdk.model.common.LogSeverity;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
+import java.util.List;
 
+/**
+ * Spring Boot configuration properties for Shopify SDK.
+ * Maps configuration from application.properties/yaml.
+ */
 @Data
 @Component
-@ConfigurationProperties(prefix = "shopify.sdk")
+@ConfigurationProperties(prefix = "shopify")
 public class ShopifyProperties {
     
-    private Api api = new Api();
-    private GraphQL graphql = new GraphQL();
-    private RateLimit rateLimit = new RateLimit();
-    private Logging logging = new Logging();
+    /**
+     * The API key for your app (Client ID).
+     */
+    private String apiKey;
     
-    @Data
-    public static class Api {
-        private String version = "2025-07";
-        private Timeout timeout = new Timeout();
-        private Retry retry = new Retry();
-        
-        @Data
-        public static class Timeout {
-            private Duration connect = Duration.ofSeconds(10);
-            private Duration read = Duration.ofSeconds(30);
-            private Duration write = Duration.ofSeconds(30);
-        }
-        
-        @Data
-        public static class Retry {
-            private int maxAttempts = 3;
-            private long backoffDelay = 1000;
-        }
-    }
+    /**
+     * The API secret key for your app (Client Secret).
+     */
+    private String apiSecretKey;
     
-    @Data
-    public static class GraphQL {
-        private String endpoint = "https://{shop}.myshopify.com/admin/api/{version}/graphql.json";
-        private int maxQueryDepth = 10;
-        private int maxQueryComplexity = 1000;
-    }
+    /**
+     * The scopes your app needs to access the API.
+     */
+    private List<String> scopes;
     
-    @Data
-    public static class RateLimit {
-        private boolean enabled = true;
-        private int maxCallsPerSecond = 2;
-        private int bucketSize = 40;
-    }
+    /**
+     * The host name of your app.
+     */
+    private String hostName;
+    
+    /**
+     * The scheme to use for the app host.
+     */
+    private String hostScheme = "https";
+    
+    /**
+     * The API version to use.
+     */
+    private ApiVersion apiVersion = ApiVersion.LATEST;
+    
+    /**
+     * Whether the app is embedded in the Shopify admin.
+     */
+    private boolean isEmbeddedApp = true;
+    
+    /**
+     * Whether the app is a Shopify admin custom store app.
+     */
+    private boolean isCustomStoreApp = false;
+    
+    /**
+     * An app-wide API access token (for custom apps).
+     */
+    private String adminApiAccessToken;
+    
+    /**
+     * The user agent prefix to use for API requests.
+     */
+    private String userAgentPrefix;
+    
+    /**
+     * An app-wide API access token for the storefront API (for custom apps).
+     */
+    private String privateAppStorefrontAccessToken;
+    
+    /**
+     * Override values for Shopify shop domains.
+     */
+    private List<String> customShopDomains;
+    
+    /**
+     * Logging configuration.
+     */
+    private final Logging logging = new Logging();
+    
+    /**
+     * Whether the app is initialized for local testing.
+     */
+    private boolean isTesting = false;
     
     @Data
     public static class Logging {
-        private String level = "INFO";
-        private boolean logRequests = false;
-        private boolean logResponses = false;
+        /**
+         * The minimum severity level to log.
+         */
+        private LogSeverity level = LogSeverity.INFO;
+        
+        /**
+         * Whether to log HTTP requests.
+         */
+        private boolean httpRequests = false;
+        
+        /**
+         * Whether to log timestamps.
+         */
+        private boolean timestamps = false;
     }
 }

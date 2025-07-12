@@ -1,16 +1,21 @@
 package com.shopify.sdk.model.product;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
+/**
+ * The status of a product.
+ */
 public enum ProductStatus {
-    ACTIVE("ACTIVE"),
-    ARCHIVED("ARCHIVED"),
-    DRAFT("DRAFT");
+    /**
+     * The product is ready to sell and is available to customers on the online store, sales channels, and apps.
+     */
+    ACTIVE,
     
-    @JsonValue
-    private final String value;
+    /**
+     * The product is no longer being sold and isn't available to customers on sales channels and apps.
+     */
+    ARCHIVED,
+    
+    /**
+     * The product isn't ready to sell and is unavailable to customers on sales channels and apps.
+     */
+    DRAFT
 }

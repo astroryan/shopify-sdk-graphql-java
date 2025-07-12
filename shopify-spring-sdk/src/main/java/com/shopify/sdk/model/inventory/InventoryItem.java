@@ -1,85 +1,78 @@
 package com.shopify.sdk.model.inventory;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.Node;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
-import java.time.OffsetDateTime;
+import java.math.BigDecimal;
+import java.time.Instant;
 
-/**
- * Represents an inventory item.
- */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InventoryItem implements Node {
-    /**
-     * A globally unique identifier.
-     */
-    @JsonProperty("id")
-    private String id;
+@Builder
+public class InventoryItem {
     
-    /**
-     * The SKU of the inventory item.
-     */
-    @JsonProperty("sku")
+    private String id;
     private String sku;
     
-    /**
-     * Whether the inventory item is tracked.
-     */
+    @JsonProperty("created_at")
+    private Instant createdAt;
+    
+    @JsonProperty("updated_at")
+    private Instant updatedAt;
+    
+    @JsonProperty("requires_shipping")
+    private Boolean requiresShipping;
+    
+    @JsonProperty("cost")
+    private BigDecimal cost;
+    
+    @JsonProperty("country_code_of_origin")
+    private String countryCodeOfOrigin;
+    
+    @JsonProperty("province_code_of_origin")
+    private String provinceCodeOfOrigin;
+    
+    @JsonProperty("harmonized_system_code")
+    private String harmonizedSystemCode;
+    
     @JsonProperty("tracked")
     private Boolean tracked;
     
-    /**
-     * Whether the inventory item requires shipping.
-     */
-    @JsonProperty("requiresShipping")
-    private Boolean requiresShipping;
+    @JsonProperty("country_harmonized_system_codes")
+    private CountryHarmonizedSystemCode[] countryHarmonizedSystemCodes;
     
-    /**
-     * The cost of the item.
-     */
-    @JsonProperty("cost")
-    private String cost;
+    @JsonProperty("duplicate_sku_count")
+    private Integer duplicateSkuCount;
     
-    /**
-     * The country code of origin.
-     */
-    @JsonProperty("countryCodeOfOrigin")
-    private String countryCodeOfOrigin;
+    public boolean isTracked() {
+        return tracked != null && tracked;
+    }
     
-    /**
-     * The harmonized system code.
-     */
-    @JsonProperty("harmonizedSystemCode")
-    private String harmonizedSystemCode;
+    public boolean requiresShipping() {
+        return requiresShipping == null || requiresShipping;
+    }
     
-    /**
-     * The province code of origin.
-     */
-    @JsonProperty("provinceCodeOfOrigin")
-    private String provinceCodeOfOrigin;
+    public boolean hasCost() {
+        return cost != null && cost.compareTo(BigDecimal.ZERO) > 0;
+    }
     
-    /**
-     * When the inventory item was created.
-     */
-    @JsonProperty("createdAt")
-    private OffsetDateTime createdAt;
+    public boolean hasOriginInformation() {
+        return countryCodeOfOrigin != null || provinceCodeOfOrigin != null;
+    }
     
-    /**
-     * When the inventory item was last updated.
-     */
-    @JsonProperty("updatedAt")
-    private OffsetDateTime updatedAt;
-    
-    /**
-     * Inventory levels for this item.
-     */
-    @JsonProperty("inventoryLevels")
-    private InventoryLevelConnection inventoryLevels;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CountryHarmonizedSystemCode {
+        @JsonProperty("country_code")
+        private String countryCode;
+        
+        @JsonProperty("harmonized_system_code")
+        private String harmonizedSystemCode;
+    }
 }

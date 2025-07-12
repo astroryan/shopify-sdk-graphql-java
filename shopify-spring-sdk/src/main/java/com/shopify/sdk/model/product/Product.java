@@ -1,109 +1,164 @@
 package com.shopify.sdk.model.product;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.*;
+import com.shopify.sdk.model.common.DateTime;
+import com.shopify.sdk.model.common.HTML;
+import com.shopify.sdk.model.common.ID;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
- * Represents a Shopify product
+ * Represents a product in Shopify.
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
+    
     /**
-     * The globally unique identifier for the product
+     * A globally-unique identifier.
      */
     @JsonProperty("id")
     private ID id;
     
     /**
-     * The title of the product
+     * The product title.
      */
     @JsonProperty("title")
     private String title;
     
     /**
-     * The description of the product
-     */
-    @JsonProperty("description")
-    private String description;
-    
-    /**
-     * The description of the product in HTML
-     */
-    @JsonProperty("descriptionHtml")
-    private String descriptionHtml;
-    
-    /**
-     * The handle of the product
+     * The product handle (URL slug).
      */
     @JsonProperty("handle")
     private String handle;
     
     /**
-     * The vendor of the product
+     * The description of the product, complete with HTML formatting.
      */
-    @JsonProperty("vendor")
-    private String vendor;
+    @JsonProperty("description")
+    private String description;
     
     /**
-     * The product type
+     * The description of the product, complete with HTML formatting.
      */
-    @JsonProperty("productType")
-    private String productType;
+    @JsonProperty("descriptionHtml")
+    private HTML descriptionHtml;
     
     /**
-     * The status of the product
-     */
-    @JsonProperty("status")
-    private ProductStatus status;
-    
-    /**
-     * When the product was created
+     * The date and time when the product was created.
      */
     @JsonProperty("createdAt")
     private DateTime createdAt;
     
     /**
-     * When the product was last updated
+     * The date and time when the product was last modified.
      */
     @JsonProperty("updatedAt")
     private DateTime updatedAt;
     
     /**
-     * When the product was published
+     * The date and time when the product was published to the channel.
      */
     @JsonProperty("publishedAt")
     private DateTime publishedAt;
     
     /**
-     * The product's variants
+     * The product type specified by the merchant.
      */
-    @JsonProperty("variants")
-    private Connection<ProductVariant> variants;
+    @JsonProperty("productType")
+    private String productType;
     
     /**
-     * The product's tags
+     * The name of the vendor of the product.
+     */
+    @JsonProperty("vendor")
+    private String vendor;
+    
+    /**
+     * A comma separated list of tags that have been added to the product.
      */
     @JsonProperty("tags")
     private List<String> tags;
     
     /**
-     * Whether the product is a gift card
+     * The product's status.
+     */
+    @JsonProperty("status")
+    private ProductStatus status;
+    
+    /**
+     * The theme template used when viewing the product in a store.
+     */
+    @JsonProperty("templateSuffix")
+    private String templateSuffix;
+    
+    /**
+     * The product's vendor.
+     */
+    @JsonProperty("tracksInventory")
+    private Boolean tracksInventory;
+    
+    /**
+     * Whether the product is a gift card.
      */
     @JsonProperty("isGiftCard")
     private Boolean isGiftCard;
     
     /**
-     * The product's SEO information
+     * The total inventory quantity of the product variant.
+     */
+    @JsonProperty("totalInventory")
+    private Integer totalInventory;
+    
+    /**
+     * The number of variants for the product.
+     */
+    @JsonProperty("totalVariants")
+    private Integer totalVariants;
+    
+    /**
+     * Whether the product has any tags.
+     */
+    @JsonProperty("hasOnlyDefaultVariant")
+    private Boolean hasOnlyDefaultVariant;
+    
+    /**
+     * Whether the product requires shipping.
+     */
+    @JsonProperty("requiresSellingPlan")
+    private Boolean requiresSellingPlan;
+    
+    /**
+     * The product's SEO information.
      */
     @JsonProperty("seo")
     private SEO seo;
+    
+    /**
+     * The online store URL for the product.
+     */
+    @JsonProperty("onlineStoreUrl")
+    private String onlineStoreUrl;
+    
+    /**
+     * The online store preview URL for the product.
+     */
+    @JsonProperty("onlineStorePreviewUrl")
+    private String onlineStorePreviewUrl;
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SEO {
+        
+        @JsonProperty("title")
+        private String title;
+        
+        @JsonProperty("description")
+        private String description;
+    }
 }

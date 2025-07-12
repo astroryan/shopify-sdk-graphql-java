@@ -1,17 +1,15 @@
 package com.shopify.sdk.service.inventory;
 
-import com.shopify.sdk.auth.ShopifyAuthContext;
-import com.shopify.sdk.client.GraphQLClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.client.ShopifyRestClient;
 import com.shopify.sdk.model.inventory.InventoryItem;
 import com.shopify.sdk.model.inventory.InventoryLevel;
-import com.shopify.sdk.model.graphql.GraphQLRequest;
-import com.shopify.sdk.model.graphql.GraphQLResponse;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,154 +18,37 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class InventoryService {
     
-    private final GraphQLClient graphQLClient;
+    private final ShopifyGraphQLClient graphQLClient;
+    private final ShopifyRestClient restClient;
+    private final ObjectMapper objectMapper;
     
-    private static final String INVENTORY_ADJUST_QUANTITIES_MUTATION = """
-        mutation inventoryAdjustQuantities($input: InventoryAdjustQuantitiesInput!) {
-            inventoryAdjustQuantities(input: $input) {
-                inventoryAdjustmentGroup {
-                    id
-                    reason
-                    referenceDocumentUri
-                    changes {
-                        name
-                        delta
-                    }
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """;
-    
-    private static final String INVENTORY_SET_QUANTITIES_MUTATION = """
-        mutation inventorySetOnHandQuantities($input: InventorySetOnHandQuantitiesInput!) {
-            inventorySetOnHandQuantities(input: $input) {
-                inventoryAdjustmentGroup {
-                    id
-                    reason
-                    referenceDocumentUri
-                    changes {
-                        name
-                        delta
-                    }
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """;
-    
-    private static final String INVENTORY_ACTIVATE_MUTATION = """
-        mutation inventoryActivate($inventoryItemId: ID!, $locationId: ID!) {
-            inventoryActivate(inventoryItemId: $inventoryItemId, locationId: $locationId) {
-                inventoryLevel {
-                    id
-                    available
-                    location {
-                        id
-                        name
-                    }
-                    inventoryItem {
-                        id
-                        sku
-                    }
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """;
-    
-    private static final String INVENTORY_DEACTIVATE_MUTATION = """
-        mutation inventoryDeactivate($inventoryLevelId: ID!) {
-            inventoryDeactivate(inventoryLevelId: $inventoryLevelId) {
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """;
-    
-    private static final String GET_INVENTORY_ITEM_QUERY = """
-        query getInventoryItem($id: ID!) {
-            inventoryItem(id: $id) {
-                id
-                countryCodeOfOrigin
-                createdAt
-                duplicateSkuCount
-                harmonizedSystemCode
-                inventoryHistoryUrl
-                legacyResourceId
-                locationsCount
-                provinceCodeOfOrigin
-                requiresShipping
-                sku
-                tracked
-                trackedEditable {
-                    locked
-                    reason
-                }
-                unitCost {
-                    amount
-                    currencyCode
-                }
-                updatedAt
-                variant {
-                    id
-                    title
-                    sku
-                    product {
-                        id
-                        title
-                    }
-                }
-                inventoryLevels(first: 50) {
-                    edges {
-                        node {
-                            id
-                            available
-                            incoming
-                            location {
-                                id
-                                name
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """;
-    
-    private static final String LIST_INVENTORY_ITEMS_QUERY = """
-        query listInventoryItems($first: Int!, $after: String, $query: String) {
-            inventoryItems(first: $first, after: $after, query: $query) {
+    private static final String INVENTORY_LEVELS_QUERY = """
+        query getInventoryLevels($first: Int, $after: String, $locationIds: [ID!]) {
+            inventoryLevels(first: $first, after: $after, query: $locationIds) {
                 edges {
+                    cursor
                     node {
                         id
-                        sku
-                        tracked
-                        requiresShipping
-                        createdAt
-                        updatedAt
-                        locationsCount
-                        variant {
-                            id
-                            title
-                            product {
-                                id
-                                title
-                            }
+                        quantities(names: ["available", "committed", "incoming", "on_hand"]) {
+                            name
+                            quantity
                         }
+                        item {
+                            id
+                            sku
+                            tracked
+                            requiresShipping
+                            countryCodeOfOrigin
+                            harmonizedSystemCode
+                            createdAt
+                            updatedAt
+                        }
+                        location {
+                            id
+                            name
+                        }
+                        updatedAt
                     }
-                    cursor
                 }
                 pageInfo {
                     hasNextPage
@@ -179,279 +60,287 @@ public class InventoryService {
         }
         """;
     
-    public InventoryAdjustmentGroup adjustQuantities(ShopifyAuthContext context, InventoryAdjustQuantitiesInput input) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("input", input);
-        
-        GraphQLRequest request = GraphQLRequest.builder()
-                .query(INVENTORY_ADJUST_QUANTITIES_MUTATION)
-                .variables(variables)
-                .build();
-        
-        GraphQLResponse<InventoryAdjustQuantitiesData> response = graphQLClient.execute(
-                request,
-                InventoryAdjustQuantitiesData.class
+    private static final String INVENTORY_ITEM_QUERY = """
+        query getInventoryItem($id: ID!) {
+            inventoryItem(id: $id) {
+                id
+                sku
+                tracked
+                requiresShipping
+                countryCodeOfOrigin
+                provinceCodeOfOrigin
+                harmonizedSystemCode
+                createdAt
+                updatedAt
+                countryHarmonizedSystemCodes {
+                    countryCode
+                    harmonizedSystemCode
+                }
+                duplicateSkuCount
+                inventoryLevels(first: 50) {
+                    edges {
+                        node {
+                            id
+                            quantities(names: ["available", "committed", "incoming", "on_hand"]) {
+                                name
+                                quantity
+                            }
+                            location {
+                                id
+                                name
+                            }
+                            updatedAt
+                        }
+                    }
+                }
+            }
+        }
+        """;
+    
+    private static final String INVENTORY_ADJUST_MUTATION = """
+        mutation inventoryAdjustQuantity($input: InventoryAdjustQuantityInput!) {
+            inventoryAdjustQuantity(input: $input) {
+                inventoryLevel {
+                    id
+                    quantities(names: ["available", "committed", "incoming", "on_hand"]) {
+                        name
+                        quantity
+                    }
+                    updatedAt
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """;
+    
+    private static final String INVENTORY_BULK_ADJUST_MUTATION = """
+        mutation inventoryBulkAdjustQuantityAtLocation($inventoryItemAdjustments: [InventoryAdjustItemInput!]!, $locationId: ID!) {
+            inventoryBulkAdjustQuantityAtLocation(inventoryItemAdjustments: $inventoryItemAdjustments, locationId: $locationId) {
+                inventoryLevels {
+                    id
+                    quantities(names: ["available", "committed", "incoming", "on_hand"]) {
+                        name
+                        quantity
+                    }
+                    item {
+                        id
+                        sku
+                    }
+                    location {
+                        id
+                        name
+                    }
+                    updatedAt
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        """;
+    
+    public Mono<List<InventoryLevel>> getInventoryLevels(String shop, String accessToken, 
+                                                        List<String> locationIds, 
+                                                        Integer first, String after) {
+        Map<String, Object> variables = Map.of(
+            "first", first != null ? first : 50,
+            "after", after != null ? after : "",
+            "locationIds", locationIds != null ? locationIds : List.of()
         );
         
-        if (response.hasErrors()) {
-            log.error("Failed to adjust inventory quantities: {}", response.getErrors());
-            throw new RuntimeException("Failed to adjust inventory quantities");
-        }
-        
-        InventoryAdjustQuantitiesResponse adjustResponse = response.getData().getInventoryAdjustQuantities();
-        if (adjustResponse.getUserErrors() != null && !adjustResponse.getUserErrors().isEmpty()) {
-            log.error("User errors adjusting inventory: {}", adjustResponse.getUserErrors());
-            throw new RuntimeException("Failed to adjust inventory: " + adjustResponse.getUserErrors());
-        }
-        
-        return adjustResponse.getInventoryAdjustmentGroup();
+        return graphQLClient.query(shop, accessToken, INVENTORY_LEVELS_QUERY, variables)
+            .map(response -> {
+                try {
+                    var edges = response.getData().get("inventoryLevels").get("edges");
+                    return objectMapper.convertValue(edges, 
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryLevel.class));
+                } catch (Exception e) {
+                    log.error("Failed to parse inventory levels response", e);
+                    throw new RuntimeException("Failed to parse inventory levels response", e);
+                }
+            });
     }
     
-    public InventoryAdjustmentGroup setOnHandQuantities(ShopifyAuthContext context, InventorySetOnHandQuantitiesInput input) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("input", input);
+    public Mono<InventoryItem> getInventoryItem(String shop, String accessToken, String inventoryItemId) {
+        Map<String, Object> variables = Map.of("id", inventoryItemId);
         
-        GraphQLRequest request = GraphQLRequest.builder()
-                .query(INVENTORY_SET_QUANTITIES_MUTATION)
-                .variables(variables)
-                .build();
-        
-        GraphQLResponse<InventorySetOnHandQuantitiesData> response = graphQLClient.execute(
-                request,
-                InventorySetOnHandQuantitiesData.class
+        return graphQLClient.query(shop, accessToken, INVENTORY_ITEM_QUERY, variables)
+            .map(response -> {
+                try {
+                    var data = response.getData().get("inventoryItem");
+                    return objectMapper.convertValue(data, InventoryItem.class);
+                } catch (Exception e) {
+                    log.error("Failed to parse inventory item response", e);
+                    throw new RuntimeException("Failed to parse inventory item response", e);
+                }
+            });
+    }
+    
+    public Mono<InventoryLevel> adjustInventoryQuantity(String shop, String accessToken, 
+                                                       String inventoryLevelId, 
+                                                       String quantityName,
+                                                       int quantityDelta) {
+        Map<String, Object> input = Map.of(
+            "inventoryLevelId", inventoryLevelId,
+            "quantityName", quantityName,
+            "quantityDelta", quantityDelta
         );
         
-        if (response.hasErrors()) {
-            log.error("Failed to set inventory quantities: {}", response.getErrors());
-            throw new RuntimeException("Failed to set inventory quantities");
-        }
+        Map<String, Object> variables = Map.of("input", input);
         
-        InventorySetOnHandQuantitiesResponse setResponse = response.getData().getInventorySetOnHandQuantities();
-        if (setResponse.getUserErrors() != null && !setResponse.getUserErrors().isEmpty()) {
-            log.error("User errors setting inventory: {}", setResponse.getUserErrors());
-            throw new RuntimeException("Failed to set inventory: " + setResponse.getUserErrors());
-        }
-        
-        return setResponse.getInventoryAdjustmentGroup();
+        return graphQLClient.query(shop, accessToken, INVENTORY_ADJUST_MUTATION, variables)
+            .map(response -> {
+                try {
+                    var data = response.getData().get("inventoryAdjustQuantity").get("inventoryLevel");
+                    return objectMapper.convertValue(data, InventoryLevel.class);
+                } catch (Exception e) {
+                    log.error("Failed to parse inventory adjust response", e);
+                    throw new RuntimeException("Failed to parse inventory adjust response", e);
+                }
+            });
     }
     
-    public InventoryLevel activateInventory(ShopifyAuthContext context, String inventoryItemId, String locationId) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("inventoryItemId", inventoryItemId);
-        variables.put("locationId", locationId);
-        
-        GraphQLRequest request = GraphQLRequest.builder()
-                .query(INVENTORY_ACTIVATE_MUTATION)
-                .variables(variables)
-                .build();
-        
-        GraphQLResponse<InventoryActivateData> response = graphQLClient.execute(
-                request,
-                InventoryActivateData.class
+    public Mono<List<InventoryLevel>> bulkAdjustInventory(String shop, String accessToken,
+                                                         String locationId,
+                                                         List<InventoryAdjustment> adjustments) {
+        Map<String, Object> variables = Map.of(
+            "locationId", locationId,
+            "inventoryItemAdjustments", adjustments
         );
         
-        if (response.hasErrors()) {
-            log.error("Failed to activate inventory: {}", response.getErrors());
-            throw new RuntimeException("Failed to activate inventory");
-        }
-        
-        InventoryActivateResponse activateResponse = response.getData().getInventoryActivate();
-        if (activateResponse.getUserErrors() != null && !activateResponse.getUserErrors().isEmpty()) {
-            log.error("User errors activating inventory: {}", activateResponse.getUserErrors());
-            throw new RuntimeException("Failed to activate inventory: " + activateResponse.getUserErrors());
-        }
-        
-        return activateResponse.getInventoryLevel();
+        return graphQLClient.query(shop, accessToken, INVENTORY_BULK_ADJUST_MUTATION, variables)
+            .map(response -> {
+                try {
+                    var data = response.getData().get("inventoryBulkAdjustQuantityAtLocation").get("inventoryLevels");
+                    return objectMapper.convertValue(data, 
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryLevel.class));
+                } catch (Exception e) {
+                    log.error("Failed to parse bulk inventory adjust response", e);
+                    throw new RuntimeException("Failed to parse bulk inventory adjust response", e);
+                }
+            });
     }
     
-    public void deactivateInventory(ShopifyAuthContext context, String inventoryLevelId) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("inventoryLevelId", inventoryLevelId);
+    public Mono<List<InventoryItem>> getInventoryItems(String shop, String accessToken, List<String> ids) {
+        String endpoint = "/admin/api/2023-10/inventory_items.json";
+        Map<String, Object> params = Map.of("ids", String.join(",", ids));
         
-        GraphQLRequest request = GraphQLRequest.builder()
-                .query(INVENTORY_DEACTIVATE_MUTATION)
-                .variables(variables)
-                .build();
+        return restClient.get(shop, accessToken, endpoint, params)
+            .map(response -> {
+                try {
+                    var data = response.get("inventory_items");
+                    return objectMapper.convertValue(data,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryItem.class));
+                } catch (Exception e) {
+                    log.error("Failed to parse inventory items response", e);
+                    throw new RuntimeException("Failed to parse inventory items response", e);
+                }
+            });
+    }
+    
+    public Mono<InventoryItem> updateInventoryItem(String shop, String accessToken, String inventoryItemId, InventoryItemUpdate update) {
+        String endpoint = "/admin/api/2023-10/inventory_items/" + inventoryItemId + ".json";
         
-        GraphQLResponse<InventoryDeactivateData> response = graphQLClient.execute(
-                request,
-                InventoryDeactivateData.class
+        return restClient.post(shop, accessToken, endpoint, Map.of("inventory_item", update))
+            .map(response -> {
+                try {
+                    var data = response.get("inventory_item");
+                    return objectMapper.convertValue(data, InventoryItem.class);
+                } catch (Exception e) {
+                    log.error("Failed to parse update inventory item response", e);
+                    throw new RuntimeException("Failed to parse update inventory item response", e);
+                }
+            });
+    }
+    
+    public Mono<List<InventoryLevel>> getInventoryLevelsRestAPI(String shop, String accessToken, 
+                                                               List<String> inventoryItemIds,
+                                                               List<String> locationIds) {
+        String endpoint = "/admin/api/2023-10/inventory_levels.json";
+        Map<String, Object> params = Map.of(
+            "inventory_item_ids", inventoryItemIds != null ? String.join(",", inventoryItemIds) : "",
+            "location_ids", locationIds != null ? String.join(",", locationIds) : ""
         );
         
-        if (response.hasErrors()) {
-            log.error("Failed to deactivate inventory: {}", response.getErrors());
-            throw new RuntimeException("Failed to deactivate inventory");
-        }
-        
-        InventoryDeactivateResponse deactivateResponse = response.getData().getInventoryDeactivate();
-        if (deactivateResponse.getUserErrors() != null && !deactivateResponse.getUserErrors().isEmpty()) {
-            log.error("User errors deactivating inventory: {}", deactivateResponse.getUserErrors());
-            throw new RuntimeException("Failed to deactivate inventory: " + deactivateResponse.getUserErrors());
-        }
+        return restClient.get(shop, accessToken, endpoint, params)
+            .map(response -> {
+                try {
+                    var data = response.get("inventory_levels");
+                    return objectMapper.convertValue(data,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryLevel.class));
+                } catch (Exception e) {
+                    log.error("Failed to parse inventory levels REST response", e);
+                    throw new RuntimeException("Failed to parse inventory levels REST response", e);
+                }
+            });
     }
     
-    public InventoryItem getInventoryItem(ShopifyAuthContext context, String inventoryItemId) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("id", inventoryItemId);
-        
-        GraphQLRequest request = GraphQLRequest.builder()
-                .query(GET_INVENTORY_ITEM_QUERY)
-                .variables(variables)
-                .build();
-        
-        GraphQLResponse<InventoryItemData> response = graphQLClient.execute(
-                request,
-                InventoryItemData.class
+    public Mono<InventoryLevel> setInventoryLevel(String shop, String accessToken, 
+                                                 String inventoryItemId, String locationId, Integer available) {
+        String endpoint = "/admin/api/2023-10/inventory_levels/set.json";
+        Map<String, Object> body = Map.of(
+            "inventory_item_id", inventoryItemId,
+            "location_id", locationId,
+            "available", available
         );
         
-        if (response.hasErrors()) {
-            log.error("Failed to get inventory item: {}", response.getErrors());
-            throw new RuntimeException("Failed to get inventory item");
-        }
+        return restClient.post(shop, accessToken, endpoint, body)
+            .map(response -> {
+                try {
+                    var data = response.get("inventory_level");
+                    return objectMapper.convertValue(data, InventoryLevel.class);
+                } catch (Exception e) {
+                    log.error("Failed to parse set inventory level response", e);
+                    throw new RuntimeException("Failed to parse set inventory level response", e);
+                }
+            });
+    }
+    
+    public Mono<InventoryLevel> adjustInventoryLevel(String shop, String accessToken,
+                                                    String inventoryItemId, String locationId, Integer quantityAdjustment) {
+        String endpoint = "/admin/api/2023-10/inventory_levels/adjust.json";
+        Map<String, Object> body = Map.of(
+            "inventory_item_id", inventoryItemId,
+            "location_id", locationId,
+            "quantity_adjustment", quantityAdjustment
+        );
         
-        return response.getData().getInventoryItem();
+        return restClient.post(shop, accessToken, endpoint, body)
+            .map(response -> {
+                try {
+                    var data = response.get("inventory_level");
+                    return objectMapper.convertValue(data, InventoryLevel.class);
+                } catch (Exception e) {
+                    log.error("Failed to parse adjust inventory level response", e);
+                    throw new RuntimeException("Failed to parse adjust inventory level response", e);
+                }
+            });
     }
     
-    @Data
-    private static class InventoryAdjustQuantitiesData {
-        private InventoryAdjustQuantitiesResponse inventoryAdjustQuantities;
-    }
-    
-    @Data
-    private static class InventorySetOnHandQuantitiesData {
-        private InventorySetOnHandQuantitiesResponse inventorySetOnHandQuantities;
-    }
-    
-    @Data
-    private static class InventoryActivateData {
-        private InventoryActivateResponse inventoryActivate;
-    }
-    
-    @Data
-    private static class InventoryDeactivateData {
-        private InventoryDeactivateResponse inventoryDeactivate;
-    }
-    
-    @Data
-    private static class InventoryItemData {
-        private InventoryItem inventoryItem;
-    }
-    
-    @Data
-    public static class InventoryAdjustQuantitiesResponse {
-        private InventoryAdjustmentGroup inventoryAdjustmentGroup;
-        private List<UserError> userErrors;
-    }
-    
-    @Data
-    public static class InventorySetOnHandQuantitiesResponse {
-        private InventoryAdjustmentGroup inventoryAdjustmentGroup;
-        private List<UserError> userErrors;
-    }
-    
-    @Data
-    public static class InventoryActivateResponse {
-        private InventoryLevel inventoryLevel;
-        private List<UserError> userErrors;
-    }
-    
-    @Data
-    public static class InventoryDeactivateResponse {
-        private List<UserError> userErrors;
-    }
-    
-    @Data
-    public static class UserError {
-        private List<String> field;
-        private String message;
-    }
-    
-    @Data
-    public static class InventoryAdjustQuantitiesInput {
-        private String reason;
-        private String name;
-        private String referenceDocumentUri;
-        private List<InventoryChangeInput> changes;
-    }
-    
-    @Data
-    public static class InventorySetOnHandQuantitiesInput {
-        private String reason;
-        private String referenceDocumentUri;
-        private List<InventorySetQuantityInput> quantities;
-    }
-    
-    @Data
-    public static class InventoryChangeInput {
-        private Integer delta;
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    @lombok.Builder
+    public static class InventoryAdjustment {
         private String inventoryItemId;
-        private String locationId;
+        private String quantityName;
+        private Integer quantityDelta;
     }
     
-    @Data
-    public static class InventorySetQuantityInput {
-        private String inventoryItemId;
-        private String locationId;
-        private Integer quantity;
-    }
-    
-    @Data
-    public static class InventoryAdjustmentGroup {
-        private String id;
-        private String reason;
-        private String referenceDocumentUri;
-        private List<InventoryChange> changes;
-    }
-    
-    @Data
-    public static class InventoryChange {
-        private String name;
-        private Integer delta;
-    }
-    
-    @Data
-    public static class Location {
-        private String id;
-        private String name;
-    }
-    
-    @Data
-    public static class EditableProperty {
-        private Boolean locked;
-        private String reason;
-    }
-    
-    @Data
-    public static class ProductVariant {
-        private String id;
-        private String title;
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    @lombok.Builder
+    public static class InventoryItemUpdate {
         private String sku;
-        private Product product;
-    }
-    
-    @Data
-    public static class Product {
-        private String id;
-        private String title;
-    }
-    
-    @Data
-    public static class InventoryLevelConnection {
-        private List<InventoryLevelEdge> edges;
-        private PageInfo pageInfo;
-    }
-    
-    @Data
-    public static class InventoryLevelEdge {
-        private InventoryLevel node;
-        private String cursor;
-    }
-    
-    @Data
-    public static class PageInfo {
-        private boolean hasNextPage;
-        private boolean hasPreviousPage;
-        private String startCursor;
-        private String endCursor;
+        private Boolean tracked;
+        private String countryCodeOfOrigin;
+        private String provinceCodeOfOrigin;
+        private String harmonizedSystemCode;
+        private Boolean requiresShipping;
     }
 }

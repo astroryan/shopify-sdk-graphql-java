@@ -1,26 +1,46 @@
 package com.shopify.sdk.model.fulfillment;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-/**
- * The status of a fulfillment.
- */
 public enum FulfillmentStatus {
-    @JsonProperty("PENDING")
-    PENDING,
+    PENDING("pending"),
+    OPEN("open"),
+    SUCCESS("success"),
+    CANCELLED("cancelled"),
+    ERROR("error"),
+    FAILURE("failure");
     
-    @JsonProperty("OPEN")
-    OPEN,
+    private final String value;
     
-    @JsonProperty("SUCCESS")
-    SUCCESS,
+    FulfillmentStatus(String value) {
+        this.value = value;
+    }
     
-    @JsonProperty("CANCELLED")
-    CANCELLED,
+    public String getValue() {
+        return value;
+    }
     
-    @JsonProperty("ERROR")
-    ERROR,
+    public static FulfillmentStatus fromValue(String value) {
+        if (value == null) {
+            return null;
+        }
+        
+        for (FulfillmentStatus status : values()) {
+            if (status.value.equals(value)) {
+                return status;
+            }
+        }
+        
+        throw new IllegalArgumentException("Unknown fulfillment status: " + value);
+    }
     
-    @JsonProperty("FAILURE")
-    FAILURE
+    public boolean isCompleted() {
+        return this == SUCCESS;
+    }
+    
+    public boolean isFailed() {
+        return this == CANCELLED || this == ERROR || this == FAILURE;
+    }
+    
+    public boolean isPending() {
+        return this == PENDING || this == OPEN;
+    }
 }

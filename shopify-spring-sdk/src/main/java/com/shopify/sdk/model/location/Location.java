@@ -1,74 +1,99 @@
 package com.shopify.sdk.model.location;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.shopify.sdk.model.common.Node;
-import com.shopify.sdk.model.common.Address;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
-/**
- * Represents a location.
- */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Location implements Node {
-    /**
-     * A globally unique identifier.
-     */
-    @JsonProperty("id")
+@Builder
+public class Location {
+    
     private String id;
-    
-    /**
-     * The name of the location.
-     */
-    @JsonProperty("name")
     private String name;
+    private String address1;
+    private String address2;
+    private String city;
+    private String zip;
+    private String province;
+    private String country;
+    private String phone;
     
-    /**
-     * The address of the location.
-     */
-    @JsonProperty("address")
-    private Address address;
+    @JsonProperty("created_at")
+    private Instant createdAt;
     
-    /**
-     * Whether the location is active.
-     */
-    @JsonProperty("isActive")
-    private Boolean isActive;
+    @JsonProperty("updated_at")
+    private Instant updatedAt;
     
-    /**
-     * Whether the location is the primary location.
-     */
-    @JsonProperty("isPrimary")
-    private Boolean isPrimary;
+    @JsonProperty("country_code")
+    private String countryCode;
     
-    /**
-     * Whether the location has active inventory.
-     */
-    @JsonProperty("hasActiveInventory")
-    private Boolean hasActiveInventory;
+    @JsonProperty("country_name")
+    private String countryName;
     
-    /**
-     * Whether the location can fulfill orders.
-     */
-    @JsonProperty("fulfillsOnlineOrders")
-    private Boolean fulfillsOnlineOrders;
+    @JsonProperty("province_code")
+    private String provinceCode;
     
-    /**
-     * The date and time when the location was created.
-     */
-    @JsonProperty("createdAt")
-    private OffsetDateTime createdAt;
+    @JsonProperty("legacy")
+    private Boolean legacy;
     
-    /**
-     * The date and time when the location was last modified.
-     */
-    @JsonProperty("updatedAt")
-    private OffsetDateTime updatedAt;
+    @JsonProperty("active")
+    private Boolean active;
+    
+    @JsonProperty("admin_graphql_api_id")
+    private String adminGraphqlApiId;
+    
+    @JsonProperty("localized_country_name")
+    private String localizedCountryName;
+    
+    @JsonProperty("localized_province_name")
+    private String localizedProvinceName;
+    
+    public boolean isActive() {
+        return active == null || active;
+    }
+    
+    public boolean isLegacy() {
+        return legacy != null && legacy;
+    }
+    
+    public String getFullAddress() {
+        StringBuilder sb = new StringBuilder();
+        
+        if (address1 != null) {
+            sb.append(address1);
+        }
+        
+        if (address2 != null && !address2.trim().isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(address2);
+        }
+        
+        if (city != null) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(city);
+        }
+        
+        if (province != null) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(province);
+        }
+        
+        if (zip != null) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(zip);
+        }
+        
+        if (country != null) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(country);
+        }
+        
+        return sb.toString();
+    }
 }

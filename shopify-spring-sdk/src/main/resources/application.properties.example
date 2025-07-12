@@ -1,0 +1,23 @@
+# Shopify SDK Configuration
+shopify.api-key=your-api-key
+shopify.api-secret-key=your-api-secret-key
+shopify.host-name=your-app-host.com
+shopify.host-scheme=https
+shopify.api-version=2025-04
+shopify.is-embedded-app=true
+shopify.is-custom-store-app=false
+
+# For custom store apps
+#shopify.admin-api-access-token=your-admin-api-access-token
+
+# Optional configurations
+shopify.user-agent-prefix=MyApp
+shopify.scopes=read_products,write_products,read_orders
+
+# Logging configuration
+shopify.logging.level=INFO
+shopify.logging.http-requests=false
+shopify.logging.timestamps=true
+
+# Testing mode
+shopify.is-testing=false
