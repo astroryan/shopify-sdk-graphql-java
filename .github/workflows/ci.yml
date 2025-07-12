@@ -71,7 +71,14 @@ jobs:
       uses: gradle/gradle-build-action@v2
       
     - name: Run integration tests
-      run: ./gradlew integrationTest
+      run: |
+        if [ -z "${{ secrets.SHOPIFY_TEST_STORE_DOMAIN }}" ]; then
+          echo "⚠️ Skipping integration tests - SHOPIFY_TEST_STORE_DOMAIN secret not configured"
+          echo "Set up secrets in repository settings to enable integration tests"
+          exit 0
+        else
+          ./gradlew integrationTest
+        fi
       env:
         SHOPIFY_TEST_STORE_DOMAIN: ${{ secrets.SHOPIFY_TEST_STORE_DOMAIN }}
         SHOPIFY_TEST_ACCESS_TOKEN: ${{ secrets.SHOPIFY_TEST_ACCESS_TOKEN }}
