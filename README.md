@@ -62,7 +62,11 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.shopify:shopify-spring-sdk:1.1.0'
+    // Stable release version (recommended for production)
+    implementation 'com.shopify:shopify-spring-sdk:1.1.1-RELEASE'
+    
+    // Or use latest development snapshot (for testing new features)
+    // implementation 'com.shopify:shopify-spring-sdk:1.2.0-SNAPSHOT-142'
 }
 ```
 
@@ -130,6 +134,44 @@ shopify:
    ```bash
    export SHOPIFY_ACCESS_TOKEN="shpat_your-access-token-here"
    ```
+
+## 📋 Version Management
+
+This SDK follows a **branch-based versioning strategy** for different development stages:
+
+### 🏷️ Version Types
+
+| Version Type | Example | Use Case | Stability |
+|--------------|---------|----------|-----------|
+| **RELEASE** | `1.1.1-RELEASE` | Production deployment | ✅ Stable |
+| **SNAPSHOT** | `1.2.0-SNAPSHOT-142` | Development & testing | ⚠️ Unstable |
+
+### 🌳 Branch Strategy
+
+- **`release` branch**: Produces `X.Y.Z-RELEASE` versions for production use
+- **`develop` branch**: Produces `X.Y.Z-SNAPSHOT-{BUILD}` versions with auto-incrementing build numbers
+- **`main` branch**: Contains stable releases and documentation
+
+### 📦 Choosing the Right Version
+
+**For Production Applications**:
+```gradle
+dependencies {
+    implementation 'com.shopify:shopify-spring-sdk:1.1.1-RELEASE'
+}
+```
+
+**For Development/Testing**:
+```gradle
+dependencies {
+    implementation 'com.shopify:shopify-spring-sdk:1.2.0-SNAPSHOT-142'
+}
+```
+
+**Latest Available Versions**:
+- 🚀 Latest stable: [`1.1.1-RELEASE`](https://github.com/astroryan/shopify-sdk-graphql-java/packages)
+- 🔄 Latest snapshot: Check [GitHub Packages](https://github.com/astroryan/shopify-sdk-graphql-java/packages) for newest SNAPSHOT
+- ✅ GitHub Actions now properly trigger on both `develop` and `release` branch PRs
 
 ## 🚀 Quick Start
 

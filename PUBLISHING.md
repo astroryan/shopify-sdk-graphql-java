@@ -96,34 +96,62 @@ gh release create v1.2.0 \
   --target main
 ```
 
-### Method 2: Automated Publishing (GitHub Actions)
+### Method 2: Branch-Based Automated Publishing (Recommended)
 
-#### Release-Based Publishing
+The repository uses **branch-based CI/CD** that automatically publishes different version types:
 
-The repository includes automated workflows that trigger on release creation:
+#### Development Publishing (SNAPSHOT)
 
-1. **Create Release on GitHub Web Interface**:
-   - Go to repository → Releases → Create a new release
-   - Tag version: `v1.2.0`
-   - Release title: `Shopify Spring SDK v1.2.0`
-   - Add release notes
-   - Publish release
+**Target**: `develop` branch
 
-2. **Workflow Execution**:
-   - The `publish.yml` workflow automatically triggers
-   - Builds the SDK with all tests
-   - Publishes to GitHub Packages
-   - Updates release with build artifacts
+1. **Create Feature Branch**:
+   ```bash
+   git checkout develop
+   git checkout -b feature/new-feature
+   # Make your changes
+   git commit -m "Add new feature"
+   git push origin feature/new-feature
+   ```
+
+2. **Create Pull Request**:
+   - Create PR to `develop` branch
+   - Merge when ready
+
+3. **Automatic Publishing**:
+   - Triggers on PR merge to `develop`
+   - Publishes as `1.2.0-SNAPSHOT-{BUILD_NUMBER}`
+   - Available immediately for testing
+
+#### Production Publishing (RELEASE)
+
+**Target**: `release` branch  
+
+1. **Create Release Branch PR**:
+   ```bash
+   git checkout release
+   git checkout -b prepare-release-1.1.1
+   # Update version if needed in build.gradle
+   git commit -m "Prepare release 1.1.1"
+   git push origin prepare-release-1.1.1
+   ```
+
+2. **Create Pull Request**:
+   - Create PR to `release` branch
+   - Merge when ready for production
+
+3. **Automatic Publishing**:
+   - Triggers on PR merge to `release`
+   - Publishes as `1.1.1-RELEASE`
+   - Production-ready version
 
 #### Manual Workflow Dispatch
 
-For on-demand publishing:
+For emergency releases or custom versions:
 
-1. Go to Actions → "Publish to GitHub Packages"
+1. Go to Actions → "CI/CD Pipeline"
 2. Click "Run workflow"
-3. Select branch (usually `main`)
-4. Enter version to publish (e.g., `1.2.0`)
-5. Click "Run workflow"
+3. Enter custom version (e.g., `1.1.2-HOTFIX`)
+4. Click "Run workflow"
 
 ### Method 3: CI/CD Integration
 
@@ -199,9 +227,43 @@ jobs:
 
 ## 📝 Version Management
 
+### Branch-Based Versioning Strategy
+
+This project uses a **branch-based versioning system** that automatically manages versions based on the target branch:
+
+#### 🌳 Branch Structure
+
+| Branch | Base Version | Published As | Purpose | Auto Deploy |
+|--------|--------------|--------------|---------|-------------|
+| **`develop`** | `1.2.0-SNAPSHOT` | `1.2.0-SNAPSHOT-{BUILD}` | Development/Testing | ✅ On PR merge |
+| **`release`** | `1.1.1` | `1.1.1-RELEASE` | Production Ready | ✅ On PR merge |
+| **`main`** | `1.1.1` | `1.1.1` | Stable Documentation | ❌ Manual only |
+
+#### 🔄 Automatic Version Generation
+
+**Develop Branch (SNAPSHOT)**:
+```bash
+# Base version in build.gradle
+version = '1.2.0-SNAPSHOT'
+
+# Auto-generated during CI/CD
+1.2.0-SNAPSHOT-142  # BUILD_NUMBER = GitHub run_number
+1.2.0-SNAPSHOT-143  # Next build
+1.2.0-SNAPSHOT-144  # Next build...
+```
+
+**Release Branch (RELEASE)**:
+```bash
+# Base version in build.gradle  
+version = '1.1.1'
+
+# Auto-generated during CI/CD
+1.1.1-RELEASE       # Stable production version
+```
+
 ### Semantic Versioning Strategy
 
-Follow [Semantic Versioning 2.0.0](https://semver.org/):
+The base versions follow [Semantic Versioning 2.0.0](https://semver.org/):
 
 - **MAJOR** (X.0.0): Breaking API changes, incompatible changes
 - **MINOR** (X.Y.0): New features, backward compatible additions
@@ -227,21 +289,31 @@ For testing and development:
 
 ## ✅ Pre-Publishing Checklist
 
-### Code Quality & Testing
+### For Development (SNAPSHOT) Publishing
+
+**Target Branch**: `develop`
+
+- [ ] **All tests pass**: `./gradlew test`
+- [ ] **Feature implemented and working**
+- [ ] **Code review completed**
+- [ ] **No breaking changes** (or properly documented)
+- [ ] **Base version updated in `build.gradle`** (if bumping major/minor)
+
+### For Production (RELEASE) Publishing  
+
+**Target Branch**: `release`
 
 - [ ] **All tests pass**: `./gradlew test`
 - [ ] **Integration tests pass**: `./gradlew integrationTest` (if applicable)
 - [ ] **Code coverage meets threshold**: `./gradlew jacocoTestCoverageVerification`
 - [ ] **No compilation warnings**: Clean build without warnings
 - [ ] **Documentation updated**: README, API docs, examples
-
-### Version & Release Management
-
-- [ ] **Version updated in `build.gradle`**
 - [ ] **CHANGELOG.md updated** with new version and changes
 - [ ] **Version follows semantic versioning**
 - [ ] **Breaking changes documented** (for major versions)
 - [ ] **Migration guide provided** (for breaking changes)
+- [ ] **Performance testing completed** (for major releases)
+- [ ] **Security review completed** (for major releases)
 
 ### Configuration & Dependencies
 
