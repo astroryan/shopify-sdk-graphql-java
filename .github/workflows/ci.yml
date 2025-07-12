@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   pull_request:
-    branches: [ release ]
+    branches: [ develop, release ]
     types: [ closed ]
   release:
     types: [created]
@@ -56,7 +56,7 @@ jobs:
         
   integration-test:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release') || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true && (github.event.pull_request.base.ref == 'develop' || github.event.pull_request.base.ref == 'release')) || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     
     steps:
     - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, code-quality]
     if: >
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'release') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && (github.event.pull_request.base.ref == 'develop' || github.event.pull_request.base.ref == 'release')) ||
       github.event_name == 'release' ||
       github.event_name == 'workflow_dispatch'
     permissions:
@@ -127,9 +127,48 @@ jobs:
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2
       
-    - name: Update version if manually triggered
-      if: github.event_name == 'workflow_dispatch'
-      run: sed -i "s/version = '.*'/version = '${{ github.event.inputs.version }}'/" build.gradle
+    - name: Set version based on branch
+      run: |
+        BASE_VERSION=$(grep "version = " build.gradle | sed "s/version = '//" | sed "s/'.*//")
+        CLEAN_VERSION=$(echo $BASE_VERSION | sed 's/-SNAPSHOT//' | sed 's/-RELEASE//')
+        
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # Manual dispatch - use provided version
+          NEW_VERSION="${{ github.event.inputs.version }}"
+        elif [ "${{ github.event.pull_request.base.ref }}" = "develop" ]; then
+          # Develop branch - SNAPSHOT with auto increment
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          BUILD_NUMBER=${{ github.run_number }}
+          NEW_VERSION="${CLEAN_VERSION}-SNAPSHOT-${BUILD_NUMBER}"
+        elif [ "${{ github.event.pull_request.base.ref }}" = "release" ]; then
+          # Release branch - RELEASE version
+          NEW_VERSION="${CLEAN_VERSION}-RELEASE"
+        else
+          # Default case
+          NEW_VERSION="${CLEAN_VERSION}"
+        fi
+        
+        echo "Original version: $BASE_VERSION"
+        echo "New version: $NEW_VERSION"
+        sed -i "s/version = '.*'/version = '$NEW_VERSION'/" build.gradle
+        
+        echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        
+    - name: Display version info
+      run: |
+        echo "🏷️ Publishing version: $VERSION"
+        echo "📦 Target branch: ${{ github.event.pull_request.base.ref }}"
+        case "${{ github.event.pull_request.base.ref }}" in
+          "develop")
+            echo "🔄 SNAPSHOT version for development"
+            ;;
+          "release")
+            echo "🚀 RELEASE version for production"
+            ;;
+          *)
+            echo "⚙️ Manual or release version"
+            ;;
+        esac
         
     - name: Publish to GitHub Packages
       run: ./gradlew publish
