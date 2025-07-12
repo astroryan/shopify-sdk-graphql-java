@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.service.order</a> &gt; <span class="el_source">OrderService.java</span></div><h1>OrderService.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.service.order;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.client.graphql.GraphQLResponse;
+import com.shopify.sdk.exception.ShopifyApiException;
+import com.shopify.sdk.model.order.Order;
+import com.shopify.sdk.model.order.OrderConnection;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Service for managing Shopify orders.
+ */
+<span class="fc" id="L21">@Slf4j</span>
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+public class OrderService {
+    
+    private final ShopifyGraphQLClient graphQLClient;
+    private final ObjectMapper objectMapper;
+    
+    /**
+     * Retrieves a single order by ID.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param orderId the order ID
+     * @return Mono of Order
+     */
+    public Mono&lt;Order&gt; getOrder(String shop, String accessToken, String orderId) {
+<span class="fc" id="L38">        String query = &quot;&quot;&quot;</span>
+            query getOrder($id: ID!) {
+                order(id: $id) {
+                    id
+                    cancelReason
+                    cancelledAt
+                    confirmed
+                    createdAt
+                    currencyCode
+                    currentSubtotalPrice
+                    currentTotalTax
+                    email
+                    financialStatus
+                    fulfillmentStatus
+                    name
+                    orderNumber
+                    phone
+                    processedAt
+                    billingAddress {
+                        id
+                        address1
+                        address2
+                        city
+                        company
+                        country
+                        countryCode
+                        firstName
+                        lastName
+                        phone
+                        province
+                        provinceCode
+                        zip
+                    }
+                    shippingAddress {
+                        id
+                        address1
+                        address2
+                        city
+                        company
+                        country
+                        countryCode
+                        firstName
+                        lastName
+                        phone
+                        province
+                        provinceCode
+                        zip
+                    }
+                    updatedAt
+                    test
+                    lineItems(first: 250) {
+                        edges {
+                            node {
+                                id
+                                quantity
+                                title
+                                variantTitle
+                                name
+                                sku
+                                vendor
+                                weight
+                                requiresShipping
+                                taxable
+                                giftCard
+                                fulfillmentStatus
+                                fulfillableQuantity
+                                refundableQuantity
+                                originalUnitPrice
+                                discountedUnitPrice
+                                originalTotalPrice
+                                discountedTotalPrice
+                                totalDiscount
+                                customAttributes {
+                                    key
+                                    value
+                                }
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                            startCursor
+                            endCursor
+                        }
+                    }
+                    canMarkAsPaid
+                    canNotifyCustomer
+                    totalPrice
+                    subtotalPrice
+                    totalShippingPrice
+                    totalTax
+                }
+            }
+            &quot;&quot;&quot;;
+        
+<span class="fc" id="L134">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L135">        variables.put(&quot;id&quot;, orderId);</span>
+        
+<span class="fc" id="L137">        return graphQLClient.query(shop, accessToken, query, variables)</span>
+<span class="fc" id="L138">            .map(this::extractOrderFromResponse);</span>
+    }
+    
+    /**
+     * Retrieves a list of orders with pagination.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param first the number of orders to retrieve
+     * @param after the cursor for pagination
+     * @param query the search query (optional)
+     * @return Mono of OrderConnection
+     */
+    public Mono&lt;OrderConnection&gt; getOrders(String shop, String accessToken, Integer first, String after, String query) {
+<span class="fc" id="L152">        String graphQLQuery = &quot;&quot;&quot;</span>
+            query getOrders($first: Int!, $after: String, $query: String) {
+                orders(first: $first, after: $after, query: $query) {
+                    edges {
+                        node {
+                            id
+                            cancelReason
+                            cancelledAt
+                            confirmed
+                            createdAt
+                            currencyCode
+                            currentSubtotalPrice
+                            currentTotalTax
+                            email
+                            financialStatus
+                            fulfillmentStatus
+                            name
+                            orderNumber
+                            phone
+                            processedAt
+                            updatedAt
+                            test
+                            totalPrice
+                            subtotalPrice
+                            totalShippingPrice
+                            totalTax
+                        }
+                        cursor
+                    }
+                    pageInfo {
+                        hasNextPage
+                        hasPreviousPage
+                        startCursor
+                        endCursor
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+        
+<span class="fc" id="L191">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        variables.put(&quot;first&quot;, first != null ? first : 10);</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">        if (after != null) {</span>
+<span class="nc" id="L194">            variables.put(&quot;after&quot;, after);</span>
+        }
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if (query != null) {</span>
+<span class="nc" id="L197">            variables.put(&quot;query&quot;, query);</span>
+        }
+        
+<span class="fc" id="L200">        return graphQLClient.query(shop, accessToken, graphQLQuery, variables)</span>
+<span class="fc" id="L201">            .map(this::extractOrderConnectionFromResponse);</span>
+    }
+    
+    /**
+     * Marks an order as paid.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param orderId the order ID
+     * @return Mono of Order
+     */
+    public Mono&lt;Order&gt; markOrderAsPaid(String shop, String accessToken, String orderId) {
+<span class="nc" id="L213">        String mutation = &quot;&quot;&quot;</span>
+            mutation orderMarkAsPaid($input: OrderMarkAsPaidInput!) {
+                orderMarkAsPaid(input: $input) {
+                    order {
+                        id
+                        financialStatus
+                        updatedAt
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+        
+<span class="nc" id="L229">        Map&lt;String, Object&gt; input = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L230">        input.put(&quot;id&quot;, orderId);</span>
+        
+<span class="nc" id="L232">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L233">        variables.put(&quot;input&quot;, input);</span>
+        
+<span class="nc" id="L235">        return graphQLClient.query(shop, accessToken, mutation, variables)</span>
+<span class="nc" id="L236">            .map(this::extractOrderFromMutationResponse);</span>
+    }
+    
+    /**
+     * Cancels an order.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param orderId the order ID
+     * @param reason the cancellation reason
+     * @param notifyCustomer whether to notify the customer
+     * @param refund whether to refund the order
+     * @return Mono of Order
+     */
+    public Mono&lt;Order&gt; cancelOrder(String shop, String accessToken, String orderId, String reason, Boolean notifyCustomer, Boolean refund) {
+<span class="fc" id="L251">        String mutation = &quot;&quot;&quot;</span>
+            mutation orderCancel($orderId: ID!, $reason: OrderCancelReason, $notifyCustomer: Boolean, $refund: Boolean) {
+                orderCancel(orderId: $orderId, reason: $reason, notifyCustomer: $notifyCustomer, refund: $refund) {
+                    order {
+                        id
+                        cancelReason
+                        cancelledAt
+                        financialStatus
+                        fulfillmentStatus
+                        updatedAt
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+        
+<span class="fc" id="L270">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L271">        variables.put(&quot;orderId&quot;, orderId);</span>
+<span class="pc bpc" id="L272" title="1 of 2 branches missed.">        if (reason != null) {</span>
+<span class="fc" id="L273">            variables.put(&quot;reason&quot;, reason);</span>
+        }
+<span class="pc bpc" id="L275" title="1 of 2 branches missed.">        if (notifyCustomer != null) {</span>
+<span class="fc" id="L276">            variables.put(&quot;notifyCustomer&quot;, notifyCustomer);</span>
+        }
+<span class="pc bpc" id="L278" title="1 of 2 branches missed.">        if (refund != null) {</span>
+<span class="fc" id="L279">            variables.put(&quot;refund&quot;, refund);</span>
+        }
+        
+<span class="fc" id="L282">        return graphQLClient.query(shop, accessToken, mutation, variables)</span>
+<span class="fc" id="L283">            .map(this::extractOrderFromCancelResponse);</span>
+    }
+    
+    private Order extractOrderFromResponse(GraphQLResponse response) {
+        try {
+<span class="fc" id="L288">            JsonNode data = response.getData();</span>
+<span class="pc bpc" id="L289" title="1 of 4 branches missed.">            if (data != null &amp;&amp; data.has(&quot;order&quot;)) {</span>
+<span class="fc" id="L290">                JsonNode orderNode = data.get(&quot;order&quot;);</span>
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">                if (!orderNode.isNull()) {</span>
+<span class="fc" id="L292">                    return objectMapper.treeToValue(orderNode, Order.class);</span>
+                }
+            }
+<span class="fc" id="L295">            return null;</span>
+<span class="nc" id="L296">        } catch (Exception e) {</span>
+<span class="nc" id="L297">            log.error(&quot;Error extracting order from response&quot;, e);</span>
+<span class="nc" id="L298">            throw new ShopifyApiException(&quot;Failed to parse order response&quot;, e);</span>
+        }
+    }
+    
+    private OrderConnection extractOrderConnectionFromResponse(GraphQLResponse response) {
+        try {
+<span class="fc" id="L304">            JsonNode data = response.getData();</span>
+<span class="pc bpc" id="L305" title="2 of 4 branches missed.">            if (data != null &amp;&amp; data.has(&quot;orders&quot;)) {</span>
+<span class="fc" id="L306">                JsonNode ordersNode = data.get(&quot;orders&quot;);</span>
+<span class="fc" id="L307">                return objectMapper.treeToValue(ordersNode, OrderConnection.class);</span>
+            }
+<span class="nc" id="L309">            return new OrderConnection();</span>
+<span class="nc" id="L310">        } catch (Exception e) {</span>
+<span class="nc" id="L311">            log.error(&quot;Error extracting order connection from response&quot;, e);</span>
+<span class="nc" id="L312">            throw new ShopifyApiException(&quot;Failed to parse orders response&quot;, e);</span>
+        }
+    }
+    
+    private Order extractOrderFromMutationResponse(GraphQLResponse response) {
+        try {
+<span class="nc" id="L318">            JsonNode data = response.getData();</span>
+<span class="nc bnc" id="L319" title="All 4 branches missed.">            if (data != null &amp;&amp; data.has(&quot;orderMarkAsPaid&quot;)) {</span>
+<span class="nc" id="L320">                JsonNode mutationNode = data.get(&quot;orderMarkAsPaid&quot;);</span>
+                
+                // Check for user errors first
+<span class="nc bnc" id="L323" title="All 2 branches missed.">                if (mutationNode.has(&quot;userErrors&quot;)) {</span>
+<span class="nc" id="L324">                    JsonNode userErrors = mutationNode.get(&quot;userErrors&quot;);</span>
+<span class="nc bnc" id="L325" title="All 4 branches missed.">                    if (userErrors.isArray() &amp;&amp; userErrors.size() &gt; 0) {</span>
+<span class="nc" id="L326">                        StringBuilder errorMessage = new StringBuilder(&quot;Order mutation failed: &quot;);</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">                        for (JsonNode error : userErrors) {</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">                            String field = error.has(&quot;field&quot;) ? error.get(&quot;field&quot;).asText() : &quot;unknown&quot;;</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">                            String message = error.has(&quot;message&quot;) ? error.get(&quot;message&quot;).asText() : &quot;unknown error&quot;;</span>
+<span class="nc" id="L330">                            errorMessage.append(String.format(&quot;[%s: %s] &quot;, field, message));</span>
+<span class="nc" id="L331">                        }</span>
+<span class="nc" id="L332">                        throw new ShopifyApiException(errorMessage.toString());</span>
+                    }
+                }
+                
+                // Extract the order
+<span class="nc bnc" id="L337" title="All 2 branches missed.">                if (mutationNode.has(&quot;order&quot;)) {</span>
+<span class="nc" id="L338">                    JsonNode orderNode = mutationNode.get(&quot;order&quot;);</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">                    if (!orderNode.isNull()) {</span>
+<span class="nc" id="L340">                        return objectMapper.treeToValue(orderNode, Order.class);</span>
+                    }
+                }
+            }
+<span class="nc" id="L344">            return null;</span>
+<span class="nc" id="L345">        } catch (ShopifyApiException e) {</span>
+<span class="nc" id="L346">            throw e;</span>
+<span class="nc" id="L347">        } catch (Exception e) {</span>
+<span class="nc" id="L348">            log.error(&quot;Error extracting order from mutation response&quot;, e);</span>
+<span class="nc" id="L349">            throw new ShopifyApiException(&quot;Failed to parse order mutation response&quot;, e);</span>
+        }
+    }
+    
+    private Order extractOrderFromCancelResponse(GraphQLResponse response) {
+        try {
+<span class="fc" id="L355">            JsonNode data = response.getData();</span>
+<span class="pc bpc" id="L356" title="2 of 4 branches missed.">            if (data != null &amp;&amp; data.has(&quot;orderCancel&quot;)) {</span>
+<span class="fc" id="L357">                JsonNode mutationNode = data.get(&quot;orderCancel&quot;);</span>
+                
+                // Check for user errors first
+<span class="pc bpc" id="L360" title="1 of 2 branches missed.">                if (mutationNode.has(&quot;userErrors&quot;)) {</span>
+<span class="fc" id="L361">                    JsonNode userErrors = mutationNode.get(&quot;userErrors&quot;);</span>
+<span class="pc bpc" id="L362" title="2 of 4 branches missed.">                    if (userErrors.isArray() &amp;&amp; userErrors.size() &gt; 0) {</span>
+<span class="nc" id="L363">                        StringBuilder errorMessage = new StringBuilder(&quot;Order cancellation failed: &quot;);</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">                        for (JsonNode error : userErrors) {</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">                            String field = error.has(&quot;field&quot;) ? error.get(&quot;field&quot;).asText() : &quot;unknown&quot;;</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">                            String message = error.has(&quot;message&quot;) ? error.get(&quot;message&quot;).asText() : &quot;unknown error&quot;;</span>
+<span class="nc" id="L367">                            errorMessage.append(String.format(&quot;[%s: %s] &quot;, field, message));</span>
+<span class="nc" id="L368">                        }</span>
+<span class="nc" id="L369">                        throw new ShopifyApiException(errorMessage.toString());</span>
+                    }
+                }
+                
+                // Extract the order
+<span class="pc bpc" id="L374" title="1 of 2 branches missed.">                if (mutationNode.has(&quot;order&quot;)) {</span>
+<span class="fc" id="L375">                    JsonNode orderNode = mutationNode.get(&quot;order&quot;);</span>
+<span class="pc bpc" id="L376" title="1 of 2 branches missed.">                    if (!orderNode.isNull()) {</span>
+<span class="fc" id="L377">                        return objectMapper.treeToValue(orderNode, Order.class);</span>
+                    }
+                }
+            }
+<span class="nc" id="L381">            return null;</span>
+<span class="nc" id="L382">        } catch (ShopifyApiException e) {</span>
+<span class="nc" id="L383">            throw e;</span>
+<span class="nc" id="L384">        } catch (Exception e) {</span>
+<span class="nc" id="L385">            log.error(&quot;Error extracting order from cancel response&quot;, e);</span>
+<span class="nc" id="L386">            throw new ShopifyApiException(&quot;Failed to parse order cancel response&quot;, e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShopifyAutoConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.config</a> &gt; <span class="el_source">ShopifyAutoConfiguration.java</span></div><h1>ShopifyAutoConfiguration.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.shopify.sdk.ShopifyApi;
+import com.shopify.sdk.client.HttpClientConfig;
+import com.shopify.sdk.client.HttpClientService;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.client.ShopifyRestClient;
+import com.shopify.sdk.client.graphql.GraphQLClient;
+import com.shopify.sdk.client.rest.RestClient;
+import com.shopify.sdk.client.rest.RestClientImpl;
+import com.shopify.sdk.auth.ShopifyOAuth;
+import com.shopify.sdk.auth.JwtTokenValidator;
+import com.shopify.sdk.session.SessionManager;
+import com.shopify.sdk.session.SessionStore;
+import com.shopify.sdk.session.InMemorySessionStore;
+import com.shopify.sdk.service.order.OrderService;
+import com.shopify.sdk.service.product.ProductService;
+import com.shopify.sdk.service.rest.RestOrderService;
+import com.shopify.sdk.service.rest.RestProductService;
+import com.shopify.sdk.service.billing.BillingService;
+import com.shopify.sdk.service.inventory.InventoryService;
+import com.shopify.sdk.service.fulfillment.FulfillmentService;
+import com.shopify.sdk.service.metafield.MetafieldService;
+import com.shopify.sdk.service.location.LocationService;
+import com.shopify.sdk.service.discount.DiscountService;
+import com.shopify.sdk.service.giftcard.GiftCardService;
+import com.shopify.sdk.service.draftorder.DraftOrderService;
+import com.shopify.sdk.service.bulk.BulkOperationService;
+import com.shopify.sdk.service.file.FileUploadService;
+import com.shopify.sdk.service.proxy.AppProxyService;
+import com.shopify.sdk.service.scripttag.ScriptTagService;
+import com.shopify.sdk.ratelimit.RateLimitConfig;
+import com.shopify.sdk.ratelimit.RateLimitService;
+import com.shopify.sdk.retry.RetryConfig;
+import com.shopify.sdk.retry.RetryService;
+import com.shopify.sdk.monitoring.MonitoringService;
+import com.shopify.sdk.webhook.WebhookProcessor;
+import com.shopify.sdk.webhook.WebhookHandler;
+import com.shopify.sdk.webhook.DefaultWebhookHandler;
+import com.shopify.sdk.webhook.BillingWebhookHandler;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
+
+/**
+ * Auto-configuration for Shopify SDK.
+ */
+@Configuration
+@EnableConfigurationProperties(ShopifyProperties.class)
+<span class="nc" id="L56">public class ShopifyAutoConfiguration {</span>
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ObjectMapper shopifyObjectMapper() {
+<span class="nc" id="L61">        ObjectMapper mapper = new ObjectMapper();</span>
+<span class="nc" id="L62">        mapper.registerModule(new JavaTimeModule());</span>
+<span class="nc" id="L63">        return mapper;</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ShopifyConfigFactory shopifyConfigFactory() {
+<span class="nc" id="L69">        return new ShopifyConfigFactory();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ShopifyAuthContext shopifyAuthContext(ShopifyProperties properties, ShopifyConfigFactory configFactory) {
+<span class="nc" id="L75">        return configFactory.createContext(properties);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public HttpClientConfig httpClientConfig() {
+<span class="nc" id="L81">        return new HttpClientConfig();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public HttpClientService httpClientService(HttpClientConfig httpClientConfig) {
+<span class="nc" id="L87">        return new HttpClientService(httpClientConfig);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public GraphQLClient graphQLClient(HttpClientConfig httpClientConfig, ObjectMapper objectMapper) {
+<span class="nc" id="L93">        return new GraphQLClient(httpClientConfig, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ShopifyGraphQLClient shopifyGraphQLClient(GraphQLClient graphQLClient, ShopifyAuthContext context) {
+<span class="nc" id="L99">        return new ShopifyGraphQLClient(graphQLClient, context);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public RestClient restClient(HttpClientConfig httpClientConfig, ObjectMapper objectMapper) {
+<span class="nc" id="L105">        return new RestClientImpl(httpClientConfig, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ShopifyRestClient shopifyRestClient(RestClient restClient, ShopifyAuthContext context) {
+<span class="nc" id="L111">        return new ShopifyRestClient(restClient, context);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ProductService productService(ShopifyGraphQLClient shopifyGraphQLClient, ObjectMapper objectMapper) {
+<span class="nc" id="L117">        return new ProductService(shopifyGraphQLClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public OrderService orderService(ShopifyGraphQLClient shopifyGraphQLClient, ObjectMapper objectMapper) {
+<span class="nc" id="L123">        return new OrderService(shopifyGraphQLClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public RestProductService restProductService(ShopifyRestClient shopifyRestClient, ObjectMapper objectMapper) {
+<span class="nc" id="L129">        return new RestProductService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public RestOrderService restOrderService(ShopifyRestClient shopifyRestClient, ObjectMapper objectMapper) {
+<span class="nc" id="L135">        return new RestOrderService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public JwtTokenValidator jwtTokenValidator(ShopifyAuthContext context) {
+<span class="nc" id="L141">        return new JwtTokenValidator(context);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ShopifyOAuth shopifyOAuth(ShopifyAuthContext context) {
+<span class="nc" id="L147">        return new ShopifyOAuth(context);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public SessionStore sessionStore() {
+<span class="nc" id="L153">        return new InMemorySessionStore();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public SessionManager sessionManager(SessionStore sessionStore, JwtTokenValidator jwtTokenValidator) {
+<span class="nc" id="L159">        return new SessionManager(sessionStore, jwtTokenValidator);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public WebhookProcessor webhookProcessor(ShopifyAuthContext context, 
+                                           ShopifyOAuth shopifyOAuth, 
+                                           ObjectMapper objectMapper, 
+                                           List&lt;WebhookHandler&gt; webhookHandlers) {
+<span class="nc" id="L168">        return new WebhookProcessor(context, shopifyOAuth, objectMapper, webhookHandlers);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public BillingService billingService(ShopifyGraphQLClient shopifyGraphQLClient, 
+                                       ShopifyRestClient shopifyRestClient, 
+                                       ObjectMapper objectMapper) {
+<span class="nc" id="L176">        return new BillingService(shopifyGraphQLClient, shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public InventoryService inventoryService(ShopifyGraphQLClient shopifyGraphQLClient, 
+                                           ShopifyRestClient shopifyRestClient, 
+                                           ObjectMapper objectMapper) {
+<span class="nc" id="L184">        return new InventoryService(shopifyGraphQLClient, shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public FulfillmentService fulfillmentService(ShopifyRestClient shopifyRestClient, 
+                                                ObjectMapper objectMapper) {
+<span class="nc" id="L191">        return new FulfillmentService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public MetafieldService metafieldService(ShopifyGraphQLClient shopifyGraphQLClient, 
+                                           ShopifyRestClient shopifyRestClient, 
+                                           ObjectMapper objectMapper) {
+<span class="nc" id="L199">        return new MetafieldService(shopifyGraphQLClient, shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public LocationService locationService(ShopifyRestClient shopifyRestClient, 
+                                         ObjectMapper objectMapper) {
+<span class="nc" id="L206">        return new LocationService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public DiscountService discountService(ShopifyRestClient shopifyRestClient, 
+                                         ObjectMapper objectMapper) {
+<span class="nc" id="L213">        return new DiscountService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public GiftCardService giftCardService(ShopifyRestClient shopifyRestClient, 
+                                         ObjectMapper objectMapper) {
+<span class="nc" id="L220">        return new GiftCardService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public DraftOrderService draftOrderService(ShopifyRestClient shopifyRestClient, 
+                                              ObjectMapper objectMapper) {
+<span class="nc" id="L227">        return new DraftOrderService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public BulkOperationService bulkOperationService(ShopifyGraphQLClient shopifyGraphQLClient, 
+                                                   ObjectMapper objectMapper) {
+<span class="nc" id="L234">        return new BulkOperationService(shopifyGraphQLClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public WebClient fileUploadWebClient() {
+<span class="nc" id="L240">        return WebClient.builder().build();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public FileUploadService fileUploadService(ShopifyGraphQLClient shopifyGraphQLClient, 
+                                             ObjectMapper objectMapper,
+                                             WebClient fileUploadWebClient) {
+<span class="nc" id="L248">        return new FileUploadService(shopifyGraphQLClient, objectMapper, fileUploadWebClient);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public AppProxyService appProxyService(ShopifyAuthContext context) {
+<span class="nc" id="L254">        return new AppProxyService(context);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ScriptTagService scriptTagService(ShopifyRestClient shopifyRestClient, 
+                                           ObjectMapper objectMapper) {
+<span class="nc" id="L261">        return new ScriptTagService(shopifyRestClient, objectMapper);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public RateLimitConfig rateLimitConfig() {
+<span class="nc" id="L267">        return RateLimitConfig.builder().build();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public RateLimitService rateLimitService(RateLimitConfig rateLimitConfig) {
+<span class="nc" id="L273">        return new RateLimitService(rateLimitConfig);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public RetryConfig retryConfig() {
+<span class="nc" id="L279">        return RetryConfig.builder().build();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public RetryService retryService(RetryConfig retryConfig) {
+<span class="nc" id="L285">        return new RetryService(retryConfig);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public MonitoringService monitoringService() {
+<span class="nc" id="L291">        return new MonitoringService();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public BillingWebhookHandler billingWebhookHandler(BillingService billingService) {
+<span class="nc" id="L297">        return new BillingWebhookHandler(billingService);</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public DefaultWebhookHandler defaultWebhookHandler() {
+<span class="nc" id="L303">        return new DefaultWebhookHandler();</span>
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ShopifyApi shopifyApi(ShopifyAuthContext context, 
+                                 ShopifyGraphQLClient graphQLClient,
+                                 ShopifyRestClient restClient,
+                                 ProductService productService,
+                                 OrderService orderService,
+                                 RestProductService restProductService,
+                                 RestOrderService restOrderService,
+                                 BillingService billingService,
+                                 InventoryService inventoryService,
+                                 FulfillmentService fulfillmentService,
+                                 MetafieldService metafieldService,
+                                 LocationService locationService,
+                                 DiscountService discountService,
+                                 GiftCardService giftCardService,
+                                 DraftOrderService draftOrderService,
+                                 BulkOperationService bulkOperationService,
+                                 FileUploadService fileUploadService,
+                                 AppProxyService appProxyService,
+                                 ScriptTagService scriptTagService,
+                                 RateLimitService rateLimitService,
+                                 RetryService retryService,
+                                 MonitoringService monitoringService,
+                                 ShopifyOAuth shopifyOAuth,
+                                 JwtTokenValidator jwtTokenValidator,
+                                 SessionManager sessionManager,
+                                 WebhookProcessor webhookProcessor) {
+<span class="nc" id="L334">        return new ShopifyApi(context, graphQLClient, restClient, productService, orderService, </span>
+                             restProductService, restOrderService, billingService, inventoryService,
+                             fulfillmentService, metafieldService, locationService, discountService,
+                             giftCardService, draftOrderService, bulkOperationService, fileUploadService,
+                             appProxyService, scriptTagService, rateLimitService, retryService, 
+                             monitoringService, shopifyOAuth, jwtTokenValidator, sessionManager,
+                             webhookProcessor);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

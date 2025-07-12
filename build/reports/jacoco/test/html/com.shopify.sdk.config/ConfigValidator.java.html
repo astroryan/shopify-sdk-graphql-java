@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.config</a> &gt; <span class="el_source">ConfigValidator.java</span></div><h1>ConfigValidator.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.config;
+
+import com.shopify.sdk.exception.ShopifyConfigException;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Validates Shopify SDK configuration.
+ * Maps to Node.js validateConfig function.
+ */
+public class ConfigValidator {
+    
+    private ConfigValidator() {
+        // Utility class
+    }
+    
+    /**
+     * Validates the provided configuration and throws an exception if invalid.
+     *
+     * @param context the configuration to validate
+     * @throws ShopifyConfigException if the configuration is invalid
+     */
+    public static void validate(ShopifyAuthContext context) {
+<span class="nc" id="L26">        List&lt;String&gt; missingFields = new ArrayList&lt;&gt;();</span>
+        
+        // Always required fields
+<span class="nc bnc" id="L29" title="All 2 branches missed.">        if (!StringUtils.hasText(context.getApiSecretKey())) {</span>
+<span class="nc" id="L30">            missingFields.add(&quot;apiSecretKey&quot;);</span>
+        }
+        
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (!StringUtils.hasText(context.getHostName())) {</span>
+<span class="nc" id="L34">            missingFields.add(&quot;hostName&quot;);</span>
+        }
+        
+        // Fields required for non-custom store apps
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (!context.isCustomStoreApp()) {</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">            if (!StringUtils.hasText(context.getApiKey())) {</span>
+<span class="nc" id="L40">                missingFields.add(&quot;apiKey&quot;);</span>
+            }
+        }
+        
+        // Fields required for custom store apps
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        if (context.isCustomStoreApp()) {</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">            if (!StringUtils.hasText(context.getAdminApiAccessToken())) {</span>
+<span class="nc" id="L47">                missingFields.add(&quot;adminApiAccessToken&quot;);</span>
+            }
+        }
+        
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (!missingFields.isEmpty()) {</span>
+<span class="nc" id="L52">            throw new ShopifyConfigException(</span>
+                &quot;Cannot initialize Shopify API Library. Missing values for: &quot; + 
+<span class="nc" id="L54">                String.join(&quot;, &quot;, missingFields)</span>
+            );
+        }
+        
+        // Validate host name format
+<span class="nc" id="L59">        validateHostName(context.getHostName());</span>
+        
+        // Validate API version
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if (context.getApiVersion() == null) {</span>
+<span class="nc" id="L63">            throw new ShopifyConfigException(&quot;API version cannot be null&quot;);</span>
+        }
+        
+        // Warn if adminApiAccessToken equals apiSecretKey for custom store apps
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (context.isCustomStoreApp() &amp;&amp; </span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            context.getAdminApiAccessToken() != null &amp;&amp;</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">            context.getAdminApiAccessToken().equals(context.getApiSecretKey())) {</span>
+            // This should be logged as a warning, but we'll just validate for now
+        }
+<span class="nc" id="L72">    }</span>
+    
+    private static void validateHostName(String hostName) {
+<span class="nc bnc" id="L75" title="All 4 branches missed.">        if (hostName == null || hostName.trim().isEmpty()) {</span>
+<span class="nc" id="L76">            throw new ShopifyConfigException(&quot;Host name cannot be empty&quot;);</span>
+        }
+        
+        // Remove trailing slash for validation
+<span class="nc" id="L80">        String cleanHostName = hostName.replaceAll(&quot;/$&quot;, &quot;&quot;);</span>
+        
+        // Basic validation - should not contain protocol
+<span class="nc bnc" id="L83" title="All 4 branches missed.">        if (cleanHostName.startsWith(&quot;http://&quot;) || cleanHostName.startsWith(&quot;https://&quot;)) {</span>
+<span class="nc" id="L84">            throw new ShopifyConfigException(</span>
+                &quot;Host name should not include protocol (http/https). Use hostScheme instead.&quot;
+            );
+        }
+        
+        // Should not contain path
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (cleanHostName.contains(&quot;/&quot;)) {</span>
+<span class="nc" id="L91">            throw new ShopifyConfigException(</span>
+                &quot;Host name should not include path. Only domain name is allowed.&quot;
+            );
+        }
+<span class="nc" id="L95">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

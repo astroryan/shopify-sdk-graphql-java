@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileUploadService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.service.file</a> &gt; <span class="el_source">FileUploadService.java</span></div><h1>FileUploadService.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.service.file;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.model.file.StagedUpload;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.Map;
+
+<span class="nc" id="L25">@Slf4j</span>
+@Service
+<span class="nc" id="L27">@RequiredArgsConstructor</span>
+public class FileUploadService {
+    
+    private final ShopifyGraphQLClient graphQLClient;
+    private final ObjectMapper objectMapper;
+    private final WebClient webClient;
+    
+    // GraphQL mutations
+    private static final String STAGED_UPLOADS_CREATE = &quot;&quot;&quot;
+        mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+            stagedUploadsCreate(input: $input) {
+                stagedTargets {
+                    url
+                    resourceUrl
+                    parameters {
+                        name
+                        value
+                    }
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    /**
+     * Creates staged upload targets for files.
+     */
+    public Mono&lt;List&lt;StagedUpload&gt;&gt; createStagedUploads(String shop, String accessToken, List&lt;StagedUploadInput&gt; inputs) {
+<span class="nc" id="L58">        Map&lt;String, Object&gt; variables = Map.of(&quot;input&quot;, inputs);</span>
+        
+<span class="nc" id="L60">        return graphQLClient.query(shop, accessToken, STAGED_UPLOADS_CREATE, variables)</span>
+<span class="nc" id="L61">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L63">                    var data = response.getData().get(&quot;stagedUploadsCreate&quot;);</span>
+<span class="nc" id="L64">                    var stagedTargets = data.get(&quot;stagedTargets&quot;);</span>
+                    
+                    // Check for user errors
+<span class="nc" id="L67">                    var userErrors = data.get(&quot;userErrors&quot;);</span>
+<span class="nc bnc" id="L68" title="All 4 branches missed.">                    if (userErrors.isArray() &amp;&amp; userErrors.size() &gt; 0) {</span>
+<span class="nc" id="L69">                        String errorMessage = userErrors.get(0).get(&quot;message&quot;).asText();</span>
+<span class="nc" id="L70">                        throw new RuntimeException(&quot;Staged upload creation failed: &quot; + errorMessage);</span>
+                    }
+                    
+<span class="nc" id="L73">                    return objectMapper.convertValue(stagedTargets,</span>
+<span class="nc" id="L74">                        objectMapper.getTypeFactory().constructCollectionType(List.class, StagedUpload.class));</span>
+<span class="nc" id="L75">                } catch (Exception e) {</span>
+<span class="nc" id="L76">                    log.error(&quot;Failed to parse staged uploads create response&quot;, e);</span>
+<span class="nc" id="L77">                    throw new RuntimeException(&quot;Failed to parse staged uploads create response&quot;, e);</span>
+                }
+            });
+    }
+    
+    /**
+     * Creates a single staged upload target.
+     */
+    public Mono&lt;StagedUpload&gt; createStagedUpload(String shop, String accessToken, StagedUploadInput input) {
+<span class="nc" id="L86">        return createStagedUploads(shop, accessToken, List.of(input))</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            .map(uploads -&gt; uploads.isEmpty() ? null : uploads.get(0));</span>
+    }
+    
+    /**
+     * Uploads a file to a staged upload target.
+     */
+    public Mono&lt;String&gt; uploadFile(StagedUpload stagedUpload, File file) {
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (!stagedUpload.hasRequiredParameters()) {</span>
+<span class="nc" id="L95">            return Mono.error(new IllegalArgumentException(&quot;Staged upload missing required parameters&quot;));</span>
+        }
+        
+        try {
+<span class="nc" id="L99">            MultipartBodyBuilder builder = new MultipartBodyBuilder();</span>
+            
+            // Add all staged upload parameters
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            for (StagedUpload.Parameter param : stagedUpload.getParameters()) {</span>
+<span class="nc" id="L103">                builder.part(param.getName(), param.getValue());</span>
+<span class="nc" id="L104">            }</span>
+            
+            // Add the file
+<span class="nc" id="L107">            builder.part(&quot;file&quot;, Files.readAllBytes(file.toPath()))</span>
+<span class="nc" id="L108">                .filename(file.getName())</span>
+<span class="nc" id="L109">                .contentType(MediaType.APPLICATION_OCTET_STREAM);</span>
+            
+<span class="nc" id="L111">            return webClient.post()</span>
+<span class="nc" id="L112">                .uri(stagedUpload.getUrl())</span>
+<span class="nc" id="L113">                .contentType(MediaType.MULTIPART_FORM_DATA)</span>
+<span class="nc" id="L114">                .body(BodyInserters.fromMultipartData(builder.build()))</span>
+<span class="nc" id="L115">                .retrieve()</span>
+<span class="nc" id="L116">                .toBodilessEntity()</span>
+<span class="nc" id="L117">                .map(response -&gt; {</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">                    if (response.getStatusCode().is2xxSuccessful()) {</span>
+<span class="nc" id="L119">                        return stagedUpload.getResourceUrl();</span>
+                    } else {
+<span class="nc" id="L121">                        throw new RuntimeException(&quot;File upload failed with status: &quot; + response.getStatusCode());</span>
+                    }
+                })
+<span class="nc" id="L124">                .doOnSuccess(resourceUrl -&gt; log.info(&quot;Successfully uploaded file {} to {}&quot;, file.getName(), resourceUrl))</span>
+<span class="nc" id="L125">                .doOnError(error -&gt; log.error(&quot;Failed to upload file {}&quot;, file.getName(), error));</span>
+                
+<span class="nc" id="L127">        } catch (IOException e) {</span>
+<span class="nc" id="L128">            return Mono.error(new RuntimeException(&quot;Failed to read file: &quot; + file.getName(), e));</span>
+        }
+    }
+    
+    /**
+     * Uploads a file from a Resource.
+     */
+    public Mono&lt;String&gt; uploadFile(StagedUpload stagedUpload, Resource resource, String filename) {
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (!stagedUpload.hasRequiredParameters()) {</span>
+<span class="nc" id="L137">            return Mono.error(new IllegalArgumentException(&quot;Staged upload missing required parameters&quot;));</span>
+        }
+        
+        try {
+<span class="nc" id="L141">            MultipartBodyBuilder builder = new MultipartBodyBuilder();</span>
+            
+            // Add all staged upload parameters
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            for (StagedUpload.Parameter param : stagedUpload.getParameters()) {</span>
+<span class="nc" id="L145">                builder.part(param.getName(), param.getValue());</span>
+<span class="nc" id="L146">            }</span>
+            
+            // Add the file
+<span class="nc" id="L149">            builder.part(&quot;file&quot;, resource)</span>
+<span class="nc" id="L150">                .filename(filename)</span>
+<span class="nc" id="L151">                .contentType(MediaType.APPLICATION_OCTET_STREAM);</span>
+            
+<span class="nc" id="L153">            return webClient.post()</span>
+<span class="nc" id="L154">                .uri(stagedUpload.getUrl())</span>
+<span class="nc" id="L155">                .contentType(MediaType.MULTIPART_FORM_DATA)</span>
+<span class="nc" id="L156">                .body(BodyInserters.fromMultipartData(builder.build()))</span>
+<span class="nc" id="L157">                .retrieve()</span>
+<span class="nc" id="L158">                .toBodilessEntity()</span>
+<span class="nc" id="L159">                .map(response -&gt; {</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">                    if (response.getStatusCode().is2xxSuccessful()) {</span>
+<span class="nc" id="L161">                        return stagedUpload.getResourceUrl();</span>
+                    } else {
+<span class="nc" id="L163">                        throw new RuntimeException(&quot;File upload failed with status: &quot; + response.getStatusCode());</span>
+                    }
+                })
+<span class="nc" id="L166">                .doOnSuccess(resourceUrl -&gt; log.info(&quot;Successfully uploaded resource {} to {}&quot;, filename, resourceUrl))</span>
+<span class="nc" id="L167">                .doOnError(error -&gt; log.error(&quot;Failed to upload resource {}&quot;, filename, error));</span>
+                
+<span class="nc" id="L169">        } catch (Exception e) {</span>
+<span class="nc" id="L170">            return Mono.error(new RuntimeException(&quot;Failed to upload resource: &quot; + filename, e));</span>
+        }
+    }
+    
+    /**
+     * Uploads a file with automatic staged upload creation.
+     */
+    public Mono&lt;String&gt; uploadFileWithStaging(String shop, String accessToken, File file, String purpose) {
+<span class="nc" id="L178">        StagedUploadInput input = StagedUploadInput.builder()</span>
+<span class="nc" id="L179">            .filename(file.getName())</span>
+<span class="nc" id="L180">            .mimeType(getMimeType(file))</span>
+<span class="nc" id="L181">            .httpMethod(&quot;POST&quot;)</span>
+<span class="nc" id="L182">            .resource(purpose)</span>
+<span class="nc" id="L183">            .build();</span>
+        
+<span class="nc" id="L185">        return createStagedUpload(shop, accessToken, input)</span>
+<span class="nc" id="L186">            .flatMap(stagedUpload -&gt; uploadFile(stagedUpload, file));</span>
+    }
+    
+    /**
+     * Uploads a Resource with automatic staged upload creation.
+     */
+    public Mono&lt;String&gt; uploadResourceWithStaging(String shop, String accessToken, Resource resource, 
+                                                 String filename, String purpose) {
+<span class="nc" id="L194">        StagedUploadInput input = StagedUploadInput.builder()</span>
+<span class="nc" id="L195">            .filename(filename)</span>
+<span class="nc" id="L196">            .mimeType(getMimeType(filename))</span>
+<span class="nc" id="L197">            .httpMethod(&quot;POST&quot;)</span>
+<span class="nc" id="L198">            .resource(purpose)</span>
+<span class="nc" id="L199">            .build();</span>
+        
+<span class="nc" id="L201">        return createStagedUpload(shop, accessToken, input)</span>
+<span class="nc" id="L202">            .flatMap(stagedUpload -&gt; uploadFile(stagedUpload, resource, filename));</span>
+    }
+    
+    /**
+     * Creates a staged upload for bulk operation files.
+     */
+    public Mono&lt;StagedUpload&gt; createBulkUploadTarget(String shop, String accessToken, String filename) {
+<span class="nc" id="L209">        StagedUploadInput input = StagedUploadInput.builder()</span>
+<span class="nc" id="L210">            .filename(filename)</span>
+<span class="nc" id="L211">            .mimeType(&quot;application/jsonl&quot;)  // JSONL format for bulk operations</span>
+<span class="nc" id="L212">            .httpMethod(&quot;POST&quot;)</span>
+<span class="nc" id="L213">            .resource(&quot;BULK_MUTATION_VARIABLES&quot;)</span>
+<span class="nc" id="L214">            .build();</span>
+        
+<span class="nc" id="L216">        return createStagedUpload(shop, accessToken, input);</span>
+    }
+    
+    /**
+     * Creates a staged upload for general file uploads.
+     */
+    public Mono&lt;StagedUpload&gt; createFileUploadTarget(String shop, String accessToken, String filename, String mimeType) {
+<span class="nc" id="L223">        StagedUploadInput input = StagedUploadInput.builder()</span>
+<span class="nc" id="L224">            .filename(filename)</span>
+<span class="nc" id="L225">            .mimeType(mimeType)</span>
+<span class="nc" id="L226">            .httpMethod(&quot;POST&quot;)</span>
+<span class="nc" id="L227">            .resource(&quot;FILE&quot;)</span>
+<span class="nc" id="L228">            .build();</span>
+        
+<span class="nc" id="L230">        return createStagedUpload(shop, accessToken, input);</span>
+    }
+    
+    /**
+     * Determines MIME type from file.
+     */
+    private String getMimeType(File file) {
+        try {
+<span class="nc" id="L238">            String mimeType = Files.probeContentType(file.toPath());</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">            return mimeType != null ? mimeType : &quot;application/octet-stream&quot;;</span>
+<span class="nc" id="L240">        } catch (IOException e) {</span>
+<span class="nc" id="L241">            return &quot;application/octet-stream&quot;;</span>
+        }
+    }
+    
+    /**
+     * Determines MIME type from filename.
+     */
+    private String getMimeType(String filename) {
+<span class="nc" id="L249">        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();</span>
+<span class="nc bnc" id="L250" title="All 10 branches missed.">        return switch (extension) {</span>
+<span class="nc" id="L251">            case &quot;json&quot; -&gt; &quot;application/json&quot;;</span>
+<span class="nc" id="L252">            case &quot;jsonl&quot; -&gt; &quot;application/jsonl&quot;;</span>
+<span class="nc" id="L253">            case &quot;csv&quot; -&gt; &quot;text/csv&quot;;</span>
+<span class="nc" id="L254">            case &quot;txt&quot; -&gt; &quot;text/plain&quot;;</span>
+<span class="nc" id="L255">            case &quot;pdf&quot; -&gt; &quot;application/pdf&quot;;</span>
+<span class="nc" id="L256">            case &quot;jpg&quot;, &quot;jpeg&quot; -&gt; &quot;image/jpeg&quot;;</span>
+<span class="nc" id="L257">            case &quot;png&quot; -&gt; &quot;image/png&quot;;</span>
+<span class="nc" id="L258">            case &quot;gif&quot; -&gt; &quot;image/gif&quot;;</span>
+<span class="nc" id="L259">            case &quot;svg&quot; -&gt; &quot;image/svg+xml&quot;;</span>
+<span class="nc" id="L260">            default -&gt; &quot;application/octet-stream&quot;;</span>
+        };
+    }
+    
+    /**
+     * Input for creating staged uploads.
+     */
+<span class="nc bnc" id="L267" title="All 38 branches missed.">    @lombok.Data</span>
+<span class="nc" id="L268">    @lombok.Builder</span>
+<span class="nc" id="L269">    @lombok.NoArgsConstructor</span>
+<span class="nc" id="L270">    @lombok.AllArgsConstructor</span>
+    public static class StagedUploadInput {
+<span class="nc" id="L272">        private String filename;</span>
+<span class="nc" id="L273">        private String mimeType;</span>
+<span class="nc" id="L274">        private String httpMethod;</span>
+<span class="nc" id="L275">        private String resource;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiMetrics.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.monitoring</a> &gt; <span class="el_source">ApiMetrics.java</span></div><h1>ApiMetrics.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.monitoring;
+
+import lombok.Data;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
+
+/**
+ * Tracks API metrics and statistics.
+ */
+<span class="nc bnc" id="L13" title="All 116 branches missed.">@Data</span>
+public class ApiMetrics {
+    
+    // Request counters
+<span class="nc" id="L17">    private final LongAdder totalRequests = new LongAdder();</span>
+<span class="nc" id="L18">    private final LongAdder successfulRequests = new LongAdder();</span>
+<span class="nc" id="L19">    private final LongAdder failedRequests = new LongAdder();</span>
+<span class="nc" id="L20">    private final LongAdder retryAttempts = new LongAdder();</span>
+<span class="nc" id="L21">    private final LongAdder rateLimitedRequests = new LongAdder();</span>
+    
+    // Timing statistics
+<span class="nc" id="L24">    private final AtomicLong totalResponseTimeMs = new AtomicLong(0);</span>
+<span class="nc" id="L25">    private final AtomicLong minResponseTimeMs = new AtomicLong(Long.MAX_VALUE);</span>
+<span class="nc" id="L26">    private final AtomicLong maxResponseTimeMs = new AtomicLong(0);</span>
+    
+    // Error statistics
+<span class="nc" id="L29">    private final LongAdder timeoutErrors = new LongAdder();</span>
+<span class="nc" id="L30">    private final LongAdder connectionErrors = new LongAdder();</span>
+<span class="nc" id="L31">    private final LongAdder authenticationErrors = new LongAdder();</span>
+<span class="nc" id="L32">    private final LongAdder serverErrors = new LongAdder();</span>
+<span class="nc" id="L33">    private final LongAdder clientErrors = new LongAdder();</span>
+    
+    // Rate limiting statistics
+<span class="nc" id="L36">    private final AtomicLong totalRateLimitWaitTimeMs = new AtomicLong(0);</span>
+<span class="nc" id="L37">    private final AtomicLong maxRateLimitWaitTimeMs = new AtomicLong(0);</span>
+    
+    // Timestamps
+<span class="nc" id="L40">    private final Instant startTime = Instant.now();</span>
+<span class="nc" id="L41">    private volatile Instant lastRequestTime = Instant.now();</span>
+<span class="nc" id="L42">    private volatile Instant lastSuccessTime;</span>
+<span class="nc" id="L43">    private volatile Instant lastFailureTime;</span>
+    
+    /**
+     * Records a request attempt.
+     */
+    public void recordRequest() {
+<span class="nc" id="L49">        totalRequests.increment();</span>
+<span class="nc" id="L50">        lastRequestTime = Instant.now();</span>
+<span class="nc" id="L51">    }</span>
+    
+    /**
+     * Records a successful request.
+     */
+    public void recordSuccess(Duration responseTime) {
+<span class="nc" id="L57">        successfulRequests.increment();</span>
+<span class="nc" id="L58">        lastSuccessTime = Instant.now();</span>
+<span class="nc" id="L59">        recordResponseTime(responseTime);</span>
+<span class="nc" id="L60">    }</span>
+    
+    /**
+     * Records a failed request.
+     */
+    public void recordFailure(Duration responseTime, Throwable error) {
+<span class="nc" id="L66">        failedRequests.increment();</span>
+<span class="nc" id="L67">        lastFailureTime = Instant.now();</span>
+        
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (responseTime != null) {</span>
+<span class="nc" id="L70">            recordResponseTime(responseTime);</span>
+        }
+        
+        // Categorize the error
+<span class="nc" id="L74">        categorizeError(error);</span>
+<span class="nc" id="L75">    }</span>
+    
+    /**
+     * Records a retry attempt.
+     */
+    public void recordRetry() {
+<span class="nc" id="L81">        retryAttempts.increment();</span>
+<span class="nc" id="L82">    }</span>
+    
+    /**
+     * Records rate limiting occurrence.
+     */
+    public void recordRateLimit(Duration waitTime) {
+<span class="nc" id="L88">        rateLimitedRequests.increment();</span>
+        
+<span class="nc" id="L90">        long waitTimeMs = waitTime.toMillis();</span>
+<span class="nc" id="L91">        totalRateLimitWaitTimeMs.addAndGet(waitTimeMs);</span>
+        
+        // Update max wait time
+<span class="nc" id="L94">        long currentMax = maxRateLimitWaitTimeMs.get();</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        while (waitTimeMs &gt; currentMax) {</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">            if (maxRateLimitWaitTimeMs.compareAndSet(currentMax, waitTimeMs)) {</span>
+<span class="nc" id="L97">                break;</span>
+            }
+<span class="nc" id="L99">            currentMax = maxRateLimitWaitTimeMs.get();</span>
+        }
+<span class="nc" id="L101">    }</span>
+    
+    /**
+     * Records response time.
+     */
+    private void recordResponseTime(Duration responseTime) {
+<span class="nc" id="L107">        long responseTimeMs = responseTime.toMillis();</span>
+        
+<span class="nc" id="L109">        totalResponseTimeMs.addAndGet(responseTimeMs);</span>
+        
+        // Update min response time
+<span class="nc" id="L112">        long currentMin = minResponseTimeMs.get();</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        while (responseTimeMs &lt; currentMin) {</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">            if (minResponseTimeMs.compareAndSet(currentMin, responseTimeMs)) {</span>
+<span class="nc" id="L115">                break;</span>
+            }
+<span class="nc" id="L117">            currentMin = minResponseTimeMs.get();</span>
+        }
+        
+        // Update max response time
+<span class="nc" id="L121">        long currentMax = maxResponseTimeMs.get();</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        while (responseTimeMs &gt; currentMax) {</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (maxResponseTimeMs.compareAndSet(currentMax, responseTimeMs)) {</span>
+<span class="nc" id="L124">                break;</span>
+            }
+<span class="nc" id="L126">            currentMax = maxResponseTimeMs.get();</span>
+        }
+<span class="nc" id="L128">    }</span>
+    
+    /**
+     * Categorizes errors for statistics.
+     */
+    private void categorizeError(Throwable error) {
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (error == null) {</span>
+<span class="nc" id="L135">            return;</span>
+        }
+        
+<span class="nc" id="L138">        String errorMessage = error.getMessage();</span>
+<span class="nc" id="L139">        String errorClass = error.getClass().getSimpleName();</span>
+        
+        // Check for timeout errors
+<span class="nc bnc" id="L142" title="All 6 branches missed.">        if (errorMessage != null &amp;&amp; (errorMessage.contains(&quot;timeout&quot;) || errorMessage.contains(&quot;timed out&quot;)) ||</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">            errorClass.contains(&quot;Timeout&quot;)) {</span>
+<span class="nc" id="L144">            timeoutErrors.increment();</span>
+        }
+        // Check for connection errors
+<span class="nc bnc" id="L147" title="All 4 branches missed.">        else if (errorMessage != null &amp;&amp; errorMessage.contains(&quot;connection&quot;) ||</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">                 errorClass.contains(&quot;Connection&quot;)) {</span>
+<span class="nc" id="L149">            connectionErrors.increment();</span>
+        }
+        // Check for authentication errors
+<span class="nc bnc" id="L152" title="All 6 branches missed.">        else if (errorMessage != null &amp;&amp; (errorMessage.contains(&quot;401&quot;) || errorMessage.contains(&quot;403&quot;) ||</span>
+<span class="nc bnc" id="L153" title="All 4 branches missed.">                                         errorMessage.contains(&quot;Unauthorized&quot;) || errorMessage.contains(&quot;Forbidden&quot;))) {</span>
+<span class="nc" id="L154">            authenticationErrors.increment();</span>
+        }
+        // Check for server errors (5xx)
+<span class="nc bnc" id="L157" title="All 4 branches missed.">        else if (errorMessage != null &amp;&amp; errorMessage.matches(&quot;.*5\\d\\d.*&quot;)) {</span>
+<span class="nc" id="L158">            serverErrors.increment();</span>
+        }
+        // Check for client errors (4xx, excluding auth)
+<span class="nc bnc" id="L161" title="All 4 branches missed.">        else if (errorMessage != null &amp;&amp; errorMessage.matches(&quot;.*4\\d\\d.*&quot;)) {</span>
+<span class="nc" id="L162">            clientErrors.increment();</span>
+        }
+<span class="nc" id="L164">    }</span>
+    
+    /**
+     * Gets the total number of requests.
+     */
+    public long getTotalRequests() {
+<span class="nc" id="L170">        return totalRequests.sum();</span>
+    }
+    
+    /**
+     * Gets the number of successful requests.
+     */
+    public long getSuccessfulRequests() {
+<span class="nc" id="L177">        return successfulRequests.sum();</span>
+    }
+    
+    /**
+     * Gets the number of failed requests.
+     */
+    public long getFailedRequests() {
+<span class="nc" id="L184">        return failedRequests.sum();</span>
+    }
+    
+    /**
+     * Gets the success rate as a percentage.
+     */
+    public double getSuccessRate() {
+<span class="nc" id="L191">        long total = getTotalRequests();</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        return total &gt; 0 ? (getSuccessfulRequests() * 100.0) / total : 0.0;</span>
+    }
+    
+    /**
+     * Gets the failure rate as a percentage.
+     */
+    public double getFailureRate() {
+<span class="nc" id="L199">        long total = getTotalRequests();</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">        return total &gt; 0 ? (getFailedRequests() * 100.0) / total : 0.0;</span>
+    }
+    
+    /**
+     * Gets the average response time in milliseconds.
+     */
+    public double getAverageResponseTimeMs() {
+<span class="nc" id="L207">        long total = getSuccessfulRequests() + getFailedRequests();</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        return total &gt; 0 ? (double) totalResponseTimeMs.get() / total : 0.0;</span>
+    }
+    
+    /**
+     * Gets the minimum response time in milliseconds.
+     */
+    public long getMinResponseTimeMs() {
+<span class="nc" id="L215">        long min = minResponseTimeMs.get();</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        return min == Long.MAX_VALUE ? 0 : min;</span>
+    }
+    
+    /**
+     * Gets the maximum response time in milliseconds.
+     */
+    public long getMaxResponseTimeMs() {
+<span class="nc" id="L223">        return maxResponseTimeMs.get();</span>
+    }
+    
+    /**
+     * Gets the number of retry attempts.
+     */
+    public long getRetryAttempts() {
+<span class="nc" id="L230">        return retryAttempts.sum();</span>
+    }
+    
+    /**
+     * Gets the number of rate limited requests.
+     */
+    public long getRateLimitedRequests() {
+<span class="nc" id="L237">        return rateLimitedRequests.sum();</span>
+    }
+    
+    /**
+     * Gets the total time spent waiting for rate limits.
+     */
+    public Duration getTotalRateLimitWaitTime() {
+<span class="nc" id="L244">        return Duration.ofMillis(totalRateLimitWaitTimeMs.get());</span>
+    }
+    
+    /**
+     * Gets the maximum time spent waiting for a single rate limit.
+     */
+    public Duration getMaxRateLimitWaitTime() {
+<span class="nc" id="L251">        return Duration.ofMillis(maxRateLimitWaitTimeMs.get());</span>
+    }
+    
+    /**
+     * Gets the uptime of this metrics instance.
+     */
+    public Duration getUptime() {
+<span class="nc" id="L258">        return Duration.between(startTime, Instant.now());</span>
+    }
+    
+    /**
+     * Gets requests per second based on uptime.
+     */
+    public double getRequestsPerSecond() {
+<span class="nc" id="L265">        double uptimeSeconds = getUptime().toMillis() / 1000.0;</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">        return uptimeSeconds &gt; 0 ? getTotalRequests() / uptimeSeconds : 0.0;</span>
+    }
+    
+    /**
+     * Resets all metrics.
+     */
+    public void reset() {
+<span class="nc" id="L273">        totalRequests.reset();</span>
+<span class="nc" id="L274">        successfulRequests.reset();</span>
+<span class="nc" id="L275">        failedRequests.reset();</span>
+<span class="nc" id="L276">        retryAttempts.reset();</span>
+<span class="nc" id="L277">        rateLimitedRequests.reset();</span>
+        
+<span class="nc" id="L279">        totalResponseTimeMs.set(0);</span>
+<span class="nc" id="L280">        minResponseTimeMs.set(Long.MAX_VALUE);</span>
+<span class="nc" id="L281">        maxResponseTimeMs.set(0);</span>
+        
+<span class="nc" id="L283">        timeoutErrors.reset();</span>
+<span class="nc" id="L284">        connectionErrors.reset();</span>
+<span class="nc" id="L285">        authenticationErrors.reset();</span>
+<span class="nc" id="L286">        serverErrors.reset();</span>
+<span class="nc" id="L287">        clientErrors.reset();</span>
+        
+<span class="nc" id="L289">        totalRateLimitWaitTimeMs.set(0);</span>
+<span class="nc" id="L290">        maxRateLimitWaitTimeMs.set(0);</span>
+        
+<span class="nc" id="L292">        lastRequestTime = Instant.now();</span>
+<span class="nc" id="L293">        lastSuccessTime = null;</span>
+<span class="nc" id="L294">        lastFailureTime = null;</span>
+<span class="nc" id="L295">    }</span>
+    
+    /**
+     * Creates a summary of the current metrics.
+     */
+    public MetricsSummary getSummary() {
+<span class="nc" id="L301">        return MetricsSummary.builder()</span>
+<span class="nc" id="L302">            .totalRequests(getTotalRequests())</span>
+<span class="nc" id="L303">            .successfulRequests(getSuccessfulRequests())</span>
+<span class="nc" id="L304">            .failedRequests(getFailedRequests())</span>
+<span class="nc" id="L305">            .successRate(getSuccessRate())</span>
+<span class="nc" id="L306">            .failureRate(getFailureRate())</span>
+<span class="nc" id="L307">            .averageResponseTimeMs(getAverageResponseTimeMs())</span>
+<span class="nc" id="L308">            .minResponseTimeMs(getMinResponseTimeMs())</span>
+<span class="nc" id="L309">            .maxResponseTimeMs(getMaxResponseTimeMs())</span>
+<span class="nc" id="L310">            .retryAttempts(getRetryAttempts())</span>
+<span class="nc" id="L311">            .rateLimitedRequests(getRateLimitedRequests())</span>
+<span class="nc" id="L312">            .totalRateLimitWaitTime(getTotalRateLimitWaitTime())</span>
+<span class="nc" id="L313">            .maxRateLimitWaitTime(getMaxRateLimitWaitTime())</span>
+<span class="nc" id="L314">            .requestsPerSecond(getRequestsPerSecond())</span>
+<span class="nc" id="L315">            .uptime(getUptime())</span>
+<span class="nc" id="L316">            .startTime(startTime)</span>
+<span class="nc" id="L317">            .lastRequestTime(lastRequestTime)</span>
+<span class="nc" id="L318">            .lastSuccessTime(lastSuccessTime)</span>
+<span class="nc" id="L319">            .lastFailureTime(lastFailureTime)</span>
+<span class="nc" id="L320">            .build();</span>
+    }
+    
+<span class="nc bnc" id="L323" title="All 84 branches missed.">    @lombok.Data</span>
+<span class="nc" id="L324">    @lombok.Builder</span>
+    public static class MetricsSummary {
+<span class="nc" id="L326">        private final long totalRequests;</span>
+<span class="nc" id="L327">        private final long successfulRequests;</span>
+<span class="nc" id="L328">        private final long failedRequests;</span>
+<span class="nc" id="L329">        private final double successRate;</span>
+<span class="nc" id="L330">        private final double failureRate;</span>
+<span class="nc" id="L331">        private final double averageResponseTimeMs;</span>
+<span class="nc" id="L332">        private final long minResponseTimeMs;</span>
+<span class="nc" id="L333">        private final long maxResponseTimeMs;</span>
+<span class="nc" id="L334">        private final long retryAttempts;</span>
+<span class="nc" id="L335">        private final long rateLimitedRequests;</span>
+<span class="nc" id="L336">        private final Duration totalRateLimitWaitTime;</span>
+<span class="nc" id="L337">        private final Duration maxRateLimitWaitTime;</span>
+<span class="nc" id="L338">        private final double requestsPerSecond;</span>
+<span class="nc" id="L339">        private final Duration uptime;</span>
+<span class="nc" id="L340">        private final Instant startTime;</span>
+<span class="nc" id="L341">        private final Instant lastRequestTime;</span>
+<span class="nc" id="L342">        private final Instant lastSuccessTime;</span>
+<span class="nc" id="L343">        private final Instant lastFailureTime;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

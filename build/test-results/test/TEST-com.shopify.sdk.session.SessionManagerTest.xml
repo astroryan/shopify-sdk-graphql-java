@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.shopify.sdk.session.SessionManagerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2025-07-12T17:59:10" hostname="Ryans-MacBook-Pro.local" time="0.131">
+  <properties/>
+  <testcase name="Should create session from JWT" classname="com.shopify.sdk.session.SessionManagerTest" time="0.118"/>
+  <testcase name="Should delete sessions by shop" classname="com.shopify.sdk.session.SessionManagerTest" time="0.004"/>
+  <testcase name="Should delete session" classname="com.shopify.sdk.session.SessionManagerTest" time="0.001"/>
+  <testcase name="Should find sessions by shop" classname="com.shopify.sdk.session.SessionManagerTest" time="0.001"/>
+  <testcase name="Should load session by ID" classname="com.shopify.sdk.session.SessionManagerTest" time="0.003"/>
+  <testcase name="Should create session from access token response" classname="com.shopify.sdk.session.SessionManagerTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

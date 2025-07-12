@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShopifyHeader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.model.common</a> &gt; <span class="el_source">ShopifyHeader.java</span></div><h1>ShopifyHeader.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.model.common;
+
+/**
+ * Standard Shopify HTTP headers.
+ * Maps to Node.js ShopifyHeader enum.
+ */
+<span class="nc" id="L7">public enum ShopifyHeader {</span>
+<span class="nc" id="L8">    ACCESS_TOKEN(&quot;X-Shopify-Access-Token&quot;),</span>
+<span class="nc" id="L9">    API_VERSION(&quot;X-Shopify-API-Version&quot;),</span>
+<span class="nc" id="L10">    DOMAIN(&quot;X-Shopify-Shop-Domain&quot;),</span>
+<span class="nc" id="L11">    HMAC(&quot;X-Shopify-Hmac-Sha256&quot;),</span>
+<span class="nc" id="L12">    TOPIC(&quot;X-Shopify-Topic&quot;),</span>
+<span class="nc" id="L13">    SUB_TOPIC(&quot;X-Shopify-Sub-Topic&quot;),</span>
+<span class="nc" id="L14">    WEBHOOK_ID(&quot;X-Shopify-Webhook-Id&quot;),</span>
+<span class="nc" id="L15">    STOREFRONT_PRIVATE_TOKEN(&quot;Shopify-Storefront-Private-Token&quot;),</span>
+<span class="nc" id="L16">    STOREFRONT_SDK_VARIANT(&quot;X-SDK-Variant&quot;),</span>
+<span class="nc" id="L17">    STOREFRONT_SDK_VERSION(&quot;X-SDK-Version&quot;);</span>
+
+    private final String headerName;
+
+<span class="nc" id="L21">    ShopifyHeader(String headerName) {</span>
+<span class="nc" id="L22">        this.headerName = headerName;</span>
+<span class="nc" id="L23">    }</span>
+
+    public String getHeaderName() {
+<span class="nc" id="L26">        return headerName;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L31">        return headerName;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PriceRule.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.model.discount</a> &gt; <span class="el_source">PriceRule.java</span></div><h1>PriceRule.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.model.discount;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+
+<span class="nc bnc" id="L13" title="All 230 branches missed.">@Data</span>
+<span class="nc" id="L14">@NoArgsConstructor</span>
+<span class="nc" id="L15">@AllArgsConstructor</span>
+<span class="nc" id="L16">@Builder</span>
+public class PriceRule {
+    
+<span class="nc" id="L19">    private String id;</span>
+<span class="nc" id="L20">    private String title;</span>
+    
+    @JsonProperty(&quot;target_type&quot;)
+<span class="nc" id="L23">    private TargetType targetType;</span>
+    
+    @JsonProperty(&quot;target_selection&quot;)
+<span class="nc" id="L26">    private TargetSelection targetSelection;</span>
+    
+    @JsonProperty(&quot;allocation_method&quot;)
+<span class="nc" id="L29">    private AllocationMethod allocationMethod;</span>
+    
+    @JsonProperty(&quot;value_type&quot;)
+<span class="nc" id="L32">    private ValueType valueType;</span>
+    
+<span class="nc" id="L34">    private BigDecimal value;</span>
+    
+    @JsonProperty(&quot;once_per_customer&quot;)
+<span class="nc" id="L37">    private Boolean oncePerCustomer;</span>
+    
+    @JsonProperty(&quot;usage_limit&quot;)
+<span class="nc" id="L40">    private Integer usageLimit;</span>
+    
+    @JsonProperty(&quot;customer_selection&quot;)
+<span class="nc" id="L43">    private CustomerSelection customerSelection;</span>
+    
+    @JsonProperty(&quot;starts_at&quot;)
+<span class="nc" id="L46">    private Instant startsAt;</span>
+    
+    @JsonProperty(&quot;ends_at&quot;)
+<span class="nc" id="L49">    private Instant endsAt;</span>
+    
+    @JsonProperty(&quot;created_at&quot;)
+<span class="nc" id="L52">    private Instant createdAt;</span>
+    
+    @JsonProperty(&quot;updated_at&quot;)
+<span class="nc" id="L55">    private Instant updatedAt;</span>
+    
+    @JsonProperty(&quot;entitled_product_ids&quot;)
+<span class="nc" id="L58">    private List&lt;String&gt; entitledProductIds;</span>
+    
+    @JsonProperty(&quot;entitled_variant_ids&quot;)
+<span class="nc" id="L61">    private List&lt;String&gt; entitledVariantIds;</span>
+    
+    @JsonProperty(&quot;entitled_collection_ids&quot;)
+<span class="nc" id="L64">    private List&lt;String&gt; entitledCollectionIds;</span>
+    
+    @JsonProperty(&quot;entitled_country_ids&quot;)
+<span class="nc" id="L67">    private List&lt;String&gt; entitledCountryIds;</span>
+    
+    @JsonProperty(&quot;prerequisite_product_ids&quot;)
+<span class="nc" id="L70">    private List&lt;String&gt; prerequisiteProductIds;</span>
+    
+    @JsonProperty(&quot;prerequisite_variant_ids&quot;)
+<span class="nc" id="L73">    private List&lt;String&gt; prerequisiteVariantIds;</span>
+    
+    @JsonProperty(&quot;prerequisite_collection_ids&quot;)
+<span class="nc" id="L76">    private List&lt;String&gt; prerequisiteCollectionIds;</span>
+    
+    @JsonProperty(&quot;prerequisite_customer_ids&quot;)
+<span class="nc" id="L79">    private List&lt;String&gt; prerequisiteCustomerIds;</span>
+    
+    @JsonProperty(&quot;prerequisite_subtotal_range&quot;)
+<span class="nc" id="L82">    private MoneyRange prerequisiteSubtotalRange;</span>
+    
+    @JsonProperty(&quot;prerequisite_quantity_range&quot;)
+<span class="nc" id="L85">    private QuantityRange prerequisiteQuantityRange;</span>
+    
+    @JsonProperty(&quot;prerequisite_shipping_price_range&quot;)
+<span class="nc" id="L88">    private MoneyRange prerequisiteShippingPriceRange;</span>
+    
+    @JsonProperty(&quot;prerequisite_to_entitlement_quantity_ratio&quot;)
+<span class="nc" id="L91">    private QuantityRatio prerequisiteToEntitlementQuantityRatio;</span>
+    
+    @JsonProperty(&quot;prerequisite_to_entitlement_purchase&quot;)
+<span class="nc" id="L94">    private PrerequisiteToEntitlementPurchase prerequisiteToEntitlementPurchase;</span>
+    
+    @JsonProperty(&quot;admin_graphql_api_id&quot;)
+<span class="nc" id="L97">    private String adminGraphqlApiId;</span>
+    
+    public boolean isActive() {
+<span class="nc" id="L100">        Instant now = Instant.now();</span>
+<span class="nc bnc" id="L101" title="All 8 branches missed.">        return (startsAt == null || startsAt.isBefore(now) || startsAt.equals(now)) &amp;&amp;</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">               (endsAt == null || endsAt.isAfter(now));</span>
+    }
+    
+    public boolean hasUsageLimit() {
+<span class="nc bnc" id="L106" title="All 4 branches missed.">        return usageLimit != null &amp;&amp; usageLimit &gt; 0;</span>
+    }
+    
+    public boolean isPercentageDiscount() {
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        return valueType == ValueType.PERCENTAGE;</span>
+    }
+    
+    public boolean isFixedAmountDiscount() {
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        return valueType == ValueType.FIXED_AMOUNT;</span>
+    }
+    
+    public boolean targetsLineItems() {
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        return targetType == TargetType.LINE_ITEM;</span>
+    }
+    
+    public boolean targetsShipping() {
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        return targetType == TargetType.SHIPPING_LINE;</span>
+    }
+    
+<span class="nc" id="L125">    public enum TargetType {</span>
+<span class="nc" id="L126">        @JsonProperty(&quot;line_item&quot;)</span>
+        LINE_ITEM,
+        
+<span class="nc" id="L129">        @JsonProperty(&quot;shipping_line&quot;)</span>
+        SHIPPING_LINE
+    }
+    
+<span class="nc" id="L133">    public enum TargetSelection {</span>
+<span class="nc" id="L134">        @JsonProperty(&quot;all&quot;)</span>
+        ALL,
+        
+<span class="nc" id="L137">        @JsonProperty(&quot;entitled&quot;)</span>
+        ENTITLED
+    }
+    
+<span class="nc" id="L141">    public enum AllocationMethod {</span>
+<span class="nc" id="L142">        @JsonProperty(&quot;each&quot;)</span>
+        EACH,
+        
+<span class="nc" id="L145">        @JsonProperty(&quot;across&quot;)</span>
+        ACROSS
+    }
+    
+<span class="nc" id="L149">    public enum ValueType {</span>
+<span class="nc" id="L150">        @JsonProperty(&quot;percentage&quot;)</span>
+        PERCENTAGE,
+        
+<span class="nc" id="L153">        @JsonProperty(&quot;fixed_amount&quot;)</span>
+        FIXED_AMOUNT
+    }
+    
+<span class="nc" id="L157">    public enum CustomerSelection {</span>
+<span class="nc" id="L158">        @JsonProperty(&quot;all&quot;)</span>
+        ALL,
+        
+<span class="nc" id="L161">        @JsonProperty(&quot;prerequisite&quot;)</span>
+        PREREQUISITE
+    }
+    
+<span class="nc" id="L165">    public enum PrerequisiteToEntitlementPurchase {</span>
+<span class="nc" id="L166">        @JsonProperty(&quot;all&quot;)</span>
+        ALL,
+        
+<span class="nc" id="L169">        @JsonProperty(&quot;entitled&quot;)</span>
+        ENTITLED
+    }
+    
+<span class="nc bnc" id="L173" title="All 22 branches missed.">    @Data</span>
+<span class="nc" id="L174">    @NoArgsConstructor</span>
+<span class="nc" id="L175">    @AllArgsConstructor</span>
+<span class="nc" id="L176">    @Builder</span>
+    public static class MoneyRange {
+        @JsonProperty(&quot;greater_than_or_equal_to&quot;)
+<span class="nc" id="L179">        private BigDecimal greaterThanOrEqualTo;</span>
+        
+        @JsonProperty(&quot;less_than_or_equal_to&quot;)
+<span class="nc" id="L182">        private BigDecimal lessThanOrEqualTo;</span>
+    }
+    
+<span class="nc bnc" id="L185" title="All 22 branches missed.">    @Data</span>
+<span class="nc" id="L186">    @NoArgsConstructor</span>
+<span class="nc" id="L187">    @AllArgsConstructor</span>
+<span class="nc" id="L188">    @Builder</span>
+    public static class QuantityRange {
+        @JsonProperty(&quot;greater_than_or_equal_to&quot;)
+<span class="nc" id="L191">        private Integer greaterThanOrEqualTo;</span>
+        
+        @JsonProperty(&quot;less_than_or_equal_to&quot;)
+<span class="nc" id="L194">        private Integer lessThanOrEqualTo;</span>
+    }
+    
+<span class="nc bnc" id="L197" title="All 22 branches missed.">    @Data</span>
+<span class="nc" id="L198">    @NoArgsConstructor</span>
+<span class="nc" id="L199">    @AllArgsConstructor</span>
+<span class="nc" id="L200">    @Builder</span>
+    public static class QuantityRatio {
+        @JsonProperty(&quot;prerequisite_quantity&quot;)
+<span class="nc" id="L203">        private Integer prerequisiteQuantity;</span>
+        
+        @JsonProperty(&quot;entitled_quantity&quot;)
+<span class="nc" id="L206">        private Integer entitledQuantity;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

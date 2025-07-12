@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Location.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.model.location</a> &gt; <span class="el_source">Location.java</span></div><h1>Location.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.model.location;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
+import java.time.Instant;
+
+<span class="nc bnc" id="L11" title="All 158 branches missed.">@Data</span>
+<span class="nc" id="L12">@NoArgsConstructor</span>
+<span class="nc" id="L13">@AllArgsConstructor</span>
+<span class="nc" id="L14">@Builder</span>
+public class Location {
+    
+<span class="nc" id="L17">    private String id;</span>
+<span class="nc" id="L18">    private String name;</span>
+<span class="nc" id="L19">    private String address1;</span>
+<span class="nc" id="L20">    private String address2;</span>
+<span class="nc" id="L21">    private String city;</span>
+<span class="nc" id="L22">    private String zip;</span>
+<span class="nc" id="L23">    private String province;</span>
+<span class="nc" id="L24">    private String country;</span>
+<span class="nc" id="L25">    private String phone;</span>
+    
+    @JsonProperty(&quot;created_at&quot;)
+<span class="nc" id="L28">    private Instant createdAt;</span>
+    
+    @JsonProperty(&quot;updated_at&quot;)
+<span class="nc" id="L31">    private Instant updatedAt;</span>
+    
+    @JsonProperty(&quot;country_code&quot;)
+<span class="nc" id="L34">    private String countryCode;</span>
+    
+    @JsonProperty(&quot;country_name&quot;)
+<span class="nc" id="L37">    private String countryName;</span>
+    
+    @JsonProperty(&quot;province_code&quot;)
+<span class="nc" id="L40">    private String provinceCode;</span>
+    
+    @JsonProperty(&quot;legacy&quot;)
+<span class="nc" id="L43">    private Boolean legacy;</span>
+    
+    @JsonProperty(&quot;active&quot;)
+<span class="nc" id="L46">    private Boolean active;</span>
+    
+    @JsonProperty(&quot;admin_graphql_api_id&quot;)
+<span class="nc" id="L49">    private String adminGraphqlApiId;</span>
+    
+    @JsonProperty(&quot;localized_country_name&quot;)
+<span class="nc" id="L52">    private String localizedCountryName;</span>
+    
+    @JsonProperty(&quot;localized_province_name&quot;)
+<span class="nc" id="L55">    private String localizedProvinceName;</span>
+    
+    public boolean isActive() {
+<span class="nc bnc" id="L58" title="All 4 branches missed.">        return active == null || active;</span>
+    }
+    
+    public boolean isLegacy() {
+<span class="nc bnc" id="L62" title="All 4 branches missed.">        return legacy != null &amp;&amp; legacy;</span>
+    }
+    
+    public String getFullAddress() {
+<span class="nc" id="L66">        StringBuilder sb = new StringBuilder();</span>
+        
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (address1 != null) {</span>
+<span class="nc" id="L69">            sb.append(address1);</span>
+        }
+        
+<span class="nc bnc" id="L72" title="All 4 branches missed.">        if (address2 != null &amp;&amp; !address2.trim().isEmpty()) {</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">            if (sb.length() &gt; 0) sb.append(&quot;, &quot;);</span>
+<span class="nc" id="L74">            sb.append(address2);</span>
+        }
+        
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (city != null) {</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">            if (sb.length() &gt; 0) sb.append(&quot;, &quot;);</span>
+<span class="nc" id="L79">            sb.append(city);</span>
+        }
+        
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (province != null) {</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            if (sb.length() &gt; 0) sb.append(&quot;, &quot;);</span>
+<span class="nc" id="L84">            sb.append(province);</span>
+        }
+        
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (zip != null) {</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">            if (sb.length() &gt; 0) sb.append(&quot; &quot;);</span>
+<span class="nc" id="L89">            sb.append(zip);</span>
+        }
+        
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (country != null) {</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            if (sb.length() &gt; 0) sb.append(&quot;, &quot;);</span>
+<span class="nc" id="L94">            sb.append(country);</span>
+        }
+        
+<span class="nc" id="L97">        return sb.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

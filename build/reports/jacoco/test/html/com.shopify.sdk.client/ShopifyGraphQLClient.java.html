@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShopifyGraphQLClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.client</a> &gt; <span class="el_source">ShopifyGraphQLClient.java</span></div><h1>ShopifyGraphQLClient.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.client;
+
+import com.shopify.sdk.client.graphql.GraphQLClient;
+import com.shopify.sdk.client.graphql.GraphQLRequest;
+import com.shopify.sdk.client.graphql.GraphQLResponse;
+import com.shopify.sdk.config.ShopifyAuthContext;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
+import java.util.Map;
+
+/**
+ * Main GraphQL client for Shopify APIs.
+ * This is the primary entry point for GraphQL operations.
+ */
+@Component
+<span class="fc" id="L18">@RequiredArgsConstructor</span>
+public class ShopifyGraphQLClient {
+    
+    private final GraphQLClient graphQLClient;
+    private final ShopifyAuthContext context;
+    
+    /**
+     * Executes a GraphQL query against the Admin API.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param query the GraphQL query string
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; query(String shop, String accessToken, String query) {
+<span class="fc" id="L33">        return graphQLClient.query(context, shop, accessToken, query);</span>
+    }
+    
+    /**
+     * Executes a GraphQL query with variables against the Admin API.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param query the GraphQL query string
+     * @param variables the query variables
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; query(String shop, String accessToken, String query, Map&lt;String, Object&gt; variables) {
+<span class="nc" id="L46">        return graphQLClient.query(context, shop, accessToken, query, variables);</span>
+    }
+    
+    /**
+     * Executes a GraphQL request against the Admin API.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param request the GraphQL request
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; execute(String shop, String accessToken, GraphQLRequest request) {
+<span class="nc" id="L58">        return graphQLClient.executeAdminQuery(context, shop, accessToken, request);</span>
+    }
+    
+    /**
+     * Executes a GraphQL query against the Storefront API.
+     *
+     * @param shop the shop domain
+     * @param storefrontAccessToken the storefront access token
+     * @param query the GraphQL query string
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; storefrontQuery(String shop, String storefrontAccessToken, String query) {
+<span class="fc" id="L70">        GraphQLRequest request = GraphQLRequest.of(query);</span>
+<span class="fc" id="L71">        return graphQLClient.executeStorefrontQuery(context, shop, storefrontAccessToken, request);</span>
+    }
+    
+    /**
+     * Executes a GraphQL query with variables against the Storefront API.
+     *
+     * @param shop the shop domain
+     * @param storefrontAccessToken the storefront access token
+     * @param query the GraphQL query string
+     * @param variables the query variables
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; storefrontQuery(String shop, String storefrontAccessToken, String query, Map&lt;String, Object&gt; variables) {
+<span class="nc" id="L84">        GraphQLRequest request = GraphQLRequest.of(query, variables);</span>
+<span class="nc" id="L85">        return graphQLClient.executeStorefrontQuery(context, shop, storefrontAccessToken, request);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

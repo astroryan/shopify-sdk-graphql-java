@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.service.billing</a> &gt; <span class="el_source">BillingService.java</span></div><h1>BillingService.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.service.billing;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.client.ShopifyRestClient;
+import com.shopify.sdk.model.billing.*;
+import com.shopify.sdk.model.billing.input.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.Map;
+
+<span class="fc" id="L15">@Slf4j</span>
+@Service
+<span class="fc" id="L17">@RequiredArgsConstructor</span>
+public class BillingService {
+    
+    private final ShopifyGraphQLClient graphQLClient;
+    private final ShopifyRestClient restClient;
+    private final ObjectMapper objectMapper;
+    
+    private static final String APP_SUBSCRIPTION_QUERY = &quot;&quot;&quot;
+        query getAppSubscriptions($first: Int, $after: String) {
+            currentAppInstallation {
+                appSubscriptions(first: $first, after: $after) {
+                    edges {
+                        cursor
+                        node {
+                            id
+                            name
+                            status
+                            createdAt
+                            currentPeriodEnd
+                            lineItems {
+                                id
+                                plan {
+                                    pricingDetails {
+                                        ... on AppRecurringPricing {
+                                            price {
+                                                amount
+                                                currencyCode
+                                            }
+                                            interval
+                                        }
+                                        ... on AppUsagePricing {
+                                            cappedAmount {
+                                                amount
+                                                currencyCode
+                                            }
+                                            terms
+                                        }
+                                    }
+                                }
+                                usageRecords(first: 10) {
+                                    edges {
+                                        node {
+                                            id
+                                            description
+                                            price {
+                                                amount
+                                                currencyCode
+                                            }
+                                            createdAt
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    pageInfo {
+                        hasNextPage
+                        hasPreviousPage
+                        startCursor
+                        endCursor
+                    }
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String CREATE_APP_SUBSCRIPTION_MUTATION = &quot;&quot;&quot;
+        mutation appSubscriptionCreate($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!, $trialDays: Int, $test: Boolean) {
+            appSubscriptionCreate(name: $name, lineItems: $lineItems, returnUrl: $returnUrl, trialDays: $trialDays, test: $test) {
+                appSubscription {
+                    id
+                    name
+                    status
+                    createdAt
+                }
+                confirmationUrl
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String CANCEL_APP_SUBSCRIPTION_MUTATION = &quot;&quot;&quot;
+        mutation appSubscriptionCancel($id: ID!) {
+            appSubscriptionCancel(id: $id) {
+                appSubscription {
+                    id
+                    status
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String CREATE_USAGE_RECORD_MUTATION = &quot;&quot;&quot;
+        mutation appUsageRecordCreate($subscriptionLineItemId: ID!, $description: String!, $price: MoneyInput!) {
+            appUsageRecordCreate(subscriptionLineItemId: $subscriptionLineItemId, description: $description, price: $price) {
+                usageRecord {
+                    id
+                    description
+                    price {
+                        amount
+                        currencyCode
+                    }
+                    createdAt
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    public Mono&lt;AppSubscriptionConnection&gt; getAppSubscriptions(String shop, String accessToken, Integer first, String after) {
+<span class="nc" id="L137">        Map&lt;String, Object&gt; variables = Map.of(</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">            &quot;first&quot;, first != null ? first : 10,</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            &quot;after&quot;, after != null ? after : &quot;&quot;</span>
+        );
+        
+<span class="nc" id="L142">        return graphQLClient.query(shop, accessToken, APP_SUBSCRIPTION_QUERY, variables)</span>
+<span class="nc" id="L143">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L145">                    var data = response.getData().get(&quot;currentAppInstallation&quot;).get(&quot;appSubscriptions&quot;);</span>
+<span class="nc" id="L146">                    return objectMapper.convertValue(data, AppSubscriptionConnection.class);</span>
+<span class="nc" id="L147">                } catch (Exception e) {</span>
+<span class="nc" id="L148">                    log.error(&quot;Failed to parse app subscriptions response&quot;, e);</span>
+<span class="nc" id="L149">                    throw new RuntimeException(&quot;Failed to parse app subscriptions response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;AppSubscription&gt; createAppSubscription(String shop, String accessToken, AppSubscriptionInput input) {
+<span class="fc" id="L155">        Map&lt;String, Object&gt; variables = Map.of(</span>
+<span class="fc" id="L156">            &quot;name&quot;, input.getName(),</span>
+<span class="fc" id="L157">            &quot;lineItems&quot;, input.getLineItems(),</span>
+<span class="fc" id="L158">            &quot;returnUrl&quot;, input.getReturnUrl(),</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">            &quot;trialDays&quot;, input.getTrialDays() != null ? input.getTrialDays() : 0,</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">            &quot;test&quot;, input.getTest() != null ? input.getTest() : false</span>
+        );
+        
+<span class="fc" id="L163">        return graphQLClient.query(shop, accessToken, CREATE_APP_SUBSCRIPTION_MUTATION, variables)</span>
+<span class="fc" id="L164">            .map(response -&gt; {</span>
+                try {
+<span class="fc" id="L166">                    var data = response.getData().get(&quot;appSubscriptionCreate&quot;).get(&quot;appSubscription&quot;);</span>
+<span class="fc" id="L167">                    return objectMapper.convertValue(data, AppSubscription.class);</span>
+<span class="fc" id="L168">                } catch (Exception e) {</span>
+<span class="fc" id="L169">                    log.error(&quot;Failed to parse create app subscription response&quot;, e);</span>
+<span class="fc" id="L170">                    throw new RuntimeException(&quot;Failed to parse create app subscription response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;AppSubscription&gt; cancelAppSubscription(String shop, String accessToken, String subscriptionId) {
+<span class="nc" id="L176">        Map&lt;String, Object&gt; variables = Map.of(&quot;id&quot;, subscriptionId);</span>
+        
+<span class="nc" id="L178">        return graphQLClient.query(shop, accessToken, CANCEL_APP_SUBSCRIPTION_MUTATION, variables)</span>
+<span class="nc" id="L179">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L181">                    var data = response.getData().get(&quot;appSubscriptionCancel&quot;).get(&quot;appSubscription&quot;);</span>
+<span class="nc" id="L182">                    return objectMapper.convertValue(data, AppSubscription.class);</span>
+<span class="nc" id="L183">                } catch (Exception e) {</span>
+<span class="nc" id="L184">                    log.error(&quot;Failed to parse cancel app subscription response&quot;, e);</span>
+<span class="nc" id="L185">                    throw new RuntimeException(&quot;Failed to parse cancel app subscription response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;UsageRecord&gt; createUsageRecord(String shop, String accessToken, String subscriptionLineItemId, UsageRecordInput input) {
+<span class="fc" id="L191">        Map&lt;String, Object&gt; priceInput = Map.of(</span>
+<span class="fc" id="L192">            &quot;amount&quot;, input.getPrice(),</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">            &quot;currencyCode&quot;, input.getCurrencyCode() != null ? input.getCurrencyCode() : &quot;USD&quot;</span>
+        );
+        
+<span class="fc" id="L196">        Map&lt;String, Object&gt; variables = Map.of(</span>
+            &quot;subscriptionLineItemId&quot;, subscriptionLineItemId,
+<span class="fc" id="L198">            &quot;description&quot;, input.getDescription(),</span>
+            &quot;price&quot;, priceInput
+        );
+        
+<span class="fc" id="L202">        return graphQLClient.query(shop, accessToken, CREATE_USAGE_RECORD_MUTATION, variables)</span>
+<span class="fc" id="L203">            .map(response -&gt; {</span>
+                try {
+<span class="fc" id="L205">                    var data = response.getData().get(&quot;appUsageRecordCreate&quot;).get(&quot;usageRecord&quot;);</span>
+<span class="fc" id="L206">                    return objectMapper.convertValue(data, UsageRecord.class);</span>
+<span class="nc" id="L207">                } catch (Exception e) {</span>
+<span class="nc" id="L208">                    log.error(&quot;Failed to parse create usage record response&quot;, e);</span>
+<span class="nc" id="L209">                    throw new RuntimeException(&quot;Failed to parse create usage record response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;RecurringApplicationCharge&gt; createRecurringCharge(String shop, String accessToken, RecurringApplicationChargeInput input) {
+<span class="fc" id="L215">        return restClient.post(shop, accessToken, &quot;/admin/api/2023-10/recurring_application_charges.json&quot;, </span>
+<span class="fc" id="L216">            Map.of(&quot;recurring_application_charge&quot;, input))</span>
+<span class="fc" id="L217">            .map(response -&gt; {</span>
+                try {
+<span class="fc" id="L219">                    var data = response.get(&quot;recurring_application_charge&quot;);</span>
+<span class="fc" id="L220">                    return objectMapper.convertValue(data, RecurringApplicationCharge.class);</span>
+<span class="nc" id="L221">                } catch (Exception e) {</span>
+<span class="nc" id="L222">                    log.error(&quot;Failed to parse create recurring charge response&quot;, e);</span>
+<span class="nc" id="L223">                    throw new RuntimeException(&quot;Failed to parse create recurring charge response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;RecurringApplicationCharge&gt; getRecurringCharge(String shop, String accessToken, String chargeId) {
+<span class="nc" id="L229">        return restClient.get(shop, accessToken, &quot;/admin/api/2023-10/recurring_application_charges/&quot; + chargeId + &quot;.json&quot;)</span>
+<span class="nc" id="L230">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L232">                    var data = response.get(&quot;recurring_application_charge&quot;);</span>
+<span class="nc" id="L233">                    return objectMapper.convertValue(data, RecurringApplicationCharge.class);</span>
+<span class="nc" id="L234">                } catch (Exception e) {</span>
+<span class="nc" id="L235">                    log.error(&quot;Failed to parse get recurring charge response&quot;, e);</span>
+<span class="nc" id="L236">                    throw new RuntimeException(&quot;Failed to parse get recurring charge response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;RecurringApplicationCharge&gt; activateRecurringCharge(String shop, String accessToken, String chargeId) {
+<span class="nc" id="L242">        return restClient.post(shop, accessToken, &quot;/admin/api/2023-10/recurring_application_charges/&quot; + chargeId + &quot;/activate.json&quot;, null)</span>
+<span class="nc" id="L243">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L245">                    var data = response.get(&quot;recurring_application_charge&quot;);</span>
+<span class="nc" id="L246">                    return objectMapper.convertValue(data, RecurringApplicationCharge.class);</span>
+<span class="nc" id="L247">                } catch (Exception e) {</span>
+<span class="nc" id="L248">                    log.error(&quot;Failed to parse activate recurring charge response&quot;, e);</span>
+<span class="nc" id="L249">                    throw new RuntimeException(&quot;Failed to parse activate recurring charge response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;Void&gt; cancelRecurringCharge(String shop, String accessToken, String chargeId) {
+<span class="nc" id="L255">        return restClient.delete(shop, accessToken, &quot;/admin/api/2023-10/recurring_application_charges/&quot; + chargeId + &quot;.json&quot;)</span>
+<span class="nc" id="L256">            .then();</span>
+    }
+    
+    public Mono&lt;ApplicationCharge&gt; createOneTimeCharge(String shop, String accessToken, ApplicationChargeInput input) {
+<span class="fc" id="L260">        return restClient.post(shop, accessToken, &quot;/admin/api/2023-10/application_charges.json&quot;, </span>
+<span class="fc" id="L261">            Map.of(&quot;application_charge&quot;, input))</span>
+<span class="fc" id="L262">            .map(response -&gt; {</span>
+                try {
+<span class="fc" id="L264">                    var data = response.get(&quot;application_charge&quot;);</span>
+<span class="fc" id="L265">                    return objectMapper.convertValue(data, ApplicationCharge.class);</span>
+<span class="nc" id="L266">                } catch (Exception e) {</span>
+<span class="nc" id="L267">                    log.error(&quot;Failed to parse create one-time charge response&quot;, e);</span>
+<span class="nc" id="L268">                    throw new RuntimeException(&quot;Failed to parse create one-time charge response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;ApplicationCharge&gt; getApplicationCharge(String shop, String accessToken, String chargeId) {
+<span class="nc" id="L274">        return restClient.get(shop, accessToken, &quot;/admin/api/2023-10/application_charges/&quot; + chargeId + &quot;.json&quot;)</span>
+<span class="nc" id="L275">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L277">                    var data = response.get(&quot;application_charge&quot;);</span>
+<span class="nc" id="L278">                    return objectMapper.convertValue(data, ApplicationCharge.class);</span>
+<span class="nc" id="L279">                } catch (Exception e) {</span>
+<span class="nc" id="L280">                    log.error(&quot;Failed to parse get application charge response&quot;, e);</span>
+<span class="nc" id="L281">                    throw new RuntimeException(&quot;Failed to parse get application charge response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;ApplicationCredit&gt; createApplicationCredit(String shop, String accessToken, ApplicationCreditInput input) {
+<span class="fc" id="L287">        return restClient.post(shop, accessToken, &quot;/admin/api/2023-10/application_credits.json&quot;, </span>
+<span class="fc" id="L288">            Map.of(&quot;application_credit&quot;, input))</span>
+<span class="fc" id="L289">            .map(response -&gt; {</span>
+                try {
+<span class="fc" id="L291">                    var data = response.get(&quot;application_credit&quot;);</span>
+<span class="fc" id="L292">                    return objectMapper.convertValue(data, ApplicationCredit.class);</span>
+<span class="nc" id="L293">                } catch (Exception e) {</span>
+<span class="nc" id="L294">                    log.error(&quot;Failed to parse create application credit response&quot;, e);</span>
+<span class="nc" id="L295">                    throw new RuntimeException(&quot;Failed to parse create application credit response&quot;, e);</span>
+                }
+            });
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

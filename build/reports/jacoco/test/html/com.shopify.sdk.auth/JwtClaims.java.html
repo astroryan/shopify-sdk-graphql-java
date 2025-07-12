@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtClaims.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.auth</a> &gt; <span class="el_source">JwtClaims.java</span></div><h1>JwtClaims.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.auth;
+
+import io.jsonwebtoken.Claims;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+import java.util.Date;
+import java.util.Map;
+
+/**
+ * Represents the claims contained in a Shopify JWT token.
+ */
+<span class="nc bnc" id="L16" title="All 94 branches missed.">@Data</span>
+<span class="pc" id="L17">@Builder</span>
+<span class="nc" id="L18">@NoArgsConstructor</span>
+<span class="fc" id="L19">@AllArgsConstructor</span>
+public class JwtClaims {
+    
+    /**
+     * The issuer of the token (shop domain).
+     */
+<span class="nc" id="L25">    private String issuer;</span>
+    
+    /**
+     * The subject of the token (user ID).
+     */
+<span class="nc" id="L30">    private String subject;</span>
+    
+    /**
+     * The audience of the token (API key).
+     */
+<span class="nc" id="L35">    private String audience;</span>
+    
+    /**
+     * The expiration time of the token.
+     */
+<span class="fc" id="L40">    private Instant expiration;</span>
+    
+    /**
+     * The issued at time of the token.
+     */
+<span class="nc" id="L45">    private Instant issuedAt;</span>
+    
+    /**
+     * The not before time of the token.
+     */
+<span class="nc" id="L50">    private Instant notBefore;</span>
+    
+    /**
+     * The JWT ID.
+     */
+<span class="nc" id="L55">    private String jwtId;</span>
+    
+    /**
+     * The destination URL from the token.
+     */
+<span class="nc" id="L60">    private String destination;</span>
+    
+    /**
+     * The shop domain extracted from the issuer.
+     */
+<span class="fc" id="L65">    private String shop;</span>
+    
+    /**
+     * The user ID as a Long.
+     */
+<span class="fc" id="L70">    private Long userId;</span>
+    
+    /**
+     * All additional custom claims.
+     */
+<span class="nc" id="L75">    private Map&lt;String, Object&gt; additionalClaims;</span>
+    
+    /**
+     * Creates JwtClaims from JWT Claims object.
+     *
+     * @param claims the JWT claims
+     * @return JwtClaims instance
+     */
+    public static JwtClaims fromJwtClaims(Claims claims) {
+<span class="nc" id="L84">        JwtClaimsBuilder builder = JwtClaims.builder()</span>
+<span class="nc" id="L85">            .issuer(claims.getIssuer())</span>
+<span class="nc" id="L86">            .subject(claims.getSubject())</span>
+<span class="nc bnc" id="L87" title="All 4 branches missed.">            .audience(claims.getAudience() != null &amp;&amp; !claims.getAudience().isEmpty() </span>
+<span class="nc" id="L88">                ? claims.getAudience().iterator().next() : null)</span>
+<span class="nc" id="L89">            .jwtId(claims.getId());</span>
+            
+        // Convert dates to Instant
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (claims.getExpiration() != null) {</span>
+<span class="nc" id="L93">            builder.expiration(claims.getExpiration().toInstant());</span>
+        }
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (claims.getIssuedAt() != null) {</span>
+<span class="nc" id="L96">            builder.issuedAt(claims.getIssuedAt().toInstant());</span>
+        }
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (claims.getNotBefore() != null) {</span>
+<span class="nc" id="L99">            builder.notBefore(claims.getNotBefore().toInstant());</span>
+        }
+        
+        // Extract destination
+<span class="nc" id="L103">        Object dest = claims.get(&quot;dest&quot;);</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (dest instanceof String) {</span>
+<span class="nc" id="L105">            builder.destination((String) dest);</span>
+        }
+        
+<span class="nc" id="L108">        JwtClaims jwtClaims = builder.build();</span>
+        
+        // Extract shop domain from issuer
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (jwtClaims.getIssuer() != null) {</span>
+<span class="nc" id="L112">            jwtClaims.setShop(extractShopFromIssuer(jwtClaims.getIssuer()));</span>
+        }
+        
+        // Extract user ID from subject
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (jwtClaims.getSubject() != null) {</span>
+            try {
+<span class="nc" id="L118">                jwtClaims.setUserId(Long.parseLong(jwtClaims.getSubject()));</span>
+<span class="nc" id="L119">            } catch (NumberFormatException e) {</span>
+                // Subject is not a number, leave userId as null
+<span class="nc" id="L121">            }</span>
+        }
+        
+        // Store additional claims
+<span class="nc" id="L125">        Map&lt;String, Object&gt; additionalClaims = new java.util.HashMap&lt;&gt;(claims);</span>
+<span class="nc" id="L126">        additionalClaims.remove(&quot;iss&quot;);</span>
+<span class="nc" id="L127">        additionalClaims.remove(&quot;sub&quot;);</span>
+<span class="nc" id="L128">        additionalClaims.remove(&quot;aud&quot;);</span>
+<span class="nc" id="L129">        additionalClaims.remove(&quot;exp&quot;);</span>
+<span class="nc" id="L130">        additionalClaims.remove(&quot;iat&quot;);</span>
+<span class="nc" id="L131">        additionalClaims.remove(&quot;nbf&quot;);</span>
+<span class="nc" id="L132">        additionalClaims.remove(&quot;jti&quot;);</span>
+<span class="nc" id="L133">        additionalClaims.remove(&quot;dest&quot;);</span>
+        
+<span class="nc" id="L135">        jwtClaims.setAdditionalClaims(additionalClaims);</span>
+        
+<span class="nc" id="L137">        return jwtClaims;</span>
+    }
+    
+    /**
+     * Checks if the token is expired.
+     *
+     * @return true if expired, false otherwise
+     */
+    public boolean isExpired() {
+<span class="nc bnc" id="L146" title="All 4 branches missed.">        return expiration != null &amp;&amp; expiration.isBefore(Instant.now());</span>
+    }
+    
+    /**
+     * Checks if the token is not yet valid.
+     *
+     * @return true if not yet valid, false otherwise
+     */
+    public boolean isNotYetValid() {
+<span class="nc bnc" id="L155" title="All 4 branches missed.">        return notBefore != null &amp;&amp; notBefore.isAfter(Instant.now());</span>
+    }
+    
+    /**
+     * Gets the remaining time until expiration in seconds.
+     *
+     * @return seconds until expiration, or -1 if no expiration
+     */
+    public long getSecondsUntilExpiration() {
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (expiration == null) {</span>
+<span class="nc" id="L165">            return -1;</span>
+        }
+<span class="nc" id="L167">        return expiration.getEpochSecond() - Instant.now().getEpochSecond();</span>
+    }
+    
+    /**
+     * Gets a custom claim value.
+     *
+     * @param claimName the claim name
+     * @return the claim value or null if not found
+     */
+    public Object getClaim(String claimName) {
+<span class="nc bnc" id="L177" title="All 2 branches missed.">        return additionalClaims != null ? additionalClaims.get(claimName) : null;</span>
+    }
+    
+    /**
+     * Gets a custom claim value as a specific type.
+     *
+     * @param claimName the claim name
+     * @param clazz the expected type
+     * @param &lt;T&gt; the type parameter
+     * @return the claim value cast to the specified type, or null if not found or wrong type
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T getClaim(String claimName, Class&lt;T&gt; clazz) {
+<span class="nc" id="L190">        Object value = getClaim(claimName);</span>
+<span class="nc bnc" id="L191" title="All 4 branches missed.">        if (value != null &amp;&amp; clazz.isAssignableFrom(value.getClass())) {</span>
+<span class="nc" id="L192">            return (T) value;</span>
+        }
+<span class="nc" id="L194">        return null;</span>
+    }
+    
+    private static String extractShopFromIssuer(String issuer) {
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (issuer == null) {</span>
+<span class="nc" id="L199">            return null;</span>
+        }
+        
+        // Remove protocol if present
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (issuer.startsWith(&quot;https://&quot;)) {</span>
+<span class="nc" id="L204">            issuer = issuer.substring(8);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        } else if (issuer.startsWith(&quot;http://&quot;)) {</span>
+<span class="nc" id="L206">            issuer = issuer.substring(7);</span>
+        }
+        
+        // Remove path if present
+<span class="nc" id="L210">        int slashIndex = issuer.indexOf('/');</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (slashIndex &gt; 0) {</span>
+<span class="nc" id="L212">            issuer = issuer.substring(0, slashIndex);</span>
+        }
+        
+<span class="nc" id="L215">        return issuer;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

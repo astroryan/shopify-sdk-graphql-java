@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.service.product</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.service.product;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.client.graphql.GraphQLResponse;
+import com.shopify.sdk.config.ShopifyAuthContext;
+import com.shopify.sdk.exception.ShopifyApiException;
+import com.shopify.sdk.model.product.Product;
+import com.shopify.sdk.model.product.ProductConnection;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Service for managing Shopify products.
+ */
+<span class="fc" id="L22">@Slf4j</span>
+@Service
+<span class="fc" id="L24">@RequiredArgsConstructor</span>
+public class ProductService {
+    
+    private final ShopifyGraphQLClient graphQLClient;
+    private final ObjectMapper objectMapper;
+    
+    /**
+     * Retrieves a single product by ID.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param productId the product ID
+     * @return Mono of Product
+     */
+    public Mono&lt;Product&gt; getProduct(String shop, String accessToken, String productId) {
+<span class="fc" id="L39">        String query = &quot;&quot;&quot;</span>
+            query getProduct($id: ID!) {
+                product(id: $id) {
+                    id
+                    title
+                    handle
+                    description
+                    descriptionHtml
+                    createdAt
+                    updatedAt
+                    publishedAt
+                    productType
+                    vendor
+                    tags
+                    status
+                    templateSuffix
+                    tracksInventory
+                    isGiftCard
+                    totalInventory
+                    totalVariants
+                    hasOnlyDefaultVariant
+                    requiresSellingPlan
+                    seo {
+                        title
+                        description
+                    }
+                    onlineStoreUrl
+                    onlineStorePreviewUrl
+                }
+            }
+            &quot;&quot;&quot;;
+        
+<span class="fc" id="L71">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L72">        variables.put(&quot;id&quot;, productId);</span>
+        
+<span class="fc" id="L74">        return graphQLClient.query(shop, accessToken, query, variables)</span>
+<span class="fc" id="L75">            .map(this::extractProductFromResponse);</span>
+    }
+    
+    /**
+     * Retrieves a list of products with pagination.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param first the number of products to retrieve
+     * @param after the cursor for pagination
+     * @param query the search query (optional)
+     * @return Mono of ProductConnection
+     */
+    public Mono&lt;ProductConnection&gt; getProducts(String shop, String accessToken, Integer first, String after, String query) {
+<span class="fc" id="L89">        StringBuilder graphQLQuery = new StringBuilder();</span>
+<span class="fc" id="L90">        graphQLQuery.append(&quot;&quot;&quot;</span>
+            query getProducts($first: Int!, $after: String, $query: String) {
+                products(first: $first, after: $after, query: $query) {
+                    edges {
+                        node {
+                            id
+                            title
+                            handle
+                            description
+                            createdAt
+                            updatedAt
+                            publishedAt
+                            productType
+                            vendor
+                            tags
+                            status
+                            totalInventory
+                            totalVariants
+                            onlineStoreUrl
+                        }
+                        cursor
+                    }
+                    pageInfo {
+                        hasNextPage
+                        hasPreviousPage
+                        startCursor
+                        endCursor
+                    }
+                }
+            }
+            &quot;&quot;&quot;);
+        
+<span class="fc" id="L122">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        variables.put(&quot;first&quot;, first != null ? first : 10);</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (after != null) {</span>
+<span class="nc" id="L125">            variables.put(&quot;after&quot;, after);</span>
+        }
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        if (query != null) {</span>
+<span class="nc" id="L128">            variables.put(&quot;query&quot;, query);</span>
+        }
+        
+<span class="fc" id="L131">        return graphQLClient.query(shop, accessToken, graphQLQuery.toString(), variables)</span>
+<span class="fc" id="L132">            .map(this::extractProductConnectionFromResponse);</span>
+    }
+    
+    /**
+     * Creates a new product.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param input the product input data
+     * @return Mono of Product
+     */
+    public Mono&lt;Product&gt; createProduct(String shop, String accessToken, ProductInput input) {
+<span class="fc" id="L144">        String mutation = &quot;&quot;&quot;</span>
+            mutation productCreate($input: ProductInput!) {
+                productCreate(input: $input) {
+                    product {
+                        id
+                        title
+                        handle
+                        description
+                        descriptionHtml
+                        createdAt
+                        updatedAt
+                        publishedAt
+                        productType
+                        vendor
+                        tags
+                        status
+                        templateSuffix
+                        tracksInventory
+                        isGiftCard
+                        totalInventory
+                        totalVariants
+                        hasOnlyDefaultVariant
+                        requiresSellingPlan
+                        seo {
+                            title
+                            description
+                        }
+                        onlineStoreUrl
+                        onlineStorePreviewUrl
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+        
+<span class="fc" id="L182">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L183">        variables.put(&quot;input&quot;, input);</span>
+        
+<span class="fc" id="L185">        return graphQLClient.query(shop, accessToken, mutation, variables)</span>
+<span class="fc" id="L186">            .map(this::extractProductFromMutationResponse);</span>
+    }
+    
+    /**
+     * Updates an existing product.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param productId the product ID
+     * @param input the product input data
+     * @return Mono of Product
+     */
+    public Mono&lt;Product&gt; updateProduct(String shop, String accessToken, String productId, ProductInput input) {
+<span class="fc" id="L199">        String mutation = &quot;&quot;&quot;</span>
+            mutation productUpdate($input: ProductInput!) {
+                productUpdate(input: $input) {
+                    product {
+                        id
+                        title
+                        handle
+                        description
+                        descriptionHtml
+                        createdAt
+                        updatedAt
+                        publishedAt
+                        productType
+                        vendor
+                        tags
+                        status
+                        templateSuffix
+                        tracksInventory
+                        isGiftCard
+                        totalInventory
+                        totalVariants
+                        hasOnlyDefaultVariant
+                        requiresSellingPlan
+                        seo {
+                            title
+                            description
+                        }
+                        onlineStoreUrl
+                        onlineStorePreviewUrl
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+        
+        // Add the ID to the input
+<span class="fc" id="L238">        Map&lt;String, Object&gt; inputMap = objectMapper.convertValue(input, Map.class);</span>
+<span class="fc" id="L239">        inputMap.put(&quot;id&quot;, productId);</span>
+        
+<span class="fc" id="L241">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L242">        variables.put(&quot;input&quot;, inputMap);</span>
+        
+<span class="fc" id="L244">        return graphQLClient.query(shop, accessToken, mutation, variables)</span>
+<span class="fc" id="L245">            .map(this::extractProductFromMutationResponse);</span>
+    }
+    
+    /**
+     * Deletes a product.
+     *
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param productId the product ID
+     * @return Mono of Boolean indicating success
+     */
+    public Mono&lt;Boolean&gt; deleteProduct(String shop, String accessToken, String productId) {
+<span class="fc" id="L257">        String mutation = &quot;&quot;&quot;</span>
+            mutation productDelete($input: ProductDeleteInput!) {
+                productDelete(input: $input) {
+                    deletedProductId
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+        
+<span class="fc" id="L269">        Map&lt;String, Object&gt; input = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L270">        input.put(&quot;id&quot;, productId);</span>
+        
+<span class="fc" id="L272">        Map&lt;String, Object&gt; variables = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L273">        variables.put(&quot;input&quot;, input);</span>
+        
+<span class="fc" id="L275">        return graphQLClient.query(shop, accessToken, mutation, variables)</span>
+<span class="fc" id="L276">            .map(response -&gt; {</span>
+<span class="fc" id="L277">                JsonNode data = response.getData();</span>
+<span class="pc bpc" id="L278" title="2 of 4 branches missed.">                if (data != null &amp;&amp; data.has(&quot;productDelete&quot;)) {</span>
+<span class="fc" id="L279">                    JsonNode productDelete = data.get(&quot;productDelete&quot;);</span>
+<span class="pc bpc" id="L280" title="1 of 2 branches missed.">                    return productDelete.has(&quot;deletedProductId&quot;) &amp;&amp; </span>
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">                           !productDelete.get(&quot;deletedProductId&quot;).isNull();</span>
+                }
+<span class="nc" id="L283">                return false;</span>
+            });
+    }
+    
+    private Product extractProductFromResponse(GraphQLResponse response) {
+        try {
+<span class="fc" id="L289">            JsonNode data = response.getData();</span>
+<span class="pc bpc" id="L290" title="1 of 4 branches missed.">            if (data != null &amp;&amp; data.has(&quot;product&quot;)) {</span>
+<span class="fc" id="L291">                JsonNode productNode = data.get(&quot;product&quot;);</span>
+<span class="pc bpc" id="L292" title="1 of 2 branches missed.">                if (!productNode.isNull()) {</span>
+<span class="fc" id="L293">                    return objectMapper.treeToValue(productNode, Product.class);</span>
+                }
+            }
+<span class="fc" id="L296">            return null;</span>
+<span class="nc" id="L297">        } catch (Exception e) {</span>
+<span class="nc" id="L298">            log.error(&quot;Error extracting product from response&quot;, e);</span>
+<span class="nc" id="L299">            throw new ShopifyApiException(&quot;Failed to parse product response&quot;, e);</span>
+        }
+    }
+    
+    private ProductConnection extractProductConnectionFromResponse(GraphQLResponse response) {
+        try {
+<span class="fc" id="L305">            JsonNode data = response.getData();</span>
+<span class="pc bpc" id="L306" title="2 of 4 branches missed.">            if (data != null &amp;&amp; data.has(&quot;products&quot;)) {</span>
+<span class="fc" id="L307">                JsonNode productsNode = data.get(&quot;products&quot;);</span>
+<span class="fc" id="L308">                return objectMapper.treeToValue(productsNode, ProductConnection.class);</span>
+            }
+<span class="nc" id="L310">            return new ProductConnection();</span>
+<span class="nc" id="L311">        } catch (Exception e) {</span>
+<span class="nc" id="L312">            log.error(&quot;Error extracting product connection from response&quot;, e);</span>
+<span class="nc" id="L313">            throw new ShopifyApiException(&quot;Failed to parse products response&quot;, e);</span>
+        }
+    }
+    
+    private Product extractProductFromMutationResponse(GraphQLResponse response) {
+        try {
+<span class="fc" id="L319">            JsonNode data = response.getData();</span>
+<span class="pc bpc" id="L320" title="1 of 2 branches missed.">            if (data != null) {</span>
+                // Check for productCreate or productUpdate
+<span class="fc bfc" id="L322" title="All 2 branches covered.">                JsonNode mutationNode = data.has(&quot;productCreate&quot;) ? </span>
+<span class="fc" id="L323">                    data.get(&quot;productCreate&quot;) : data.get(&quot;productUpdate&quot;);</span>
+                
+<span class="pc bpc" id="L325" title="1 of 2 branches missed.">                if (mutationNode != null) {</span>
+                    // Check for user errors first
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">                    if (mutationNode.has(&quot;userErrors&quot;)) {</span>
+<span class="fc" id="L328">                        JsonNode userErrors = mutationNode.get(&quot;userErrors&quot;);</span>
+<span class="pc bpc" id="L329" title="2 of 4 branches missed.">                        if (userErrors.isArray() &amp;&amp; userErrors.size() &gt; 0) {</span>
+<span class="nc" id="L330">                            StringBuilder errorMessage = new StringBuilder(&quot;Product mutation failed: &quot;);</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">                            for (JsonNode error : userErrors) {</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">                                String field = error.has(&quot;field&quot;) ? error.get(&quot;field&quot;).asText() : &quot;unknown&quot;;</span>
+<span class="nc bnc" id="L333" title="All 2 branches missed.">                                String message = error.has(&quot;message&quot;) ? error.get(&quot;message&quot;).asText() : &quot;unknown error&quot;;</span>
+<span class="nc" id="L334">                                errorMessage.append(String.format(&quot;[%s: %s] &quot;, field, message));</span>
+<span class="nc" id="L335">                            }</span>
+<span class="nc" id="L336">                            throw new ShopifyApiException(errorMessage.toString());</span>
+                        }
+                    }
+                    
+                    // Extract the product
+<span class="pc bpc" id="L341" title="1 of 2 branches missed.">                    if (mutationNode.has(&quot;product&quot;)) {</span>
+<span class="fc" id="L342">                        JsonNode productNode = mutationNode.get(&quot;product&quot;);</span>
+<span class="pc bpc" id="L343" title="1 of 2 branches missed.">                        if (!productNode.isNull()) {</span>
+<span class="fc" id="L344">                            return objectMapper.treeToValue(productNode, Product.class);</span>
+                        }
+                    }
+                }
+            }
+<span class="nc" id="L349">            return null;</span>
+<span class="nc" id="L350">        } catch (ShopifyApiException e) {</span>
+<span class="nc" id="L351">            throw e;</span>
+<span class="nc" id="L352">        } catch (Exception e) {</span>
+<span class="nc" id="L353">            log.error(&quot;Error extracting product from mutation response&quot;, e);</span>
+<span class="nc" id="L354">            throw new ShopifyApiException(&quot;Failed to parse product mutation response&quot;, e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

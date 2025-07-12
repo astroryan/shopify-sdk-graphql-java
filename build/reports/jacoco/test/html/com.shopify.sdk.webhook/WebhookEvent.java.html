@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebhookEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.webhook</a> &gt; <span class="el_source">WebhookEvent.java</span></div><h1>WebhookEvent.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.webhook;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+import java.util.Map;
+
+/**
+ * Represents a webhook event received from Shopify.
+ */
+<span class="pc bnc" id="L15" title="All 134 branches missed.">@Data</span>
+<span class="pc" id="L16">@Builder</span>
+<span class="nc" id="L17">@NoArgsConstructor</span>
+<span class="fc" id="L18">@AllArgsConstructor</span>
+public class WebhookEvent {
+    
+    /**
+     * The unique identifier for this webhook event.
+     */
+<span class="fc" id="L24">    private String id;</span>
+    
+    /**
+     * The webhook topic/event type.
+     */
+<span class="fc" id="L29">    private String topic;</span>
+    
+    /**
+     * The webhook event type enum.
+     */
+<span class="fc" id="L34">    private WebhookEventType eventType;</span>
+    
+    /**
+     * The shop domain that sent the webhook.
+     */
+<span class="fc" id="L39">    private String shop;</span>
+    
+    /**
+     * The raw request body as received from Shopify.
+     */
+<span class="fc" id="L44">    private String rawBody;</span>
+    
+    /**
+     * The parsed JSON payload.
+     */
+<span class="fc" id="L49">    private JsonNode payload;</span>
+    
+    /**
+     * The webhook headers.
+     */
+<span class="fc" id="L54">    private Map&lt;String, String&gt; headers;</span>
+    
+    /**
+     * The HMAC signature from the X-Shopify-Hmac-Sha256 header.
+     */
+<span class="fc" id="L59">    private String hmacSignature;</span>
+    
+    /**
+     * The API version used for this webhook.
+     */
+<span class="fc" id="L64">    private String apiVersion;</span>
+    
+    /**
+     * When the webhook was received.
+     */
+<span class="nc" id="L69">    private Instant receivedAt;</span>
+    
+    /**
+     * When the event occurred on Shopify (if available in payload).
+     */
+<span class="nc" id="L74">    private Instant occurredAt;</span>
+    
+    /**
+     * Whether the webhook signature was verified.
+     */
+<span class="nc" id="L79">    private Boolean verified;</span>
+    
+    /**
+     * Any processing errors that occurred.
+     */
+<span class="nc" id="L84">    private String error;</span>
+    
+    /**
+     * Additional metadata.
+     */
+<span class="nc" id="L89">    private Map&lt;String, Object&gt; metadata;</span>
+    
+    /**
+     * Whether this webhook has been processed.
+     */
+<span class="nc" id="L94">    private Boolean processed;</span>
+    
+    /**
+     * When the webhook was processed.
+     */
+<span class="nc" id="L99">    private Instant processedAt;</span>
+    
+    /**
+     * Gets a specific header value.
+     *
+     * @param headerName the header name
+     * @return the header value or null if not found
+     */
+    public String getHeader(String headerName) {
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        return headers != null ? headers.get(headerName) : null;</span>
+    }
+    
+    /**
+     * Gets the Shopify topic header.
+     *
+     * @return the X-Shopify-Topic header value
+     */
+    public String getShopifyTopic() {
+<span class="nc" id="L117">        return getHeader(&quot;X-Shopify-Topic&quot;);</span>
+    }
+    
+    /**
+     * Gets the Shopify shop domain header.
+     *
+     * @return the X-Shopify-Shop-Domain header value
+     */
+    public String getShopifyShopDomain() {
+<span class="nc" id="L126">        return getHeader(&quot;X-Shopify-Shop-Domain&quot;);</span>
+    }
+    
+    /**
+     * Gets the Shopify API version header.
+     *
+     * @return the X-Shopify-API-Version header value
+     */
+    public String getShopifyApiVersion() {
+<span class="nc" id="L135">        return getHeader(&quot;X-Shopify-API-Version&quot;);</span>
+    }
+    
+    /**
+     * Gets the webhook ID header.
+     *
+     * @return the X-Shopify-Webhook-Id header value
+     */
+    public String getShopifyWebhookId() {
+<span class="nc" id="L144">        return getHeader(&quot;X-Shopify-Webhook-Id&quot;);</span>
+    }
+    
+    /**
+     * Gets the request ID header for tracking.
+     *
+     * @return the X-Request-Id header value
+     */
+    public String getRequestId() {
+<span class="nc" id="L153">        return getHeader(&quot;X-Request-Id&quot;);</span>
+    }
+    
+    /**
+     * Extracts a field from the JSON payload.
+     *
+     * @param fieldPath the JSON path (e.g., &quot;order.id&quot;)
+     * @return the field value as JsonNode or null if not found
+     */
+    public JsonNode getPayloadField(String fieldPath) {
+<span class="nc bnc" id="L163" title="All 4 branches missed.">        if (payload == null || fieldPath == null) {</span>
+<span class="nc" id="L164">            return null;</span>
+        }
+        
+<span class="nc" id="L167">        String[] pathParts = fieldPath.split(&quot;\\.&quot;);</span>
+<span class="nc" id="L168">        JsonNode current = payload;</span>
+        
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        for (String part : pathParts) {</span>
+<span class="nc bnc" id="L171" title="All 4 branches missed.">            if (current == null || !current.has(part)) {</span>
+<span class="nc" id="L172">                return null;</span>
+            }
+<span class="nc" id="L174">            current = current.get(part);</span>
+        }
+        
+<span class="nc" id="L177">        return current;</span>
+    }
+    
+    /**
+     * Extracts a field from the JSON payload as a string.
+     *
+     * @param fieldPath the JSON path
+     * @return the field value as string or null if not found
+     */
+    public String getPayloadFieldAsString(String fieldPath) {
+<span class="nc" id="L187">        JsonNode field = getPayloadField(fieldPath);</span>
+<span class="nc bnc" id="L188" title="All 4 branches missed.">        return field != null &amp;&amp; !field.isNull() ? field.asText() : null;</span>
+    }
+    
+    /**
+     * Extracts a field from the JSON payload as a long.
+     *
+     * @param fieldPath the JSON path
+     * @return the field value as long or null if not found
+     */
+    public Long getPayloadFieldAsLong(String fieldPath) {
+<span class="nc" id="L198">        JsonNode field = getPayloadField(fieldPath);</span>
+<span class="nc bnc" id="L199" title="All 6 branches missed.">        return field != null &amp;&amp; !field.isNull() &amp;&amp; field.isNumber() ? field.asLong() : null;</span>
+    }
+    
+    /**
+     * Gets the entity ID from the payload (works for most Shopify resources).
+     *
+     * @return the entity ID or null if not found
+     */
+    public Long getEntityId() {
+        // Try common patterns for entity ID
+<span class="nc" id="L209">        JsonNode idField = getPayloadField(&quot;id&quot;);</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        if (idField == null) {</span>
+            // Try nested patterns like order.id, product.id, etc.
+<span class="nc" id="L212">            String[] commonEntities = {&quot;order&quot;, &quot;product&quot;, &quot;customer&quot;, &quot;collection&quot;, &quot;cart&quot;, &quot;checkout&quot;};</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">            for (String entity : commonEntities) {</span>
+<span class="nc" id="L214">                idField = getPayloadField(entity + &quot;.id&quot;);</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">                if (idField != null) {</span>
+<span class="nc" id="L216">                    break;</span>
+                }
+            }
+        }
+        
+<span class="nc bnc" id="L221" title="All 6 branches missed.">        return idField != null &amp;&amp; !idField.isNull() &amp;&amp; idField.isNumber() ? idField.asLong() : null;</span>
+    }
+    
+    /**
+     * Marks this webhook as processed.
+     */
+    public void markAsProcessed() {
+<span class="fc" id="L228">        this.processed = true;</span>
+<span class="fc" id="L229">        this.processedAt = Instant.now();</span>
+<span class="fc" id="L230">    }</span>
+    
+    /**
+     * Marks this webhook as failed with an error.
+     *
+     * @param error the error message
+     */
+    public void markAsFailed(String error) {
+<span class="nc" id="L238">        this.processed = false;</span>
+<span class="nc" id="L239">        this.error = error;</span>
+<span class="nc" id="L240">        this.processedAt = Instant.now();</span>
+<span class="nc" id="L241">    }</span>
+    
+    /**
+     * Sets metadata value.
+     *
+     * @param key the metadata key
+     * @param value the metadata value
+     */
+    public void setMetadata(String key, Object value) {
+<span class="nc bnc" id="L250" title="All 2 branches missed.">        if (metadata == null) {</span>
+<span class="nc" id="L251">            metadata = new java.util.HashMap&lt;&gt;();</span>
+        }
+<span class="nc" id="L253">        metadata.put(key, value);</span>
+<span class="nc" id="L254">    }</span>
+    
+    /**
+     * Gets metadata value.
+     *
+     * @param key the metadata key
+     * @return the metadata value or null if not found
+     */
+    public Object getMetadata(String key) {
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        return metadata != null ? metadata.get(key) : null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

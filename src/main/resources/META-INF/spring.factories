@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.shopify.sdk.config.ShopifyAutoConfiguration

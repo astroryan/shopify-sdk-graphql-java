@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShopifyProperties.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.config</a> &gt; <span class="el_source">ShopifyProperties.java</span></div><h1>ShopifyProperties.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.config;
+
+import com.shopify.sdk.model.common.ApiVersion;
+import com.shopify.sdk.model.common.LogSeverity;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+/**
+ * Spring Boot configuration properties for Shopify SDK.
+ * Maps configuration from application.properties/yaml.
+ */
+<span class="nc bnc" id="L15" title="All 106 branches missed.">@Data</span>
+@Component
+@ConfigurationProperties(prefix = &quot;shopify&quot;)
+public class ShopifyProperties {
+    
+    /**
+     * The API key for your app (Client ID).
+     */
+<span class="nc" id="L23">    private String apiKey;</span>
+    
+    /**
+     * The API secret key for your app (Client Secret).
+     */
+<span class="nc" id="L28">    private String apiSecretKey;</span>
+    
+    /**
+     * The scopes your app needs to access the API.
+     */
+<span class="nc" id="L33">    private List&lt;String&gt; scopes;</span>
+    
+    /**
+     * The host name of your app.
+     */
+<span class="nc" id="L38">    private String hostName;</span>
+    
+    /**
+     * The scheme to use for the app host.
+     */
+<span class="nc" id="L43">    private String hostScheme = &quot;https&quot;;</span>
+    
+    /**
+     * The API version to use.
+     */
+<span class="nc" id="L48">    private ApiVersion apiVersion = ApiVersion.LATEST;</span>
+    
+    /**
+     * Whether the app is embedded in the Shopify admin.
+     */
+<span class="nc" id="L53">    private boolean isEmbeddedApp = true;</span>
+    
+    /**
+     * Whether the app is a Shopify admin custom store app.
+     */
+<span class="nc" id="L58">    private boolean isCustomStoreApp = false;</span>
+    
+    /**
+     * An app-wide API access token (for custom apps).
+     */
+<span class="nc" id="L63">    private String adminApiAccessToken;</span>
+    
+    /**
+     * The user agent prefix to use for API requests.
+     */
+<span class="nc" id="L68">    private String userAgentPrefix;</span>
+    
+    /**
+     * An app-wide API access token for the storefront API (for custom apps).
+     */
+<span class="nc" id="L73">    private String privateAppStorefrontAccessToken;</span>
+    
+    /**
+     * Override values for Shopify shop domains.
+     */
+<span class="nc" id="L78">    private List&lt;String&gt; customShopDomains;</span>
+    
+    /**
+     * Logging configuration.
+     */
+<span class="nc" id="L83">    private final Logging logging = new Logging();</span>
+    
+    /**
+     * Whether the app is initialized for local testing.
+     */
+<span class="nc" id="L88">    private boolean isTesting = false;</span>
+    
+<span class="nc bnc" id="L90" title="All 22 branches missed.">    @Data</span>
+    public static class Logging {
+        /**
+         * The minimum severity level to log.
+         */
+<span class="nc" id="L95">        private LogSeverity level = LogSeverity.INFO;</span>
+        
+        /**
+         * Whether to log HTTP requests.
+         */
+<span class="nc" id="L100">        private boolean httpRequests = false;</span>
+        
+        /**
+         * Whether to log timestamps.
+         */
+<span class="nc" id="L105">        private boolean timestamps = false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

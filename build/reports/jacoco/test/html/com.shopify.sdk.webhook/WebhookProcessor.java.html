@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebhookProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.webhook</a> &gt; <span class="el_source">WebhookProcessor.java</span></div><h1>WebhookProcessor.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.webhook;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.auth.ShopifyOAuth;
+import com.shopify.sdk.config.ShopifyAuthContext;
+import com.shopify.sdk.exception.ShopifyApiException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * Service for processing Shopify webhooks.
+ */
+<span class="fc" id="L25">@Slf4j</span>
+@Service
+<span class="fc" id="L27">@RequiredArgsConstructor</span>
+public class WebhookProcessor {
+    
+    private final ShopifyAuthContext context;
+    private final ShopifyOAuth shopifyOAuth;
+    private final ObjectMapper objectMapper;
+    private final List&lt;WebhookHandler&gt; webhookHandlers;
+    
+    // Statistics
+<span class="fc" id="L36">    private final AtomicLong totalReceived = new AtomicLong(0);</span>
+<span class="fc" id="L37">    private final AtomicLong totalProcessed = new AtomicLong(0);</span>
+<span class="fc" id="L38">    private final AtomicLong totalFailed = new AtomicLong(0);</span>
+<span class="fc" id="L39">    private final Map&lt;String, AtomicLong&gt; eventTypeStats = new ConcurrentHashMap&lt;&gt;();</span>
+    
+    /**
+     * Processes a webhook request.
+     *
+     * @param rawBody the raw request body
+     * @param headers the request headers
+     * @return Mono containing the processed webhook event
+     */
+    public Mono&lt;WebhookEvent&gt; processWebhook(String rawBody, Map&lt;String, String&gt; headers) {
+<span class="fc" id="L49">        totalReceived.incrementAndGet();</span>
+        
+<span class="fc" id="L51">        return Mono.fromSupplier(() -&gt; parseWebhookEvent(rawBody, headers))</span>
+<span class="fc" id="L52">            .flatMap(this::verifyWebhook)</span>
+<span class="fc" id="L53">            .flatMap(this::routeToHandlers)</span>
+<span class="fc" id="L54">            .doOnSuccess(event -&gt; {</span>
+<span class="fc" id="L55">                totalProcessed.incrementAndGet();</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">                if (event.getEventType() != null) {</span>
+<span class="fc" id="L57">                    eventTypeStats.computeIfAbsent(event.getEventType().getTopic(), k -&gt; new AtomicLong(0))</span>
+<span class="fc" id="L58">                        .incrementAndGet();</span>
+                }
+<span class="fc" id="L60">                log.debug(&quot;Successfully processed webhook: {} for shop: {}&quot;, </span>
+<span class="fc" id="L61">                    event.getTopic(), event.getShop());</span>
+<span class="fc" id="L62">            })</span>
+<span class="fc" id="L63">            .doOnError(error -&gt; {</span>
+<span class="fc" id="L64">                totalFailed.incrementAndGet();</span>
+<span class="fc" id="L65">                log.error(&quot;Failed to process webhook&quot;, error);</span>
+<span class="fc" id="L66">            });</span>
+    }
+    
+    /**
+     * Processes a webhook with verification disabled (for testing).
+     *
+     * @param rawBody the raw request body
+     * @param headers the request headers
+     * @return Mono containing the processed webhook event
+     */
+    public Mono&lt;WebhookEvent&gt; processWebhookWithoutVerification(String rawBody, Map&lt;String, String&gt; headers) {
+<span class="nc" id="L77">        totalReceived.incrementAndGet();</span>
+        
+<span class="nc" id="L79">        return Mono.fromSupplier(() -&gt; parseWebhookEvent(rawBody, headers))</span>
+<span class="nc" id="L80">            .flatMap(this::routeToHandlers)</span>
+<span class="nc" id="L81">            .doOnSuccess(event -&gt; {</span>
+<span class="nc" id="L82">                totalProcessed.incrementAndGet();</span>
+<span class="nc" id="L83">                log.debug(&quot;Successfully processed unverified webhook: {} for shop: {}&quot;, </span>
+<span class="nc" id="L84">                    event.getTopic(), event.getShop());</span>
+<span class="nc" id="L85">            })</span>
+<span class="nc" id="L86">            .doOnError(error -&gt; {</span>
+<span class="nc" id="L87">                totalFailed.incrementAndGet();</span>
+<span class="nc" id="L88">                log.error(&quot;Failed to process unverified webhook&quot;, error);</span>
+<span class="nc" id="L89">            });</span>
+    }
+    
+    /**
+     * Verifies a webhook signature.
+     *
+     * @param rawBody the raw request body
+     * @param hmacSignature the HMAC signature from header
+     * @return true if verification succeeds
+     */
+    public boolean verifyWebhookSignature(String rawBody, String hmacSignature) {
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (!context.hasWebhookSecret()) {</span>
+<span class="nc" id="L101">            log.warn(&quot;Webhook secret not configured, skipping verification&quot;);</span>
+<span class="nc" id="L102">            return true; // Allow if not configured</span>
+        }
+        
+<span class="fc" id="L105">        return shopifyOAuth.validateWebhook(rawBody, hmacSignature);</span>
+    }
+    
+    /**
+     * Gets webhook processing statistics.
+     *
+     * @return webhook statistics
+     */
+    public WebhookStats getStats() {
+<span class="nc" id="L114">        return WebhookStats.builder()</span>
+<span class="nc" id="L115">            .totalReceived(totalReceived.get())</span>
+<span class="nc" id="L116">            .totalProcessed(totalProcessed.get())</span>
+<span class="nc" id="L117">            .totalFailed(totalFailed.get())</span>
+<span class="nc" id="L118">            .eventTypeStats(Map.copyOf(eventTypeStats))</span>
+<span class="nc" id="L119">            .build();</span>
+    }
+    
+    /**
+     * Resets webhook processing statistics.
+     */
+    public void resetStats() {
+<span class="nc" id="L126">        totalReceived.set(0);</span>
+<span class="nc" id="L127">        totalProcessed.set(0);</span>
+<span class="nc" id="L128">        totalFailed.set(0);</span>
+<span class="nc" id="L129">        eventTypeStats.clear();</span>
+<span class="nc" id="L130">        log.info(&quot;Webhook statistics reset&quot;);</span>
+<span class="nc" id="L131">    }</span>
+    
+    private WebhookEvent parseWebhookEvent(String rawBody, Map&lt;String, String&gt; headers) {
+        try {
+<span class="fc" id="L135">            String topic = headers.get(&quot;X-Shopify-Topic&quot;);</span>
+<span class="fc" id="L136">            String shop = headers.get(&quot;X-Shopify-Shop-Domain&quot;);</span>
+<span class="fc" id="L137">            String hmacSignature = headers.get(&quot;X-Shopify-Hmac-Sha256&quot;);</span>
+<span class="fc" id="L138">            String apiVersion = headers.get(&quot;X-Shopify-API-Version&quot;);</span>
+<span class="fc" id="L139">            String webhookId = headers.get(&quot;X-Shopify-Webhook-Id&quot;);</span>
+            
+<span class="fc" id="L141">            JsonNode payload = null;</span>
+<span class="pc bpc" id="L142" title="2 of 4 branches missed.">            if (rawBody != null &amp;&amp; !rawBody.trim().isEmpty()) {</span>
+<span class="fc" id="L143">                payload = objectMapper.readTree(rawBody);</span>
+            }
+            
+<span class="fc" id="L146">            WebhookEvent event = WebhookEvent.builder()</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">                .id(webhookId != null ? webhookId : UUID.randomUUID().toString())</span>
+<span class="fc" id="L148">                .topic(topic)</span>
+<span class="fc" id="L149">                .eventType(WebhookEventType.fromTopic(topic))</span>
+<span class="fc" id="L150">                .shop(shop)</span>
+<span class="fc" id="L151">                .rawBody(rawBody)</span>
+<span class="fc" id="L152">                .payload(payload)</span>
+<span class="fc" id="L153">                .headers(Map.copyOf(headers))</span>
+<span class="fc" id="L154">                .hmacSignature(hmacSignature)</span>
+<span class="fc" id="L155">                .apiVersion(apiVersion)</span>
+<span class="fc" id="L156">                .receivedAt(Instant.now())</span>
+<span class="fc" id="L157">                .verified(false) // Will be set during verification</span>
+<span class="fc" id="L158">                .processed(false)</span>
+<span class="fc" id="L159">                .build();</span>
+            
+<span class="fc" id="L161">            log.debug(&quot;Parsed webhook event: {} from shop: {}&quot;, topic, shop);</span>
+<span class="fc" id="L162">            return event;</span>
+            
+<span class="nc" id="L164">        } catch (Exception e) {</span>
+<span class="nc" id="L165">            log.error(&quot;Failed to parse webhook event&quot;, e);</span>
+<span class="nc" id="L166">            throw new ShopifyApiException(&quot;Failed to parse webhook event&quot;, e);</span>
+        }
+    }
+    
+    private Mono&lt;WebhookEvent&gt; verifyWebhook(WebhookEvent event) {
+<span class="fc" id="L171">        return Mono.fromSupplier(() -&gt; {</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">            if (!context.hasWebhookSecret()) {</span>
+<span class="fc" id="L173">                log.debug(&quot;Webhook secret not configured, skipping verification for event: {}&quot;, event.getId());</span>
+<span class="fc" id="L174">                event.setVerified(true);</span>
+<span class="fc" id="L175">                return event;</span>
+            }
+            
+<span class="fc" id="L178">            boolean isValid = verifyWebhookSignature(event.getRawBody(), event.getHmacSignature());</span>
+<span class="fc" id="L179">            event.setVerified(isValid);</span>
+            
+<span class="pc bpc" id="L181" title="1 of 2 branches missed.">            if (!isValid) {</span>
+<span class="fc" id="L182">                throw new ShopifyApiException(&quot;Webhook signature verification failed for event: &quot; + event.getId());</span>
+            }
+            
+<span class="nc" id="L185">            log.debug(&quot;Webhook signature verified for event: {}&quot;, event.getId());</span>
+<span class="nc" id="L186">            return event;</span>
+        });
+    }
+    
+    private Mono&lt;WebhookEvent&gt; routeToHandlers(WebhookEvent event) {
+<span class="fc" id="L191">        List&lt;WebhookHandler&gt; applicableHandlers = webhookHandlers.stream()</span>
+<span class="fc" id="L192">            .filter(handler -&gt; handler.canHandle(event))</span>
+<span class="fc" id="L193">            .sorted(Comparator.comparingInt(WebhookHandler::getPriority))</span>
+<span class="fc" id="L194">            .toList();</span>
+        
+<span class="fc bfc" id="L196" title="All 2 branches covered.">        if (applicableHandlers.isEmpty()) {</span>
+<span class="fc" id="L197">            log.debug(&quot;No handlers found for webhook event: {}&quot;, event.getTopic());</span>
+<span class="fc" id="L198">            event.markAsProcessed();</span>
+<span class="fc" id="L199">            return Mono.just(event);</span>
+        }
+        
+<span class="fc" id="L202">        log.debug(&quot;Found {} handlers for webhook event: {}&quot;, applicableHandlers.size(), event.getTopic());</span>
+        
+<span class="fc" id="L204">        return Flux.fromIterable(applicableHandlers)</span>
+<span class="fc" id="L205">            .flatMap(handler -&gt; processWithHandler(handler, event))</span>
+<span class="fc" id="L206">            .then(Mono.fromRunnable(() -&gt; event.markAsProcessed()))</span>
+<span class="fc" id="L207">            .thenReturn(event)</span>
+<span class="fc" id="L208">            .onErrorMap(error -&gt; {</span>
+<span class="nc" id="L209">                event.markAsFailed(error.getMessage());</span>
+<span class="nc" id="L210">                return new ShopifyApiException(&quot;Failed to process webhook with handlers&quot;, error);</span>
+            });
+    }
+    
+    private Mono&lt;Void&gt; processWithHandler(WebhookHandler handler, WebhookEvent event) {
+<span class="fc" id="L215">        return handler.handle(event)</span>
+<span class="fc" id="L216">            .doOnSuccess(ignored -&gt; log.debug(&quot;Handler {} successfully processed webhook: {}&quot;, </span>
+<span class="fc" id="L217">                handler.getClass().getSimpleName(), event.getId()))</span>
+<span class="fc" id="L218">            .onErrorResume(error -&gt; {</span>
+<span class="fc" id="L219">                log.error(&quot;Handler {} failed to process webhook: {}&quot;, </span>
+<span class="fc" id="L220">                    handler.getClass().getSimpleName(), event.getId(), error);</span>
+<span class="fc" id="L221">                return handler.onError(event, error);</span>
+            });
+    }
+    
+    /**
+     * Webhook processing statistics.
+     */
+<span class="nc bnc" id="L228" title="All 20 branches missed.">    @lombok.Data</span>
+<span class="nc" id="L229">    @lombok.Builder</span>
+<span class="nc" id="L230">    @lombok.NoArgsConstructor</span>
+<span class="nc" id="L231">    @lombok.AllArgsConstructor</span>
+    public static class WebhookStats {
+<span class="nc" id="L233">        private long totalReceived;</span>
+<span class="nc" id="L234">        private long totalProcessed;</span>
+<span class="nc" id="L235">        private long totalFailed;</span>
+<span class="nc" id="L236">        private Map&lt;String, AtomicLong&gt; eventTypeStats;</span>
+        
+        public double getSuccessRate() {
+<span class="nc bnc" id="L239" title="All 2 branches missed.">            return totalReceived &gt; 0 ? (double) totalProcessed / totalReceived * 100 : 0.0;</span>
+        }
+        
+        public double getFailureRate() {
+<span class="nc bnc" id="L243" title="All 2 branches missed.">            return totalReceived &gt; 0 ? (double) totalFailed / totalReceived * 100 : 0.0;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

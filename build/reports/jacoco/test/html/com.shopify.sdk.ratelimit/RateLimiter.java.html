@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RateLimiter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.ratelimit</a> &gt; <span class="el_source">RateLimiter.java</span></div><h1>RateLimiter.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.ratelimit;
+
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * Token bucket rate limiter implementation.
+ */
+<span class="fc" id="L14">@Slf4j</span>
+public class RateLimiter {
+    
+    private final int capacity;
+    private final int refillRate; // tokens per second
+    private final AtomicInteger tokens;
+    private final AtomicLong lastRefill;
+    private final String name;
+    
+<span class="fc" id="L23">    public RateLimiter(String name, int capacity, int refillRate) {</span>
+<span class="fc" id="L24">        this.name = name;</span>
+<span class="fc" id="L25">        this.capacity = capacity;</span>
+<span class="fc" id="L26">        this.refillRate = refillRate;</span>
+<span class="fc" id="L27">        this.tokens = new AtomicInteger(capacity);</span>
+<span class="fc" id="L28">        this.lastRefill = new AtomicLong(System.currentTimeMillis());</span>
+<span class="fc" id="L29">    }</span>
+    
+    /**
+     * Attempts to acquire a token for request execution.
+     * 
+     * @return Mono that completes when a token is acquired
+     */
+    public Mono&lt;Void&gt; acquire() {
+<span class="fc" id="L37">        return acquire(1);</span>
+    }
+    
+    /**
+     * Attempts to acquire multiple tokens for request execution.
+     * 
+     * @param requestedTokens number of tokens to acquire
+     * @return Mono that completes when tokens are acquired
+     */
+    public Mono&lt;Void&gt; acquire(int requestedTokens) {
+<span class="fc" id="L47">        return Mono.defer(() -&gt; {</span>
+<span class="fc" id="L48">            refillTokens();</span>
+            
+<span class="fc" id="L50">            int currentTokens = tokens.get();</span>
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">            if (currentTokens &gt;= requestedTokens) {</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">                if (tokens.compareAndSet(currentTokens, currentTokens - requestedTokens)) {</span>
+<span class="fc" id="L53">                    log.debug(&quot;Rate limiter '{}' acquired {} tokens, {} remaining&quot;, </span>
+<span class="fc" id="L54">                        name, requestedTokens, tokens.get());</span>
+<span class="fc" id="L55">                    return Mono.empty();</span>
+                }
+                // Retry if CAS failed
+<span class="fc" id="L58">                return acquire(requestedTokens);</span>
+            }
+            
+            // Not enough tokens, calculate wait time
+<span class="nc" id="L62">            long waitTimeMs = calculateWaitTime(requestedTokens);</span>
+            
+<span class="nc" id="L64">            log.debug(&quot;Rate limiter '{}' delaying request by {}ms, current tokens: {}, requested: {}&quot;, </span>
+<span class="nc" id="L65">                name, waitTimeMs, currentTokens, requestedTokens);</span>
+            
+<span class="nc" id="L67">            return Mono.delay(Duration.ofMillis(waitTimeMs))</span>
+<span class="nc" id="L68">                .then(acquire(requestedTokens));</span>
+        });
+    }
+    
+    /**
+     * Attempts to acquire a token without waiting.
+     * 
+     * @return true if token was acquired, false otherwise
+     */
+    public boolean tryAcquire() {
+<span class="nc" id="L78">        return tryAcquire(1);</span>
+    }
+    
+    /**
+     * Attempts to acquire multiple tokens without waiting.
+     * 
+     * @param requestedTokens number of tokens to acquire
+     * @return true if tokens were acquired, false otherwise
+     */
+    public boolean tryAcquire(int requestedTokens) {
+<span class="nc" id="L88">        refillTokens();</span>
+        
+<span class="nc" id="L90">        int currentTokens = tokens.get();</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (currentTokens &gt;= requestedTokens) {</span>
+<span class="nc" id="L92">            return tokens.compareAndSet(currentTokens, currentTokens - requestedTokens);</span>
+        }
+        
+<span class="nc" id="L95">        return false;</span>
+    }
+    
+    /**
+     * Gets the current number of available tokens.
+     */
+    public int getAvailableTokens() {
+<span class="nc" id="L102">        refillTokens();</span>
+<span class="nc" id="L103">        return tokens.get();</span>
+    }
+    
+    /**
+     * Gets the maximum capacity of the bucket.
+     */
+    public int getCapacity() {
+<span class="nc" id="L110">        return capacity;</span>
+    }
+    
+    /**
+     * Gets the refill rate (tokens per second).
+     */
+    public int getRefillRate() {
+<span class="nc" id="L117">        return refillRate;</span>
+    }
+    
+    /**
+     * Gets the name of this rate limiter.
+     */
+    public String getName() {
+<span class="nc" id="L124">        return name;</span>
+    }
+    
+    /**
+     * Resets the rate limiter to full capacity.
+     */
+    public void reset() {
+<span class="nc" id="L131">        tokens.set(capacity);</span>
+<span class="nc" id="L132">        lastRefill.set(System.currentTimeMillis());</span>
+<span class="nc" id="L133">        log.debug(&quot;Rate limiter '{}' reset to full capacity&quot;, name);</span>
+<span class="nc" id="L134">    }</span>
+    
+    /**
+     * Updates the bucket based on Shopify's rate limit headers.
+     */
+    public void updateFromHeaders(int remainingRequests, int maxRequests) {
+<span class="pc bpc" id="L140" title="2 of 4 branches missed.">        if (remainingRequests &gt;= 0 &amp;&amp; maxRequests &gt; 0) {</span>
+            // Update tokens based on actual API response
+<span class="fc" id="L142">            int newTokens = Math.min(remainingRequests, capacity);</span>
+<span class="fc" id="L143">            tokens.set(newTokens);</span>
+            
+<span class="fc" id="L145">            log.debug(&quot;Rate limiter '{}' updated from headers: {} remaining of {} max, set to {} tokens&quot;, </span>
+<span class="fc" id="L146">                name, remainingRequests, maxRequests, newTokens);</span>
+        }
+<span class="fc" id="L148">    }</span>
+    
+    /**
+     * Refills tokens based on elapsed time.
+     */
+    private void refillTokens() {
+<span class="fc" id="L154">        long now = System.currentTimeMillis();</span>
+<span class="fc" id="L155">        long lastRefillTime = lastRefill.get();</span>
+<span class="fc" id="L156">        long elapsedMs = now - lastRefillTime;</span>
+        
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (elapsedMs &gt; 0) {</span>
+            // Calculate tokens to add based on elapsed time
+<span class="fc" id="L160">            long tokensToAdd = (elapsedMs * refillRate) / 1000;</span>
+            
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">            if (tokensToAdd &gt; 0) {</span>
+<span class="nc" id="L163">                int currentTokens = tokens.get();</span>
+<span class="nc" id="L164">                int newTokens = Math.min(capacity, currentTokens + (int) tokensToAdd);</span>
+                
+<span class="nc bnc" id="L166" title="All 2 branches missed.">                if (tokens.compareAndSet(currentTokens, newTokens)) {</span>
+<span class="nc" id="L167">                    lastRefill.set(now);</span>
+                    
+<span class="nc bnc" id="L169" title="All 2 branches missed.">                    if (newTokens != currentTokens) {</span>
+<span class="nc" id="L170">                        log.trace(&quot;Rate limiter '{}' refilled {} tokens ({}-&gt;{})&quot;, </span>
+<span class="nc" id="L171">                            name, tokensToAdd, currentTokens, newTokens);</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L176">    }</span>
+    
+    /**
+     * Calculates how long to wait for the requested tokens to become available.
+     */
+    private long calculateWaitTime(int requestedTokens) {
+<span class="nc" id="L182">        int currentTokens = tokens.get();</span>
+<span class="nc" id="L183">        int tokensNeeded = requestedTokens - currentTokens;</span>
+        
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        if (tokensNeeded &lt;= 0) {</span>
+<span class="nc" id="L186">            return 0;</span>
+        }
+        
+        // Time to wait for tokens to be refilled
+<span class="nc" id="L190">        return (tokensNeeded * 1000L) / refillRate;</span>
+    }
+    
+    /**
+     * Gets a summary of the current state.
+     */
+    public RateLimiterState getState() {
+<span class="nc" id="L197">        refillTokens();</span>
+<span class="nc" id="L198">        return RateLimiterState.builder()</span>
+<span class="nc" id="L199">            .name(name)</span>
+<span class="nc" id="L200">            .availableTokens(tokens.get())</span>
+<span class="nc" id="L201">            .capacity(capacity)</span>
+<span class="nc" id="L202">            .refillRate(refillRate)</span>
+<span class="nc" id="L203">            .lastRefill(Instant.ofEpochMilli(lastRefill.get()))</span>
+<span class="nc" id="L204">            .build();</span>
+    }
+    
+<span class="nc bnc" id="L207" title="All 28 branches missed.">    @lombok.Data</span>
+<span class="nc" id="L208">    @lombok.Builder</span>
+    public static class RateLimiterState {
+<span class="nc" id="L210">        private final String name;</span>
+<span class="nc" id="L211">        private final int availableTokens;</span>
+<span class="nc" id="L212">        private final int capacity;</span>
+<span class="nc" id="L213">        private final int refillRate;</span>
+<span class="nc" id="L214">        private final Instant lastRefill;</span>
+        
+        public double getUtilizationPercentage() {
+<span class="nc" id="L217">            return (double) (capacity - availableTokens) / capacity * 100;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

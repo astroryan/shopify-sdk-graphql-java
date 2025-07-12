@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MoneyScalar.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.graphql.scalar</a> &gt; <span class="el_source">MoneyScalar.java</span></div><h1>MoneyScalar.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.graphql.scalar;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+import java.math.BigDecimal;
+
+/**
+ * Shopify Money scalar type.
+ * Represents a monetary amount as a decimal string.
+ */
+@Getter
+<span class="nc bnc" id="L15" title="All 14 branches missed.">@EqualsAndHashCode</span>
+public class MoneyScalar {
+    
+<span class="nc" id="L18">    private final BigDecimal amount;</span>
+
+<span class="fc" id="L20">    public MoneyScalar(BigDecimal amount) {</span>
+<span class="pc bpc" id="L21" title="1 of 2 branches missed.">        this.amount = amount != null ? amount : BigDecimal.ZERO;</span>
+<span class="fc" id="L22">    }</span>
+
+    @JsonCreator
+    public static MoneyScalar of(String moneyString) {
+<span class="pc bpc" id="L26" title="2 of 4 branches missed.">        if (moneyString == null || moneyString.trim().isEmpty()) {</span>
+<span class="nc" id="L27">            return new MoneyScalar(BigDecimal.ZERO);</span>
+        }
+<span class="fc" id="L29">        return new MoneyScalar(new BigDecimal(moneyString));</span>
+    }
+
+    public static MoneyScalar of(BigDecimal amount) {
+<span class="nc" id="L33">        return new MoneyScalar(amount);</span>
+    }
+
+    public static MoneyScalar of(double amount) {
+<span class="nc" id="L37">        return new MoneyScalar(BigDecimal.valueOf(amount));</span>
+    }
+
+    public static MoneyScalar zero() {
+<span class="nc" id="L41">        return new MoneyScalar(BigDecimal.ZERO);</span>
+    }
+
+    @JsonValue
+    public String toString() {
+<span class="nc" id="L46">        return amount.toPlainString();</span>
+    }
+
+    public BigDecimal toBigDecimal() {
+<span class="nc" id="L50">        return amount;</span>
+    }
+
+    public double toDouble() {
+<span class="nc" id="L54">        return amount.doubleValue();</span>
+    }
+
+    public MoneyScalar add(MoneyScalar other) {
+<span class="nc" id="L58">        return new MoneyScalar(this.amount.add(other.amount));</span>
+    }
+
+    public MoneyScalar subtract(MoneyScalar other) {
+<span class="nc" id="L62">        return new MoneyScalar(this.amount.subtract(other.amount));</span>
+    }
+
+    public MoneyScalar multiply(MoneyScalar other) {
+<span class="nc" id="L66">        return new MoneyScalar(this.amount.multiply(other.amount));</span>
+    }
+
+    public MoneyScalar divide(MoneyScalar other) {
+<span class="nc" id="L70">        return new MoneyScalar(this.amount.divide(other.amount));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

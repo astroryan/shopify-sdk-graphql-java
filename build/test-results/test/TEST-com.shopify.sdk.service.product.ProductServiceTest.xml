@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.shopify.sdk.service.product.ProductServiceTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2025-07-12T17:59:10" hostname="Ryans-MacBook-Pro.local" time="0.035">
+  <properties/>
+  <testcase name="Should handle GraphQL errors gracefully" classname="com.shopify.sdk.service.product.ProductServiceTest" time="0.002"/>
+  <testcase name="Should create product successfully" classname="com.shopify.sdk.service.product.ProductServiceTest" time="0.006"/>
+  <testcase name="Should get single product by ID" classname="com.shopify.sdk.service.product.ProductServiceTest" time="0.004"/>
+  <testcase name="Should update product successfully" classname="com.shopify.sdk.service.product.ProductServiceTest" time="0.014"/>
+  <testcase name="Should fetch products successfully" classname="com.shopify.sdk.service.product.ProductServiceTest" time="0.005"/>
+  <testcase name="Should delete product successfully" classname="com.shopify.sdk.service.product.ProductServiceTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

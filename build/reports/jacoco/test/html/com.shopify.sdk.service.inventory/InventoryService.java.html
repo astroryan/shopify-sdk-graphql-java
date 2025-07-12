@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InventoryService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.service.inventory</a> &gt; <span class="el_source">InventoryService.java</span></div><h1>InventoryService.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.service.inventory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.client.ShopifyRestClient;
+import com.shopify.sdk.model.inventory.InventoryItem;
+import com.shopify.sdk.model.inventory.InventoryLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.Map;
+
+<span class="nc" id="L16">@Slf4j</span>
+@Service
+<span class="nc" id="L18">@RequiredArgsConstructor</span>
+public class InventoryService {
+    
+    private final ShopifyGraphQLClient graphQLClient;
+    private final ShopifyRestClient restClient;
+    private final ObjectMapper objectMapper;
+    
+    private static final String INVENTORY_LEVELS_QUERY = &quot;&quot;&quot;
+        query getInventoryLevels($first: Int, $after: String, $locationIds: [ID!]) {
+            inventoryLevels(first: $first, after: $after, query: $locationIds) {
+                edges {
+                    cursor
+                    node {
+                        id
+                        quantities(names: [&quot;available&quot;, &quot;committed&quot;, &quot;incoming&quot;, &quot;on_hand&quot;]) {
+                            name
+                            quantity
+                        }
+                        item {
+                            id
+                            sku
+                            tracked
+                            requiresShipping
+                            countryCodeOfOrigin
+                            harmonizedSystemCode
+                            createdAt
+                            updatedAt
+                        }
+                        location {
+                            id
+                            name
+                        }
+                        updatedAt
+                    }
+                }
+                pageInfo {
+                    hasNextPage
+                    hasPreviousPage
+                    startCursor
+                    endCursor
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String INVENTORY_ITEM_QUERY = &quot;&quot;&quot;
+        query getInventoryItem($id: ID!) {
+            inventoryItem(id: $id) {
+                id
+                sku
+                tracked
+                requiresShipping
+                countryCodeOfOrigin
+                provinceCodeOfOrigin
+                harmonizedSystemCode
+                createdAt
+                updatedAt
+                countryHarmonizedSystemCodes {
+                    countryCode
+                    harmonizedSystemCode
+                }
+                duplicateSkuCount
+                inventoryLevels(first: 50) {
+                    edges {
+                        node {
+                            id
+                            quantities(names: [&quot;available&quot;, &quot;committed&quot;, &quot;incoming&quot;, &quot;on_hand&quot;]) {
+                                name
+                                quantity
+                            }
+                            location {
+                                id
+                                name
+                            }
+                            updatedAt
+                        }
+                    }
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String INVENTORY_ADJUST_MUTATION = &quot;&quot;&quot;
+        mutation inventoryAdjustQuantity($input: InventoryAdjustQuantityInput!) {
+            inventoryAdjustQuantity(input: $input) {
+                inventoryLevel {
+                    id
+                    quantities(names: [&quot;available&quot;, &quot;committed&quot;, &quot;incoming&quot;, &quot;on_hand&quot;]) {
+                        name
+                        quantity
+                    }
+                    updatedAt
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String INVENTORY_BULK_ADJUST_MUTATION = &quot;&quot;&quot;
+        mutation inventoryBulkAdjustQuantityAtLocation($inventoryItemAdjustments: [InventoryAdjustItemInput!]!, $locationId: ID!) {
+            inventoryBulkAdjustQuantityAtLocation(inventoryItemAdjustments: $inventoryItemAdjustments, locationId: $locationId) {
+                inventoryLevels {
+                    id
+                    quantities(names: [&quot;available&quot;, &quot;committed&quot;, &quot;incoming&quot;, &quot;on_hand&quot;]) {
+                        name
+                        quantity
+                    }
+                    item {
+                        id
+                        sku
+                    }
+                    location {
+                        id
+                        name
+                    }
+                    updatedAt
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    public Mono&lt;List&lt;InventoryLevel&gt;&gt; getInventoryLevels(String shop, String accessToken, 
+                                                        List&lt;String&gt; locationIds, 
+                                                        Integer first, String after) {
+<span class="nc" id="L149">        Map&lt;String, Object&gt; variables = Map.of(</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">            &quot;first&quot;, first != null ? first : 50,</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            &quot;after&quot;, after != null ? after : &quot;&quot;,</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            &quot;locationIds&quot;, locationIds != null ? locationIds : List.of()</span>
+        );
+        
+<span class="nc" id="L155">        return graphQLClient.query(shop, accessToken, INVENTORY_LEVELS_QUERY, variables)</span>
+<span class="nc" id="L156">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L158">                    var edges = response.getData().get(&quot;inventoryLevels&quot;).get(&quot;edges&quot;);</span>
+<span class="nc" id="L159">                    return objectMapper.convertValue(edges, </span>
+<span class="nc" id="L160">                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryLevel.class));</span>
+<span class="nc" id="L161">                } catch (Exception e) {</span>
+<span class="nc" id="L162">                    log.error(&quot;Failed to parse inventory levels response&quot;, e);</span>
+<span class="nc" id="L163">                    throw new RuntimeException(&quot;Failed to parse inventory levels response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;InventoryItem&gt; getInventoryItem(String shop, String accessToken, String inventoryItemId) {
+<span class="nc" id="L169">        Map&lt;String, Object&gt; variables = Map.of(&quot;id&quot;, inventoryItemId);</span>
+        
+<span class="nc" id="L171">        return graphQLClient.query(shop, accessToken, INVENTORY_ITEM_QUERY, variables)</span>
+<span class="nc" id="L172">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L174">                    var data = response.getData().get(&quot;inventoryItem&quot;);</span>
+<span class="nc" id="L175">                    return objectMapper.convertValue(data, InventoryItem.class);</span>
+<span class="nc" id="L176">                } catch (Exception e) {</span>
+<span class="nc" id="L177">                    log.error(&quot;Failed to parse inventory item response&quot;, e);</span>
+<span class="nc" id="L178">                    throw new RuntimeException(&quot;Failed to parse inventory item response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;InventoryLevel&gt; adjustInventoryQuantity(String shop, String accessToken, 
+                                                       String inventoryLevelId, 
+                                                       String quantityName,
+                                                       int quantityDelta) {
+<span class="nc" id="L187">        Map&lt;String, Object&gt; input = Map.of(</span>
+            &quot;inventoryLevelId&quot;, inventoryLevelId,
+            &quot;quantityName&quot;, quantityName,
+<span class="nc" id="L190">            &quot;quantityDelta&quot;, quantityDelta</span>
+        );
+        
+<span class="nc" id="L193">        Map&lt;String, Object&gt; variables = Map.of(&quot;input&quot;, input);</span>
+        
+<span class="nc" id="L195">        return graphQLClient.query(shop, accessToken, INVENTORY_ADJUST_MUTATION, variables)</span>
+<span class="nc" id="L196">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L198">                    var data = response.getData().get(&quot;inventoryAdjustQuantity&quot;).get(&quot;inventoryLevel&quot;);</span>
+<span class="nc" id="L199">                    return objectMapper.convertValue(data, InventoryLevel.class);</span>
+<span class="nc" id="L200">                } catch (Exception e) {</span>
+<span class="nc" id="L201">                    log.error(&quot;Failed to parse inventory adjust response&quot;, e);</span>
+<span class="nc" id="L202">                    throw new RuntimeException(&quot;Failed to parse inventory adjust response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;List&lt;InventoryLevel&gt;&gt; bulkAdjustInventory(String shop, String accessToken,
+                                                         String locationId,
+                                                         List&lt;InventoryAdjustment&gt; adjustments) {
+<span class="nc" id="L210">        Map&lt;String, Object&gt; variables = Map.of(</span>
+            &quot;locationId&quot;, locationId,
+            &quot;inventoryItemAdjustments&quot;, adjustments
+        );
+        
+<span class="nc" id="L215">        return graphQLClient.query(shop, accessToken, INVENTORY_BULK_ADJUST_MUTATION, variables)</span>
+<span class="nc" id="L216">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L218">                    var data = response.getData().get(&quot;inventoryBulkAdjustQuantityAtLocation&quot;).get(&quot;inventoryLevels&quot;);</span>
+<span class="nc" id="L219">                    return objectMapper.convertValue(data, </span>
+<span class="nc" id="L220">                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryLevel.class));</span>
+<span class="nc" id="L221">                } catch (Exception e) {</span>
+<span class="nc" id="L222">                    log.error(&quot;Failed to parse bulk inventory adjust response&quot;, e);</span>
+<span class="nc" id="L223">                    throw new RuntimeException(&quot;Failed to parse bulk inventory adjust response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;List&lt;InventoryItem&gt;&gt; getInventoryItems(String shop, String accessToken, List&lt;String&gt; ids) {
+<span class="nc" id="L229">        String endpoint = &quot;/admin/api/2023-10/inventory_items.json&quot;;</span>
+<span class="nc" id="L230">        Map&lt;String, Object&gt; params = Map.of(&quot;ids&quot;, String.join(&quot;,&quot;, ids));</span>
+        
+<span class="nc" id="L232">        return restClient.get(shop, accessToken, endpoint, params)</span>
+<span class="nc" id="L233">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L235">                    var data = response.get(&quot;inventory_items&quot;);</span>
+<span class="nc" id="L236">                    return objectMapper.convertValue(data,</span>
+<span class="nc" id="L237">                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryItem.class));</span>
+<span class="nc" id="L238">                } catch (Exception e) {</span>
+<span class="nc" id="L239">                    log.error(&quot;Failed to parse inventory items response&quot;, e);</span>
+<span class="nc" id="L240">                    throw new RuntimeException(&quot;Failed to parse inventory items response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;InventoryItem&gt; updateInventoryItem(String shop, String accessToken, String inventoryItemId, InventoryItemUpdate update) {
+<span class="nc" id="L246">        String endpoint = &quot;/admin/api/2023-10/inventory_items/&quot; + inventoryItemId + &quot;.json&quot;;</span>
+        
+<span class="nc" id="L248">        return restClient.post(shop, accessToken, endpoint, Map.of(&quot;inventory_item&quot;, update))</span>
+<span class="nc" id="L249">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L251">                    var data = response.get(&quot;inventory_item&quot;);</span>
+<span class="nc" id="L252">                    return objectMapper.convertValue(data, InventoryItem.class);</span>
+<span class="nc" id="L253">                } catch (Exception e) {</span>
+<span class="nc" id="L254">                    log.error(&quot;Failed to parse update inventory item response&quot;, e);</span>
+<span class="nc" id="L255">                    throw new RuntimeException(&quot;Failed to parse update inventory item response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;List&lt;InventoryLevel&gt;&gt; getInventoryLevelsRestAPI(String shop, String accessToken, 
+                                                               List&lt;String&gt; inventoryItemIds,
+                                                               List&lt;String&gt; locationIds) {
+<span class="nc" id="L263">        String endpoint = &quot;/admin/api/2023-10/inventory_levels.json&quot;;</span>
+<span class="nc" id="L264">        Map&lt;String, Object&gt; params = Map.of(</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">            &quot;inventory_item_ids&quot;, inventoryItemIds != null ? String.join(&quot;,&quot;, inventoryItemIds) : &quot;&quot;,</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">            &quot;location_ids&quot;, locationIds != null ? String.join(&quot;,&quot;, locationIds) : &quot;&quot;</span>
+        );
+        
+<span class="nc" id="L269">        return restClient.get(shop, accessToken, endpoint, params)</span>
+<span class="nc" id="L270">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L272">                    var data = response.get(&quot;inventory_levels&quot;);</span>
+<span class="nc" id="L273">                    return objectMapper.convertValue(data,</span>
+<span class="nc" id="L274">                        objectMapper.getTypeFactory().constructCollectionType(List.class, InventoryLevel.class));</span>
+<span class="nc" id="L275">                } catch (Exception e) {</span>
+<span class="nc" id="L276">                    log.error(&quot;Failed to parse inventory levels REST response&quot;, e);</span>
+<span class="nc" id="L277">                    throw new RuntimeException(&quot;Failed to parse inventory levels REST response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;InventoryLevel&gt; setInventoryLevel(String shop, String accessToken, 
+                                                 String inventoryItemId, String locationId, Integer available) {
+<span class="nc" id="L284">        String endpoint = &quot;/admin/api/2023-10/inventory_levels/set.json&quot;;</span>
+<span class="nc" id="L285">        Map&lt;String, Object&gt; body = Map.of(</span>
+            &quot;inventory_item_id&quot;, inventoryItemId,
+            &quot;location_id&quot;, locationId,
+            &quot;available&quot;, available
+        );
+        
+<span class="nc" id="L291">        return restClient.post(shop, accessToken, endpoint, body)</span>
+<span class="nc" id="L292">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L294">                    var data = response.get(&quot;inventory_level&quot;);</span>
+<span class="nc" id="L295">                    return objectMapper.convertValue(data, InventoryLevel.class);</span>
+<span class="nc" id="L296">                } catch (Exception e) {</span>
+<span class="nc" id="L297">                    log.error(&quot;Failed to parse set inventory level response&quot;, e);</span>
+<span class="nc" id="L298">                    throw new RuntimeException(&quot;Failed to parse set inventory level response&quot;, e);</span>
+                }
+            });
+    }
+    
+    public Mono&lt;InventoryLevel&gt; adjustInventoryLevel(String shop, String accessToken,
+                                                    String inventoryItemId, String locationId, Integer quantityAdjustment) {
+<span class="nc" id="L305">        String endpoint = &quot;/admin/api/2023-10/inventory_levels/adjust.json&quot;;</span>
+<span class="nc" id="L306">        Map&lt;String, Object&gt; body = Map.of(</span>
+            &quot;inventory_item_id&quot;, inventoryItemId,
+            &quot;location_id&quot;, locationId,
+            &quot;quantity_adjustment&quot;, quantityAdjustment
+        );
+        
+<span class="nc" id="L312">        return restClient.post(shop, accessToken, endpoint, body)</span>
+<span class="nc" id="L313">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L315">                    var data = response.get(&quot;inventory_level&quot;);</span>
+<span class="nc" id="L316">                    return objectMapper.convertValue(data, InventoryLevel.class);</span>
+<span class="nc" id="L317">                } catch (Exception e) {</span>
+<span class="nc" id="L318">                    log.error(&quot;Failed to parse adjust inventory level response&quot;, e);</span>
+<span class="nc" id="L319">                    throw new RuntimeException(&quot;Failed to parse adjust inventory level response&quot;, e);</span>
+                }
+            });
+    }
+    
+<span class="nc bnc" id="L324" title="All 30 branches missed.">    @lombok.Data</span>
+<span class="nc" id="L325">    @lombok.NoArgsConstructor</span>
+<span class="nc" id="L326">    @lombok.AllArgsConstructor</span>
+<span class="nc" id="L327">    @lombok.Builder</span>
+    public static class InventoryAdjustment {
+<span class="nc" id="L329">        private String inventoryItemId;</span>
+<span class="nc" id="L330">        private String quantityName;</span>
+<span class="nc" id="L331">        private Integer quantityDelta;</span>
+    }
+    
+<span class="nc bnc" id="L334" title="All 54 branches missed.">    @lombok.Data</span>
+<span class="nc" id="L335">    @lombok.NoArgsConstructor</span>
+<span class="nc" id="L336">    @lombok.AllArgsConstructor</span>
+<span class="nc" id="L337">    @lombok.Builder</span>
+    public static class InventoryItemUpdate {
+<span class="nc" id="L339">        private String sku;</span>
+<span class="nc" id="L340">        private Boolean tracked;</span>
+<span class="nc" id="L341">        private String countryCodeOfOrigin;</span>
+<span class="nc" id="L342">        private String provinceCodeOfOrigin;</span>
+<span class="nc" id="L343">        private String harmonizedSystemCode;</span>
+<span class="nc" id="L344">        private Boolean requiresShipping;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

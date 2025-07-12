@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HttpClientService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.client</a> &gt; <span class="el_source">HttpClientService.java</span></div><h1>HttpClientService.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.client;
+
+import com.shopify.sdk.config.ShopifyAuthContext;
+import com.shopify.sdk.exception.ShopifyHttpException;
+import com.shopify.sdk.model.common.LogSeverity;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Base HTTP client service for making requests to Shopify APIs.
+ */
+@Service
+<span class="nc" id="L23">@RequiredArgsConstructor</span>
+public class HttpClientService {
+    
+    private final HttpClientConfig httpClientConfig;
+    
+    /**
+     * Executes an HTTP request and returns the response.
+     *
+     * @param context the Shopify configuration context
+     * @param request the HTTP request to execute
+     * @return Mono of ShopifyHttpResponse
+     */
+    public Mono&lt;ShopifyHttpResponse&gt; execute(ShopifyAuthContext context, ShopifyHttpRequest request) {
+<span class="nc" id="L36">        WebClient webClient = httpClientConfig.createWebClient(context);</span>
+        
+<span class="nc" id="L38">        return executeRequest(webClient, context, request)</span>
+<span class="nc" id="L39">            .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))</span>
+<span class="nc" id="L40">                .filter(this::shouldRetry)</span>
+<span class="nc" id="L41">                .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -&gt; </span>
+<span class="nc" id="L42">                    new ShopifyHttpException(500, &quot;Max retries exceeded&quot;, retrySignal.failure())))</span>
+<span class="nc" id="L43">            .doOnSuccess(response -&gt; logResponse(context, request, response))</span>
+<span class="nc" id="L44">            .doOnError(error -&gt; logError(context, request, error));</span>
+    }
+    
+    private Mono&lt;ShopifyHttpResponse&gt; executeRequest(WebClient webClient, ShopifyAuthContext context, ShopifyHttpRequest request) {
+<span class="nc" id="L48">        WebClient.RequestBodySpec requestSpec = webClient</span>
+<span class="nc" id="L49">            .method(request.getMethod())</span>
+<span class="nc" id="L50">            .uri(uriBuilder -&gt; {</span>
+<span class="nc" id="L51">                uriBuilder.path(request.getUrl());</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">                if (request.getQueryParams() != null) {</span>
+<span class="nc" id="L53">                    request.getQueryParams().forEach((key, value) -&gt; </span>
+<span class="nc" id="L54">                        uriBuilder.queryParam(key, value));</span>
+                }
+<span class="nc" id="L56">                return uriBuilder.build();</span>
+            });
+        
+        // Add headers
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (request.getHeaders() != null) {</span>
+<span class="nc" id="L61">            request.getHeaders().forEach(requestSpec::header);</span>
+        }
+        
+        // Add body for POST/PUT requests
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if (request.getBody() != null) {</span>
+<span class="nc" id="L66">            requestSpec.contentType(MediaType.APPLICATION_JSON);</span>
+<span class="nc" id="L67">            requestSpec.bodyValue(request.getBody());</span>
+        }
+        
+<span class="nc" id="L70">        return requestSpec</span>
+<span class="nc" id="L71">            .retrieve()</span>
+<span class="nc" id="L72">            .toEntity(String.class)</span>
+<span class="nc" id="L73">            .map(responseEntity -&gt; {</span>
+<span class="nc" id="L74">                Map&lt;String, String&gt; headers = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L75">                responseEntity.getHeaders().forEach((key, values) -&gt; {</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">                    if (!values.isEmpty()) {</span>
+<span class="nc" id="L77">                        headers.put(key, values.get(0));</span>
+                    }
+<span class="nc" id="L79">                });</span>
+                
+<span class="nc" id="L81">                return new ShopifyHttpResponse(</span>
+<span class="nc" id="L82">                    HttpStatus.resolve(responseEntity.getStatusCode().value()),</span>
+                    headers,
+<span class="nc" id="L84">                    responseEntity.getBody()</span>
+                );
+            })
+<span class="nc" id="L87">            .onErrorMap(WebClientResponseException.class, ex -&gt; {</span>
+<span class="nc" id="L88">                return new ShopifyHttpException(</span>
+<span class="nc" id="L89">                    ex.getStatusCode().value(),</span>
+<span class="nc" id="L90">                    ex.getMessage(),</span>
+<span class="nc" id="L91">                    ex.getResponseBodyAsString(),</span>
+<span class="nc" id="L92">                    convertHeaders(ex.getHeaders().toSingleValueMap())</span>
+                );
+            });
+    }
+    
+    private boolean shouldRetry(Throwable throwable) {
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (throwable instanceof ShopifyHttpException) {</span>
+<span class="nc" id="L99">            ShopifyHttpException httpEx = (ShopifyHttpException) throwable;</span>
+            // Retry on rate limiting and server errors
+<span class="nc bnc" id="L101" title="All 4 branches missed.">            return httpEx.isRateLimited() || httpEx.isServerError();</span>
+        }
+<span class="nc" id="L103">        return false;</span>
+    }
+    
+    private Map&lt;String, String&gt; convertHeaders(Map&lt;String, String&gt; headers) {
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        return headers != null ? new HashMap&lt;&gt;(headers) : new HashMap&lt;&gt;();</span>
+    }
+    
+    private void logResponse(ShopifyAuthContext context, ShopifyHttpRequest request, ShopifyHttpResponse response) {
+<span class="nc bnc" id="L111" title="All 4 branches missed.">        if (context.isLogHttpRequests() &amp;&amp; context.getLogFunction() != null) {</span>
+<span class="nc" id="L112">            String message = String.format(</span>
+                &quot;HTTP %s %s -&gt; %d %s&quot;,
+<span class="nc" id="L114">                request.getMethod(),</span>
+<span class="nc" id="L115">                request.getUrl(),</span>
+<span class="nc" id="L116">                response.getStatusCode(),</span>
+<span class="nc" id="L117">                response.getStatus().getReasonPhrase()</span>
+            );
+<span class="nc" id="L119">            context.getLogFunction().log(LogSeverity.DEBUG, message);</span>
+        }
+<span class="nc" id="L121">    }</span>
+    
+    private void logError(ShopifyAuthContext context, ShopifyHttpRequest request, Throwable error) {
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (context.getLogFunction() != null) {</span>
+<span class="nc" id="L125">            String message = String.format(</span>
+                &quot;HTTP %s %s failed: %s&quot;,
+<span class="nc" id="L127">                request.getMethod(),</span>
+<span class="nc" id="L128">                request.getUrl(),</span>
+<span class="nc" id="L129">                error.getMessage()</span>
+            );
+<span class="nc" id="L131">            context.getLogFunction().log(LogSeverity.ERROR, message);</span>
+        }
+<span class="nc" id="L133">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

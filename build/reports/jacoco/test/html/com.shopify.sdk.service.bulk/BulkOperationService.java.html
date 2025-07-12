@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BulkOperationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.service.bulk</a> &gt; <span class="el_source">BulkOperationService.java</span></div><h1>BulkOperationService.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.service.bulk;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.ShopifyGraphQLClient;
+import com.shopify.sdk.model.bulk.BulkOperation;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.Map;
+
+<span class="nc" id="L14">@Slf4j</span>
+@Service
+<span class="nc" id="L16">@RequiredArgsConstructor</span>
+public class BulkOperationService {
+    
+    private final ShopifyGraphQLClient graphQLClient;
+    private final ObjectMapper objectMapper;
+    
+    // GraphQL queries and mutations
+    private static final String BULK_OPERATION_RUN_QUERY = &quot;&quot;&quot;
+        mutation bulkOperationRunQuery($query: String!) {
+            bulkOperationRunQuery(query: $query) {
+                bulkOperation {
+                    id
+                    status
+                    errorCode
+                    createdAt
+                    completedAt
+                    objectCount
+                    fileSize
+                    url
+                    partialDataUrl
+                    rootObjectCount
+                    type
+                    query
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String BULK_OPERATION_RUN_MUTATION = &quot;&quot;&quot;
+        mutation bulkOperationRunMutation($mutation: String!, $stagedUploadPath: String!) {
+            bulkOperationRunMutation(mutation: $mutation, stagedUploadPath: $stagedUploadPath) {
+                bulkOperation {
+                    id
+                    status
+                    errorCode
+                    createdAt
+                    completedAt
+                    objectCount
+                    fileSize
+                    url
+                    partialDataUrl
+                    rootObjectCount
+                    type
+                    query
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String CURRENT_BULK_OPERATION_QUERY = &quot;&quot;&quot;
+        query {
+            currentBulkOperation {
+                id
+                status
+                errorCode
+                createdAt
+                completedAt
+                objectCount
+                fileSize
+                url
+                partialDataUrl
+                rootObjectCount
+                type
+                query
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    private static final String BULK_OPERATION_CANCEL = &quot;&quot;&quot;
+        mutation bulkOperationCancel($id: ID!) {
+            bulkOperationCancel(id: $id) {
+                bulkOperation {
+                    id
+                    status
+                    errorCode
+                    createdAt
+                    completedAt
+                    objectCount
+                    fileSize
+                    url
+                    partialDataUrl
+                    rootObjectCount
+                    type
+                    query
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+        &quot;&quot;&quot;;
+    
+    /**
+     * Starts a bulk query operation.
+     */
+    public Mono&lt;BulkOperation&gt; runQuery(String shop, String accessToken, String query) {
+<span class="nc" id="L121">        Map&lt;String, Object&gt; variables = Map.of(&quot;query&quot;, query);</span>
+        
+<span class="nc" id="L123">        return graphQLClient.query(shop, accessToken, BULK_OPERATION_RUN_QUERY, variables)</span>
+<span class="nc" id="L124">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L126">                    var data = response.getData().get(&quot;bulkOperationRunQuery&quot;);</span>
+<span class="nc" id="L127">                    var bulkOp = data.get(&quot;bulkOperation&quot;);</span>
+                    
+                    // Check for user errors
+<span class="nc" id="L130">                    var userErrors = data.get(&quot;userErrors&quot;);</span>
+<span class="nc bnc" id="L131" title="All 4 branches missed.">                    if (userErrors.isArray() &amp;&amp; userErrors.size() &gt; 0) {</span>
+<span class="nc" id="L132">                        String errorMessage = userErrors.get(0).get(&quot;message&quot;).asText();</span>
+<span class="nc" id="L133">                        throw new RuntimeException(&quot;Bulk operation failed: &quot; + errorMessage);</span>
+                    }
+                    
+<span class="nc" id="L136">                    return objectMapper.convertValue(bulkOp, BulkOperation.class);</span>
+<span class="nc" id="L137">                } catch (Exception e) {</span>
+<span class="nc" id="L138">                    log.error(&quot;Failed to parse bulk operation run query response&quot;, e);</span>
+<span class="nc" id="L139">                    throw new RuntimeException(&quot;Failed to parse bulk operation run query response&quot;, e);</span>
+                }
+            });
+    }
+    
+    /**
+     * Starts a bulk mutation operation.
+     */
+    public Mono&lt;BulkOperation&gt; runMutation(String shop, String accessToken, String mutation, String stagedUploadPath) {
+<span class="nc" id="L148">        Map&lt;String, Object&gt; variables = Map.of(</span>
+            &quot;mutation&quot;, mutation,
+            &quot;stagedUploadPath&quot;, stagedUploadPath
+        );
+        
+<span class="nc" id="L153">        return graphQLClient.query(shop, accessToken, BULK_OPERATION_RUN_MUTATION, variables)</span>
+<span class="nc" id="L154">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L156">                    var data = response.getData().get(&quot;bulkOperationRunMutation&quot;);</span>
+<span class="nc" id="L157">                    var bulkOp = data.get(&quot;bulkOperation&quot;);</span>
+                    
+                    // Check for user errors
+<span class="nc" id="L160">                    var userErrors = data.get(&quot;userErrors&quot;);</span>
+<span class="nc bnc" id="L161" title="All 4 branches missed.">                    if (userErrors.isArray() &amp;&amp; userErrors.size() &gt; 0) {</span>
+<span class="nc" id="L162">                        String errorMessage = userErrors.get(0).get(&quot;message&quot;).asText();</span>
+<span class="nc" id="L163">                        throw new RuntimeException(&quot;Bulk operation failed: &quot; + errorMessage);</span>
+                    }
+                    
+<span class="nc" id="L166">                    return objectMapper.convertValue(bulkOp, BulkOperation.class);</span>
+<span class="nc" id="L167">                } catch (Exception e) {</span>
+<span class="nc" id="L168">                    log.error(&quot;Failed to parse bulk operation run mutation response&quot;, e);</span>
+<span class="nc" id="L169">                    throw new RuntimeException(&quot;Failed to parse bulk operation run mutation response&quot;, e);</span>
+                }
+            });
+    }
+    
+    /**
+     * Gets the current running bulk operation.
+     */
+    public Mono&lt;BulkOperation&gt; getCurrentOperation(String shop, String accessToken) {
+<span class="nc" id="L178">        return graphQLClient.query(shop, accessToken, CURRENT_BULK_OPERATION_QUERY)</span>
+<span class="nc" id="L179">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L181">                    var data = response.getData().get(&quot;currentBulkOperation&quot;);</span>
+<span class="nc bnc" id="L182" title="All 4 branches missed.">                    if (data == null || data.isNull()) {</span>
+<span class="nc" id="L183">                        return null;</span>
+                    }
+<span class="nc" id="L185">                    return objectMapper.convertValue(data, BulkOperation.class);</span>
+<span class="nc" id="L186">                } catch (Exception e) {</span>
+<span class="nc" id="L187">                    log.error(&quot;Failed to parse current bulk operation response&quot;, e);</span>
+<span class="nc" id="L188">                    throw new RuntimeException(&quot;Failed to parse current bulk operation response&quot;, e);</span>
+                }
+            });
+    }
+    
+    /**
+     * Cancels a running bulk operation.
+     */
+    public Mono&lt;BulkOperation&gt; cancelOperation(String shop, String accessToken, String operationId) {
+<span class="nc" id="L197">        Map&lt;String, Object&gt; variables = Map.of(&quot;id&quot;, operationId);</span>
+        
+<span class="nc" id="L199">        return graphQLClient.query(shop, accessToken, BULK_OPERATION_CANCEL, variables)</span>
+<span class="nc" id="L200">            .map(response -&gt; {</span>
+                try {
+<span class="nc" id="L202">                    var data = response.getData().get(&quot;bulkOperationCancel&quot;);</span>
+<span class="nc" id="L203">                    var bulkOp = data.get(&quot;bulkOperation&quot;);</span>
+                    
+                    // Check for user errors
+<span class="nc" id="L206">                    var userErrors = data.get(&quot;userErrors&quot;);</span>
+<span class="nc bnc" id="L207" title="All 4 branches missed.">                    if (userErrors.isArray() &amp;&amp; userErrors.size() &gt; 0) {</span>
+<span class="nc" id="L208">                        String errorMessage = userErrors.get(0).get(&quot;message&quot;).asText();</span>
+<span class="nc" id="L209">                        throw new RuntimeException(&quot;Bulk operation cancel failed: &quot; + errorMessage);</span>
+                    }
+                    
+<span class="nc" id="L212">                    return objectMapper.convertValue(bulkOp, BulkOperation.class);</span>
+<span class="nc" id="L213">                } catch (Exception e) {</span>
+<span class="nc" id="L214">                    log.error(&quot;Failed to parse bulk operation cancel response&quot;, e);</span>
+<span class="nc" id="L215">                    throw new RuntimeException(&quot;Failed to parse bulk operation cancel response&quot;, e);</span>
+                }
+            });
+    }
+    
+    /**
+     * Polls a bulk operation until completion with configurable intervals.
+     */
+    public Mono&lt;BulkOperation&gt; pollUntilComplete(String shop, String accessToken, String operationId, 
+                                               Duration pollInterval, Duration timeout) {
+<span class="nc" id="L225">        return Mono.defer(() -&gt; getCurrentOperation(shop, accessToken))</span>
+<span class="nc bnc" id="L226" title="All 4 branches missed.">            .filter(operation -&gt; operation != null &amp;&amp; operationId.equals(operation.getId()))</span>
+<span class="nc" id="L227">            .flatMap(operation -&gt; {</span>
+<span class="nc bnc" id="L228" title="All 6 branches missed.">                if (operation.isCompleted() || operation.isFailed() || operation.isCanceled()) {</span>
+<span class="nc" id="L229">                    return Mono.just(operation);</span>
+                }
+                
+<span class="nc" id="L232">                log.debug(&quot;Bulk operation {} status: {}, waiting {} seconds...&quot;, </span>
+<span class="nc" id="L233">                    operationId, operation.getStatus(), pollInterval.getSeconds());</span>
+                
+<span class="nc" id="L235">                return Mono.delay(pollInterval)</span>
+<span class="nc" id="L236">                    .then(pollUntilComplete(shop, accessToken, operationId, pollInterval, timeout));</span>
+            })
+<span class="nc" id="L238">            .timeout(timeout)</span>
+<span class="nc" id="L239">            .doOnError(ex -&gt; log.error(&quot;Bulk operation polling failed&quot;, ex));</span>
+    }
+    
+    /**
+     * Polls a bulk operation until completion with default intervals (5s polling, 30min timeout).
+     */
+    public Mono&lt;BulkOperation&gt; pollUntilComplete(String shop, String accessToken, String operationId) {
+<span class="nc" id="L246">        return pollUntilComplete(shop, accessToken, operationId, </span>
+<span class="nc" id="L247">            Duration.ofSeconds(5), Duration.ofMinutes(30));</span>
+    }
+    
+    /**
+     * Convenience method to run a query and wait for completion.
+     */
+    public Mono&lt;BulkOperation&gt; runQueryAndWait(String shop, String accessToken, String query) {
+<span class="nc" id="L254">        return runQuery(shop, accessToken, query)</span>
+<span class="nc" id="L255">            .flatMap(operation -&gt; {</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">                if (operation.isFailed()) {</span>
+<span class="nc" id="L257">                    return Mono.error(new RuntimeException(&quot;Bulk operation failed: &quot; + operation.getErrorCode()));</span>
+                }
+<span class="nc" id="L259">                return pollUntilComplete(shop, accessToken, operation.getId());</span>
+            });
+    }
+    
+    /**
+     * Convenience method to run a mutation and wait for completion.
+     */
+    public Mono&lt;BulkOperation&gt; runMutationAndWait(String shop, String accessToken, String mutation, String stagedUploadPath) {
+<span class="nc" id="L267">        return runMutation(shop, accessToken, mutation, stagedUploadPath)</span>
+<span class="nc" id="L268">            .flatMap(operation -&gt; {</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">                if (operation.isFailed()) {</span>
+<span class="nc" id="L270">                    return Mono.error(new RuntimeException(&quot;Bulk operation failed: &quot; + operation.getErrorCode()));</span>
+                }
+<span class="nc" id="L272">                return pollUntilComplete(shop, accessToken, operation.getId());</span>
+            });
+    }
+    
+    /**
+     * Creates a bulk export query for products.
+     */
+    public String createProductExportQuery() {
+<span class="nc" id="L280">        return &quot;&quot;&quot;</span>
+            {
+                products {
+                    edges {
+                        node {
+                            id
+                            title
+                            handle
+                            description
+                            vendor
+                            productType
+                            createdAt
+                            updatedAt
+                            publishedAt
+                            status
+                            tags
+                            variants {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        sku
+                                        price
+                                        compareAtPrice
+                                        inventoryQuantity
+                                        weight
+                                        weightUnit
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+    }
+    
+    /**
+     * Creates a bulk export query for orders.
+     */
+    public String createOrderExportQuery() {
+<span class="nc" id="L321">        return &quot;&quot;&quot;</span>
+            {
+                orders {
+                    edges {
+                        node {
+                            id
+                            name
+                            email
+                            createdAt
+                            updatedAt
+                            totalPrice
+                            subtotalPrice
+                            totalTax
+                            financialStatus
+                            fulfillmentStatus
+                            customer {
+                                id
+                                email
+                                firstName
+                                lastName
+                            }
+                            lineItems {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        quantity
+                                        price
+                                        variant {
+                                            id
+                                            sku
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+    }
+    
+    /**
+     * Creates a bulk export query for customers.
+     */
+    public String createCustomerExportQuery() {
+<span class="nc" id="L367">        return &quot;&quot;&quot;</span>
+            {
+                customers {
+                    edges {
+                        node {
+                            id
+                            email
+                            firstName
+                            lastName
+                            phone
+                            createdAt
+                            updatedAt
+                            acceptsMarketing
+                            totalSpent
+                            ordersCount
+                            state
+                            addresses {
+                                id
+                                firstName
+                                lastName
+                                company
+                                address1
+                                address2
+                                city
+                                province
+                                country
+                                zip
+                                phone
+                            }
+                        }
+                    }
+                }
+            }
+            &quot;&quot;&quot;;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

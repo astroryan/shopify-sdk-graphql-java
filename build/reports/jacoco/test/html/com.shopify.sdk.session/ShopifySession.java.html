@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShopifySession.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.session</a> &gt; <span class="el_source">ShopifySession.java</span></div><h1>ShopifySession.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.session;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Represents a Shopify session containing authentication and shop information.
+ */
+<span class="pc bnc" id="L18" title="All 138 branches missed.">@Data</span>
+<span class="pc" id="L19">@Builder(toBuilder = true)</span>
+<span class="nc" id="L20">@NoArgsConstructor</span>
+<span class="fc" id="L21">@AllArgsConstructor</span>
+public class ShopifySession implements Serializable {
+    
+    private static final long serialVersionUID = 1L;
+    
+    /**
+     * Unique session identifier.
+     */
+    @JsonProperty(&quot;id&quot;)
+<span class="fc" id="L30">    private String id;</span>
+    
+    /**
+     * The shop domain.
+     */
+    @JsonProperty(&quot;shop&quot;)
+<span class="fc" id="L36">    private String shop;</span>
+    
+    /**
+     * The access token for API requests.
+     */
+    @JsonProperty(&quot;accessToken&quot;)
+<span class="fc" id="L42">    private String accessToken;</span>
+    
+    /**
+     * The granted scopes for this session.
+     */
+    @JsonProperty(&quot;scope&quot;)
+<span class="fc" id="L48">    private Set&lt;String&gt; scope;</span>
+    
+    /**
+     * Whether this is an online access token.
+     */
+    @JsonProperty(&quot;isOnline&quot;)
+<span class="fc" id="L54">    private boolean isOnline;</span>
+    
+    /**
+     * The user ID for online access tokens.
+     */
+    @JsonProperty(&quot;userId&quot;)
+<span class="fc" id="L60">    private Long userId;</span>
+    
+    /**
+     * The user email for online access tokens.
+     */
+    @JsonProperty(&quot;userEmail&quot;)
+<span class="nc" id="L66">    private String userEmail;</span>
+    
+    /**
+     * The user first name for online access tokens.
+     */
+    @JsonProperty(&quot;userFirstName&quot;)
+<span class="nc" id="L72">    private String userFirstName;</span>
+    
+    /**
+     * The user last name for online access tokens.
+     */
+    @JsonProperty(&quot;userLastName&quot;)
+<span class="nc" id="L78">    private String userLastName;</span>
+    
+    /**
+     * Whether the user's email is verified.
+     */
+    @JsonProperty(&quot;userEmailVerified&quot;)
+<span class="nc" id="L84">    private Boolean userEmailVerified;</span>
+    
+    /**
+     * Whether the user is the account owner.
+     */
+    @JsonProperty(&quot;accountOwner&quot;)
+<span class="nc" id="L90">    private Boolean accountOwner;</span>
+    
+    /**
+     * Whether the user is a collaborator.
+     */
+    @JsonProperty(&quot;collaborator&quot;)
+<span class="nc" id="L96">    private Boolean collaborator;</span>
+    
+    /**
+     * The user's locale.
+     */
+    @JsonProperty(&quot;userLocale&quot;)
+<span class="nc" id="L102">    private String userLocale;</span>
+    
+    /**
+     * When the session was created.
+     */
+    @JsonProperty(&quot;createdAt&quot;)
+<span class="fc" id="L108">    private Instant createdAt;</span>
+    
+    /**
+     * When the session was last updated.
+     */
+    @JsonProperty(&quot;updatedAt&quot;)
+<span class="nc" id="L114">    private Instant updatedAt;</span>
+    
+    /**
+     * When the session expires (for online tokens).
+     */
+    @JsonProperty(&quot;expiresAt&quot;)
+<span class="fc" id="L120">    private Instant expiresAt;</span>
+    
+    /**
+     * Additional session metadata.
+     */
+    @JsonProperty(&quot;metadata&quot;)
+<span class="nc" id="L126">    private java.util.Map&lt;String, Object&gt; metadata;</span>
+    
+    /**
+     * Checks if the session is valid and not expired.
+     *
+     * @return true if valid, false otherwise
+     */
+    @JsonIgnore
+    public boolean isValid() {
+<span class="pc bpc" id="L135" title="2 of 4 branches missed.">        if (accessToken == null || accessToken.trim().isEmpty()) {</span>
+<span class="nc" id="L136">            return false;</span>
+        }
+        
+<span class="pc bpc" id="L139" title="2 of 4 branches missed.">        if (shop == null || shop.trim().isEmpty()) {</span>
+<span class="nc" id="L140">            return false;</span>
+        }
+        
+<span class="pc bpc" id="L143" title="2 of 6 branches missed.">        if (isOnline &amp;&amp; expiresAt != null &amp;&amp; expiresAt.isBefore(Instant.now())) {</span>
+<span class="nc" id="L144">            return false;</span>
+        }
+        
+<span class="fc" id="L147">        return true;</span>
+    }
+    
+    /**
+     * Checks if the session is expired.
+     *
+     * @return true if expired, false otherwise
+     */
+    @JsonIgnore
+    public boolean isExpired() {
+<span class="nc bnc" id="L157" title="All 6 branches missed.">        return isOnline &amp;&amp; expiresAt != null &amp;&amp; expiresAt.isBefore(Instant.now());</span>
+    }
+    
+    /**
+     * Gets the remaining time until expiration in seconds.
+     *
+     * @return seconds until expiration, or -1 if no expiration
+     */
+    @JsonIgnore
+    public long getSecondsUntilExpiration() {
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (expiresAt == null) {</span>
+<span class="nc" id="L168">            return -1;</span>
+        }
+<span class="nc" id="L170">        return expiresAt.getEpochSecond() - Instant.now().getEpochSecond();</span>
+    }
+    
+    /**
+     * Checks if the session has a specific scope.
+     *
+     * @param scopeName the scope to check
+     * @return true if the scope is granted, false otherwise
+     */
+    public boolean hasScope(String scopeName) {
+<span class="nc bnc" id="L180" title="All 4 branches missed.">        return scope != null &amp;&amp; scope.contains(scopeName);</span>
+    }
+    
+    /**
+     * Checks if the session has all the specified scopes.
+     *
+     * @param requiredScopes the scopes to check
+     * @return true if all scopes are granted, false otherwise
+     */
+    public boolean hasAllScopes(List&lt;String&gt; requiredScopes) {
+<span class="nc bnc" id="L190" title="All 4 branches missed.">        if (scope == null || requiredScopes == null) {</span>
+<span class="nc" id="L191">            return false;</span>
+        }
+<span class="nc" id="L193">        return scope.containsAll(requiredScopes);</span>
+    }
+    
+    /**
+     * Gets the session type as a string.
+     *
+     * @return &quot;online&quot; or &quot;offline&quot;
+     */
+    @JsonIgnore
+    public String getSessionType() {
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        return isOnline ? &quot;online&quot; : &quot;offline&quot;;</span>
+    }
+    
+    /**
+     * Creates a session ID based on shop and user information.
+     *
+     * @param shop the shop domain
+     * @param isOnline whether this is an online session
+     * @param userId the user ID (for online sessions)
+     * @return the session ID
+     */
+    public static String createSessionId(String shop, boolean isOnline, Long userId) {
+<span class="pc bpc" id="L215" title="1 of 2 branches missed.">        if (shop == null) {</span>
+<span class="nc" id="L216">            throw new IllegalArgumentException(&quot;Shop cannot be null&quot;);</span>
+        }
+        
+<span class="fc" id="L219">        String normalizedShop = shop.toLowerCase()</span>
+<span class="fc" id="L220">            .replace(&quot;https://&quot;, &quot;&quot;)</span>
+<span class="fc" id="L221">            .replace(&quot;http://&quot;, &quot;&quot;)</span>
+<span class="fc" id="L222">            .replace(&quot;.myshopify.com&quot;, &quot;&quot;);</span>
+            
+<span class="pc bpc" id="L224" title="1 of 4 branches missed.">        if (isOnline &amp;&amp; userId != null) {</span>
+<span class="fc" id="L225">            return String.format(&quot;online_%s_%d&quot;, normalizedShop, userId);</span>
+        } else {
+<span class="fc" id="L227">            return String.format(&quot;offline_%s&quot;, normalizedShop);</span>
+        }
+    }
+    
+    /**
+     * Updates the session's updated timestamp.
+     */
+    public void touch() {
+<span class="nc" id="L235">        this.updatedAt = Instant.now();</span>
+<span class="nc" id="L236">    }</span>
+    
+    /**
+     * Adds or updates metadata.
+     *
+     * @param key the metadata key
+     * @param value the metadata value
+     */
+    public void setMetadata(String key, Object value) {
+<span class="nc bnc" id="L245" title="All 2 branches missed.">        if (metadata == null) {</span>
+<span class="nc" id="L246">            metadata = new java.util.HashMap&lt;&gt;();</span>
+        }
+<span class="nc" id="L248">        metadata.put(key, value);</span>
+<span class="nc" id="L249">        touch();</span>
+<span class="nc" id="L250">    }</span>
+    
+    /**
+     * Gets metadata value.
+     *
+     * @param key the metadata key
+     * @return the metadata value or null if not found
+     */
+    public Object getMetadata(String key) {
+<span class="nc bnc" id="L259" title="All 2 branches missed.">        return metadata != null ? metadata.get(key) : null;</span>
+    }
+    
+    /**
+     * Gets metadata value as a specific type.
+     *
+     * @param key the metadata key
+     * @param clazz the expected type
+     * @param &lt;T&gt; the type parameter
+     * @return the metadata value cast to the specified type, or null if not found or wrong type
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T getMetadata(String key, Class&lt;T&gt; clazz) {
+<span class="nc" id="L272">        Object value = getMetadata(key);</span>
+<span class="nc bnc" id="L273" title="All 4 branches missed.">        if (value != null &amp;&amp; clazz.isAssignableFrom(value.getClass())) {</span>
+<span class="nc" id="L274">            return (T) value;</span>
+        }
+<span class="nc" id="L276">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

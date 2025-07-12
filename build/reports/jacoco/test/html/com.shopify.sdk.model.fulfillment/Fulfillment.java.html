@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Fulfillment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.model.fulfillment</a> &gt; <span class="el_source">Fulfillment.java</span></div><h1>Fulfillment.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.model.fulfillment;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+
+import java.time.Instant;
+import java.util.List;
+
+<span class="nc bnc" id="L12" title="All 166 branches missed.">@Data</span>
+<span class="nc" id="L13">@NoArgsConstructor</span>
+<span class="nc" id="L14">@AllArgsConstructor</span>
+<span class="nc" id="L15">@Builder</span>
+public class Fulfillment {
+    
+<span class="nc" id="L18">    private String id;</span>
+    
+    @JsonProperty(&quot;order_id&quot;)
+<span class="nc" id="L21">    private String orderId;</span>
+    
+<span class="nc" id="L23">    private FulfillmentStatus status;</span>
+    
+    @JsonProperty(&quot;created_at&quot;)
+<span class="nc" id="L26">    private Instant createdAt;</span>
+    
+    @JsonProperty(&quot;updated_at&quot;)
+<span class="nc" id="L29">    private Instant updatedAt;</span>
+    
+    @JsonProperty(&quot;tracking_company&quot;)
+<span class="nc" id="L32">    private String trackingCompany;</span>
+    
+    @JsonProperty(&quot;tracking_number&quot;)
+<span class="nc" id="L35">    private String trackingNumber;</span>
+    
+    @JsonProperty(&quot;tracking_numbers&quot;)
+<span class="nc" id="L38">    private List&lt;String&gt; trackingNumbers;</span>
+    
+    @JsonProperty(&quot;tracking_url&quot;)
+<span class="nc" id="L41">    private String trackingUrl;</span>
+    
+    @JsonProperty(&quot;tracking_urls&quot;)
+<span class="nc" id="L44">    private List&lt;String&gt; trackingUrls;</span>
+    
+<span class="nc" id="L46">    private Receipt receipt;</span>
+    
+    @JsonProperty(&quot;name&quot;)
+<span class="nc" id="L49">    private String name;</span>
+    
+    @JsonProperty(&quot;service&quot;)
+<span class="nc" id="L52">    private String service;</span>
+    
+    @JsonProperty(&quot;shipment_status&quot;)
+<span class="nc" id="L55">    private String shipmentStatus;</span>
+    
+    @JsonProperty(&quot;location_id&quot;)
+<span class="nc" id="L58">    private String locationId;</span>
+    
+    @JsonProperty(&quot;origin_address&quot;)
+<span class="nc" id="L61">    private Address originAddress;</span>
+    
+    @JsonProperty(&quot;destination&quot;)
+<span class="nc" id="L64">    private Address destination;</span>
+    
+    @JsonProperty(&quot;line_items&quot;)
+<span class="nc" id="L67">    private List&lt;FulfillmentLineItem&gt; lineItems;</span>
+    
+    @JsonProperty(&quot;notify_customer&quot;)
+<span class="nc" id="L70">    private Boolean notifyCustomer;</span>
+    
+    @JsonProperty(&quot;admin_graphql_api_id&quot;)
+<span class="nc" id="L73">    private String adminGraphqlApiId;</span>
+    
+    public boolean hasTracking() {
+<span class="nc bnc" id="L76" title="All 6 branches missed.">        return trackingNumber != null || (trackingNumbers != null &amp;&amp; !trackingNumbers.isEmpty());</span>
+    }
+    
+    public boolean isCompleted() {
+<span class="nc bnc" id="L80" title="All 4 branches missed.">        return status != null &amp;&amp; status.isCompleted();</span>
+    }
+    
+    public boolean isFailed() {
+<span class="nc bnc" id="L84" title="All 4 branches missed.">        return status != null &amp;&amp; status.isFailed();</span>
+    }
+    
+    public boolean isPending() {
+<span class="nc bnc" id="L88" title="All 4 branches missed.">        return status != null &amp;&amp; status.isPending();</span>
+    }
+    
+    public int getItemCount() {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        return lineItems != null ? lineItems.size() : 0;</span>
+    }
+    
+<span class="nc bnc" id="L95" title="All 22 branches missed.">    @Data</span>
+<span class="nc" id="L96">    @NoArgsConstructor</span>
+<span class="nc" id="L97">    @AllArgsConstructor</span>
+<span class="nc" id="L98">    @Builder</span>
+    public static class Receipt {
+        @JsonProperty(&quot;testcase&quot;)
+<span class="nc" id="L101">        private Boolean testcase;</span>
+        
+        @JsonProperty(&quot;authorization&quot;)
+<span class="nc" id="L104">        private String authorization;</span>
+    }
+    
+<span class="nc bnc" id="L107" title="All 102 branches missed.">    @Data</span>
+<span class="nc" id="L108">    @NoArgsConstructor</span>
+<span class="nc" id="L109">    @AllArgsConstructor</span>
+<span class="nc" id="L110">    @Builder</span>
+    public static class Address {
+<span class="nc" id="L112">        private String address1;</span>
+<span class="nc" id="L113">        private String address2;</span>
+<span class="nc" id="L114">        private String city;</span>
+<span class="nc" id="L115">        private String company;</span>
+<span class="nc" id="L116">        private String country;</span>
+        
+        @JsonProperty(&quot;country_code&quot;)
+<span class="nc" id="L119">        private String countryCode;</span>
+        
+        @JsonProperty(&quot;first_name&quot;)
+<span class="nc" id="L122">        private String firstName;</span>
+        
+        @JsonProperty(&quot;last_name&quot;)
+<span class="nc" id="L125">        private String lastName;</span>
+        
+<span class="nc" id="L127">        private String phone;</span>
+<span class="nc" id="L128">        private String province;</span>
+        
+        @JsonProperty(&quot;province_code&quot;)
+<span class="nc" id="L131">        private String provinceCode;</span>
+        
+<span class="nc" id="L133">        private String zip;</span>
+        
+        public String getFullName() {
+<span class="nc" id="L136">            StringBuilder name = new StringBuilder();</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            if (firstName != null) {</span>
+<span class="nc" id="L138">                name.append(firstName);</span>
+            }
+<span class="nc bnc" id="L140" title="All 2 branches missed.">            if (lastName != null) {</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">                if (name.length() &gt; 0) name.append(&quot; &quot;);</span>
+<span class="nc" id="L142">                name.append(lastName);</span>
+            }
+<span class="nc" id="L144">            return name.toString();</span>
+        }
+    }
+    
+<span class="nc bnc" id="L148" title="All 222 branches missed.">    @Data</span>
+<span class="nc" id="L149">    @NoArgsConstructor</span>
+<span class="nc" id="L150">    @AllArgsConstructor</span>
+<span class="nc" id="L151">    @Builder</span>
+    public static class FulfillmentLineItem {
+<span class="nc" id="L153">        private String id;</span>
+        
+        @JsonProperty(&quot;variant_id&quot;)
+<span class="nc" id="L156">        private String variantId;</span>
+        
+<span class="nc" id="L158">        private String title;</span>
+<span class="nc" id="L159">        private Integer quantity;</span>
+        
+        @JsonProperty(&quot;sku&quot;)
+<span class="nc" id="L162">        private String sku;</span>
+        
+        @JsonProperty(&quot;variant_title&quot;)
+<span class="nc" id="L165">        private String variantTitle;</span>
+        
+        @JsonProperty(&quot;vendor&quot;)
+<span class="nc" id="L168">        private String vendor;</span>
+        
+        @JsonProperty(&quot;fulfillment_service&quot;)
+<span class="nc" id="L171">        private String fulfillmentService;</span>
+        
+        @JsonProperty(&quot;product_id&quot;)
+<span class="nc" id="L174">        private String productId;</span>
+        
+        @JsonProperty(&quot;requires_shipping&quot;)
+<span class="nc" id="L177">        private Boolean requiresShipping;</span>
+        
+        @JsonProperty(&quot;taxable&quot;)
+<span class="nc" id="L180">        private Boolean taxable;</span>
+        
+        @JsonProperty(&quot;gift_card&quot;)
+<span class="nc" id="L183">        private Boolean giftCard;</span>
+        
+        @JsonProperty(&quot;name&quot;)
+<span class="nc" id="L186">        private String name;</span>
+        
+        @JsonProperty(&quot;variant_inventory_management&quot;)
+<span class="nc" id="L189">        private String variantInventoryManagement;</span>
+        
+        @JsonProperty(&quot;properties&quot;)
+<span class="nc" id="L192">        private List&lt;LineItemProperty&gt; properties;</span>
+        
+        @JsonProperty(&quot;product_exists&quot;)
+<span class="nc" id="L195">        private Boolean productExists;</span>
+        
+        @JsonProperty(&quot;fulfillable_quantity&quot;)
+<span class="nc" id="L198">        private Integer fulfillableQuantity;</span>
+        
+        @JsonProperty(&quot;grams&quot;)
+<span class="nc" id="L201">        private Integer grams;</span>
+        
+        @JsonProperty(&quot;price&quot;)
+<span class="nc" id="L204">        private String price;</span>
+        
+        @JsonProperty(&quot;total_discount&quot;)
+<span class="nc" id="L207">        private String totalDiscount;</span>
+        
+        @JsonProperty(&quot;fulfillment_status&quot;)
+<span class="nc" id="L210">        private String fulfillmentStatus;</span>
+        
+        @JsonProperty(&quot;price_set&quot;)
+<span class="nc" id="L213">        private PriceSet priceSet;</span>
+        
+        @JsonProperty(&quot;total_discount_set&quot;)
+<span class="nc" id="L216">        private PriceSet totalDiscountSet;</span>
+        
+        @JsonProperty(&quot;discount_allocations&quot;)
+<span class="nc" id="L219">        private List&lt;DiscountAllocation&gt; discountAllocations;</span>
+        
+        @JsonProperty(&quot;duties&quot;)
+<span class="nc" id="L222">        private List&lt;Duty&gt; duties;</span>
+        
+        @JsonProperty(&quot;admin_graphql_api_id&quot;)
+<span class="nc" id="L225">        private String adminGraphqlApiId;</span>
+        
+        @JsonProperty(&quot;tax_lines&quot;)
+<span class="nc" id="L228">        private List&lt;TaxLine&gt; taxLines;</span>
+        
+        public boolean isGiftCard() {
+<span class="nc bnc" id="L231" title="All 4 branches missed.">            return giftCard != null &amp;&amp; giftCard;</span>
+        }
+        
+        public boolean requiresShipping() {
+<span class="nc bnc" id="L235" title="All 4 branches missed.">            return requiresShipping == null || requiresShipping;</span>
+        }
+        
+        public boolean isTaxable() {
+<span class="nc bnc" id="L239" title="All 4 branches missed.">            return taxable == null || taxable;</span>
+        }
+    }
+    
+<span class="nc bnc" id="L243" title="All 22 branches missed.">    @Data</span>
+<span class="nc" id="L244">    @NoArgsConstructor</span>
+<span class="nc" id="L245">    @AllArgsConstructor</span>
+<span class="nc" id="L246">    @Builder</span>
+    public static class LineItemProperty {
+<span class="nc" id="L248">        private String name;</span>
+<span class="nc" id="L249">        private String value;</span>
+    }
+    
+<span class="nc bnc" id="L252" title="All 22 branches missed.">    @Data</span>
+<span class="nc" id="L253">    @NoArgsConstructor</span>
+<span class="nc" id="L254">    @AllArgsConstructor</span>
+<span class="nc" id="L255">    @Builder</span>
+    public static class PriceSet {
+        @JsonProperty(&quot;shop_money&quot;)
+<span class="nc" id="L258">        private Money shopMoney;</span>
+        
+        @JsonProperty(&quot;presentment_money&quot;)
+<span class="nc" id="L261">        private Money presentmentMoney;</span>
+    }
+    
+<span class="nc bnc" id="L264" title="All 22 branches missed.">    @Data</span>
+<span class="nc" id="L265">    @NoArgsConstructor</span>
+<span class="nc" id="L266">    @AllArgsConstructor</span>
+<span class="nc" id="L267">    @Builder</span>
+    public static class Money {
+<span class="nc" id="L269">        private String amount;</span>
+        
+        @JsonProperty(&quot;currency_code&quot;)
+<span class="nc" id="L272">        private String currencyCode;</span>
+    }
+    
+<span class="nc bnc" id="L275" title="All 30 branches missed.">    @Data</span>
+<span class="nc" id="L276">    @NoArgsConstructor</span>
+<span class="nc" id="L277">    @AllArgsConstructor</span>
+<span class="nc" id="L278">    @Builder</span>
+    public static class DiscountAllocation {
+<span class="nc" id="L280">        private String amount;</span>
+        
+        @JsonProperty(&quot;amount_set&quot;)
+<span class="nc" id="L283">        private PriceSet amountSet;</span>
+        
+        @JsonProperty(&quot;discount_application_index&quot;)
+<span class="nc" id="L286">        private Integer discountApplicationIndex;</span>
+    }
+    
+<span class="nc bnc" id="L289" title="All 62 branches missed.">    @Data</span>
+<span class="nc" id="L290">    @NoArgsConstructor</span>
+<span class="nc" id="L291">    @AllArgsConstructor</span>
+<span class="nc" id="L292">    @Builder</span>
+    public static class Duty {
+<span class="nc" id="L294">        private String id;</span>
+        
+        @JsonProperty(&quot;harmonized_system_code&quot;)
+<span class="nc" id="L297">        private String harmonizedSystemCode;</span>
+        
+        @JsonProperty(&quot;country_code_of_origin&quot;)
+<span class="nc" id="L300">        private String countryCodeOfOrigin;</span>
+        
+        @JsonProperty(&quot;shop_money&quot;)
+<span class="nc" id="L303">        private Money shopMoney;</span>
+        
+        @JsonProperty(&quot;presentment_money&quot;)
+<span class="nc" id="L306">        private Money presentmentMoney;</span>
+        
+        @JsonProperty(&quot;tax_lines&quot;)
+<span class="nc" id="L309">        private List&lt;TaxLine&gt; taxLines;</span>
+        
+        @JsonProperty(&quot;admin_graphql_api_id&quot;)
+<span class="nc" id="L312">        private String adminGraphqlApiId;</span>
+    }
+    
+<span class="nc bnc" id="L315" title="All 46 branches missed.">    @Data</span>
+<span class="nc" id="L316">    @NoArgsConstructor</span>
+<span class="nc" id="L317">    @AllArgsConstructor</span>
+<span class="nc" id="L318">    @Builder</span>
+    public static class TaxLine {
+<span class="nc" id="L320">        private String title;</span>
+<span class="nc" id="L321">        private String price;</span>
+<span class="nc" id="L322">        private Double rate;</span>
+        
+        @JsonProperty(&quot;price_set&quot;)
+<span class="nc" id="L325">        private PriceSet priceSet;</span>
+        
+        @JsonProperty(&quot;channel_liable&quot;)
+<span class="nc" id="L328">        private Boolean channelLiable;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

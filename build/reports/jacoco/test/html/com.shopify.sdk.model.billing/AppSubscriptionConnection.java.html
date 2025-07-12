@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AppSubscriptionConnection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.model.billing</a> &gt; <span class="el_source">AppSubscriptionConnection.java</span></div><h1>AppSubscriptionConnection.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.model.billing;
+
+import com.shopify.sdk.model.common.Connection;
+import com.shopify.sdk.model.common.Edge;
+import com.shopify.sdk.model.common.PageInfo;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+<span class="nc" id="L10">public class AppSubscriptionConnection extends Connection&lt;AppSubscription&gt; {</span>
+    
+    private List&lt;AppSubscriptionEdge&gt; appSubscriptionEdges;
+    private PageInfo pageInfo;
+    
+    @Override
+    public List&lt;Edge&lt;AppSubscription&gt;&gt; getEdges() {
+<span class="nc bnc" id="L17" title="All 2 branches missed.">        return appSubscriptionEdges != null ? </span>
+<span class="nc" id="L18">            appSubscriptionEdges.stream().map(edge -&gt; (Edge&lt;AppSubscription&gt;) edge).collect(Collectors.toList()) : </span>
+<span class="nc" id="L19">            null;</span>
+    }
+    
+    @Override
+    public void setEdges(List&lt;Edge&lt;AppSubscription&gt;&gt; edges) {
+<span class="nc bnc" id="L24" title="All 2 branches missed.">        this.appSubscriptionEdges = edges != null ?</span>
+<span class="nc" id="L25">            edges.stream().map(edge -&gt; (AppSubscriptionEdge) edge).collect(Collectors.toList()) :</span>
+<span class="nc" id="L26">            null;</span>
+<span class="nc" id="L27">    }</span>
+    
+    public List&lt;AppSubscriptionEdge&gt; getAppSubscriptionEdges() {
+<span class="nc" id="L30">        return appSubscriptionEdges;</span>
+    }
+    
+    public void setAppSubscriptionEdges(List&lt;AppSubscriptionEdge&gt; edges) {
+<span class="nc" id="L34">        this.appSubscriptionEdges = edges;</span>
+<span class="nc" id="L35">    }</span>
+    
+    @Override
+    public PageInfo getPageInfo() {
+<span class="nc" id="L39">        return pageInfo;</span>
+    }
+    
+    @Override
+    public void setPageInfo(PageInfo pageInfo) {
+<span class="nc" id="L44">        this.pageInfo = pageInfo;</span>
+<span class="nc" id="L45">    }</span>
+    
+<span class="nc" id="L47">    public static class AppSubscriptionEdge extends Edge&lt;AppSubscription&gt; {</span>
+        private String cursor;
+        private AppSubscription node;
+        
+        @Override
+        public String getCursor() {
+<span class="nc" id="L53">            return cursor;</span>
+        }
+        
+        @Override
+        public void setCursor(String cursor) {
+<span class="nc" id="L58">            this.cursor = cursor;</span>
+<span class="nc" id="L59">        }</span>
+        
+        @Override
+        public AppSubscription getNode() {
+<span class="nc" id="L63">            return node;</span>
+        }
+        
+        @Override
+        public void setNode(AppSubscription node) {
+<span class="nc" id="L68">            this.node = node;</span>
+<span class="nc" id="L69">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

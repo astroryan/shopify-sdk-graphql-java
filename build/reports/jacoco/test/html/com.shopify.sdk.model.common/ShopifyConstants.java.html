@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShopifyConstants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.model.common</a> &gt; <span class="el_source">ShopifyConstants.java</span></div><h1>ShopifyConstants.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.model.common;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Common constants used throughout the Shopify SDK.
+ * Maps to Node.js constants.
+ */
+public final class ShopifyConstants {
+    
+    private ShopifyConstants() {
+        // Utility class
+    }
+
+    public static final String LIBRARY_NAME = &quot;Shopify API Library&quot;;
+    
+    /**
+     * Privacy-related webhook topics that require special handling.
+     */
+<span class="nc" id="L21">    public static final List&lt;String&gt; PRIVACY_TOPICS = Arrays.asList(</span>
+        &quot;CUSTOMERS_DATA_REQUEST&quot;,
+        &quot;CUSTOMERS_REDACT&quot;, 
+        &quot;SHOP_REDACT&quot;
+    );
+    
+    /**
+     * Default user agent for HTTP requests.
+     */
+    public static final String DEFAULT_USER_AGENT = &quot;Shopify SDK Java&quot;;
+    
+    /**
+     * Default timeout for HTTP requests (in milliseconds).
+     */
+    public static final int DEFAULT_TIMEOUT_MS = 30000;
+    
+    /**
+     * Maximum number of retry attempts for failed requests.
+     */
+    public static final int MAX_RETRY_ATTEMPTS = 3;
+    
+    /**
+     * Default host scheme for apps.
+     */
+    public static final String DEFAULT_HOST_SCHEME = &quot;https&quot;;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GraphQLClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.client.graphql</a> &gt; <span class="el_source">GraphQLClient.java</span></div><h1>GraphQLClient.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.client.graphql;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.HttpClientConfig;
+import com.shopify.sdk.config.ShopifyAuthContext;
+import com.shopify.sdk.exception.ShopifyGraphQLException;
+import com.shopify.sdk.exception.ShopifyHttpException;
+import com.shopify.sdk.model.common.ShopifyHeader;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * GraphQL client for Shopify Admin and Storefront APIs.
+ */
+@Component
+<span class="nc" id="L26">@RequiredArgsConstructor</span>
+public class GraphQLClient {
+    
+    private final HttpClientConfig httpClientConfig;
+    private final ObjectMapper objectMapper;
+    
+    /**
+     * Executes a GraphQL query against the Admin API.
+     *
+     * @param context the Shopify configuration context
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param request the GraphQL request
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; executeAdminQuery(ShopifyAuthContext context, String shop, String accessToken, GraphQLRequest request) {
+<span class="nc" id="L42">        WebClient webClient = httpClientConfig.createAdminApiClient(context, shop);</span>
+<span class="nc" id="L43">        return executeQuery(webClient, accessToken, request, true);</span>
+    }
+    
+    /**
+     * Executes a GraphQL query against the Storefront API.
+     *
+     * @param context the Shopify configuration context
+     * @param shop the shop domain
+     * @param accessToken the storefront access token
+     * @param request the GraphQL request
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; executeStorefrontQuery(ShopifyAuthContext context, String shop, String accessToken, GraphQLRequest request) {
+<span class="nc" id="L56">        WebClient webClient = httpClientConfig.createStorefrontApiClient(context, shop);</span>
+<span class="nc" id="L57">        return executeQuery(webClient, accessToken, request, false);</span>
+    }
+    
+    /**
+     * Executes a GraphQL query with variables.
+     *
+     * @param context the Shopify configuration context
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param query the GraphQL query string
+     * @param variables the query variables
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; query(ShopifyAuthContext context, String shop, String accessToken, String query, Map&lt;String, Object&gt; variables) {
+<span class="nc" id="L71">        GraphQLRequest request = GraphQLRequest.of(query, variables);</span>
+<span class="nc" id="L72">        return executeAdminQuery(context, shop, accessToken, request);</span>
+    }
+    
+    /**
+     * Executes a simple GraphQL query without variables.
+     *
+     * @param context the Shopify configuration context
+     * @param shop the shop domain
+     * @param accessToken the access token
+     * @param query the GraphQL query string
+     * @return Mono of GraphQLResponse
+     */
+    public Mono&lt;GraphQLResponse&gt; query(ShopifyAuthContext context, String shop, String accessToken, String query) {
+<span class="nc" id="L85">        return query(context, shop, accessToken, query, null);</span>
+    }
+    
+    private Mono&lt;GraphQLResponse&gt; executeQuery(WebClient webClient, String accessToken, GraphQLRequest request, boolean isAdminApi) {
+        try {
+<span class="nc" id="L90">            String requestBody = objectMapper.writeValueAsString(request);</span>
+            
+<span class="nc" id="L92">            WebClient.RequestHeadersSpec&lt;?&gt; requestSpec = webClient</span>
+<span class="nc" id="L93">                .post()</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">                .uri(isAdminApi ? &quot;/graphql.json&quot; : &quot;/graphql&quot;)</span>
+<span class="nc" id="L95">                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="nc" id="L96">                .bodyValue(requestBody);</span>
+            
+            // Add appropriate access token header
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            if (isAdminApi) {</span>
+<span class="nc" id="L100">                requestSpec = requestSpec.header(ShopifyHeader.ACCESS_TOKEN.getHeaderName(), accessToken);</span>
+            } else {
+<span class="nc" id="L102">                requestSpec = requestSpec.header(ShopifyHeader.STOREFRONT_PRIVATE_TOKEN.getHeaderName(), accessToken);</span>
+            }
+            
+<span class="nc" id="L105">            return requestSpec</span>
+<span class="nc" id="L106">                .retrieve()</span>
+<span class="nc" id="L107">                .bodyToMono(String.class)</span>
+<span class="nc" id="L108">                .map(this::parseResponse)</span>
+<span class="nc" id="L109">                .flatMap(this::validateResponse)</span>
+<span class="nc" id="L110">                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))</span>
+<span class="nc" id="L111">                    .filter(this::shouldRetry));</span>
+            
+<span class="nc" id="L113">        } catch (JsonProcessingException e) {</span>
+<span class="nc" id="L114">            return Mono.error(new ShopifyGraphQLException(&quot;Failed to serialize GraphQL request&quot;, null));</span>
+        }
+    }
+    
+    private GraphQLResponse parseResponse(String responseBody) {
+        try {
+<span class="nc" id="L120">            return objectMapper.readValue(responseBody, GraphQLResponse.class);</span>
+<span class="nc" id="L121">        } catch (JsonProcessingException e) {</span>
+<span class="nc" id="L122">            throw new ShopifyGraphQLException(&quot;Failed to parse GraphQL response: &quot; + e.getMessage(), null);</span>
+        }
+    }
+    
+    private Mono&lt;GraphQLResponse&gt; validateResponse(GraphQLResponse response) {
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        if (response.hasErrors()) {</span>
+<span class="nc" id="L128">            return Mono.error(new ShopifyGraphQLException(</span>
+<span class="nc" id="L129">                response.getErrors().stream()</span>
+<span class="nc" id="L130">                    .map(GraphQLResponse.GraphQLError::getMessage)</span>
+<span class="nc" id="L131">                    .collect(Collectors.joining(&quot;, &quot;)),</span>
+<span class="nc" id="L132">                convertErrors(response.getErrors())</span>
+            ));
+        }
+<span class="nc" id="L135">        return Mono.just(response);</span>
+    }
+    
+    private boolean shouldRetry(Throwable throwable) {
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (throwable instanceof ShopifyHttpException) {</span>
+<span class="nc" id="L140">            ShopifyHttpException httpEx = (ShopifyHttpException) throwable;</span>
+<span class="nc bnc" id="L141" title="All 4 branches missed.">            return httpEx.isRateLimited() || httpEx.isServerError();</span>
+        }
+<span class="nc" id="L143">        return false;</span>
+    }
+    
+    private java.util.List&lt;ShopifyGraphQLException.GraphQLError&gt; convertErrors(java.util.List&lt;GraphQLResponse.GraphQLError&gt; errors) {
+<span class="nc" id="L147">        return errors.stream()</span>
+<span class="nc" id="L148">            .map(error -&gt; new ShopifyGraphQLException.GraphQLError(</span>
+<span class="nc" id="L149">                error.getMessage(),</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                error.getLocations() != null ? </span>
+<span class="nc" id="L151">                    error.getLocations().stream()</span>
+<span class="nc" id="L152">                        .map(loc -&gt; new ShopifyGraphQLException.GraphQLError.Location(loc.getLine(), loc.getColumn()))</span>
+<span class="nc" id="L153">                        .collect(Collectors.toList()) : null,</span>
+<span class="nc" id="L154">                error.getPath(),</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">                error.getExtensions() != null ? error.getExtensions().toString() : null</span>
+            ))
+<span class="nc" id="L157">            .collect(Collectors.toList());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

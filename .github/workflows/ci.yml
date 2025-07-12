@@ -31,32 +31,26 @@ jobs:
       uses: gradle/gradle-build-action@v2
       
     - name: Build with Gradle
-      run: |
-        cd shopify-spring-sdk
-        ./gradlew clean build
+      run: ./gradlew clean build
         
     - name: Run unit tests
-      run: |
-        cd shopify-spring-sdk
-        ./gradlew test
+      run: ./gradlew test
         
     - name: Generate test report
       if: always()
-      run: |
-        cd shopify-spring-sdk
-        ./gradlew jacocoTestReport
+      run: ./gradlew jacocoTestReport
         
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: shopify-spring-sdk/build/reports/tests/test/
+        path: build/reports/tests/test/
         
     - name: Upload coverage reports
       uses: codecov/codecov-action@v4
       with:
-        directory: ./shopify-spring-sdk/build/reports/jacoco/test/
+        directory: ./build/reports/jacoco/test/
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
@@ -79,9 +73,7 @@ jobs:
       
     - name: Run integration tests
       if: env.SHOPIFY_TEST_STORE_DOMAIN != ''
-      run: |
-        cd shopify-spring-sdk
-        ./gradlew integrationTest
+      run: ./gradlew integrationTest
       env:
         SHOPIFY_TEST_STORE_DOMAIN: ${{ secrets.SHOPIFY_TEST_STORE_DOMAIN }}
         SHOPIFY_TEST_ACCESS_TOKEN: ${{ secrets.SHOPIFY_TEST_ACCESS_TOKEN }}
@@ -99,14 +91,10 @@ jobs:
         distribution: 'temurin'
         
     - name: Run SpotBugs
-      run: |
-        cd shopify-spring-sdk
-        ./gradlew spotbugsMain || true
+      run: ./gradlew spotbugsMain || true
         
     - name: Check code style
-      run: |
-        cd shopify-spring-sdk
-        ./gradlew checkstyleMain || true
+      run: ./gradlew checkstyleMain || true
 
   publish:
     runs-on: ubuntu-latest
@@ -133,13 +121,10 @@ jobs:
       
     - name: Update version if manually triggered
       if: github.event_name == 'workflow_dispatch'
-      run: |
-        sed -i "s/version = '.*'/version = '${{ github.event.inputs.version }}'/" shopify-spring-sdk/build.gradle
+      run: sed -i "s/version = '.*'/version = '${{ github.event.inputs.version }}'/" build.gradle
         
     - name: Publish to GitHub Packages
-      run: |
-        cd shopify-spring-sdk
-        ./gradlew publish
+      run: ./gradlew publish
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         

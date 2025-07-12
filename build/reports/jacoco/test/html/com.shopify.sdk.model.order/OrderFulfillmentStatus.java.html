@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderFulfillmentStatus.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shopify-spring-sdk</a> &gt; <a href="index.source.html" class="el_package">com.shopify.sdk.model.order</a> &gt; <span class="el_source">OrderFulfillmentStatus.java</span></div><h1>OrderFulfillmentStatus.java</h1><pre class="source lang-java linenums">package com.shopify.sdk.model.order;
+
+/**
+ * The fulfillment status for an order.
+ */
+<span class="fc" id="L6">public enum OrderFulfillmentStatus {</span>
+    /**
+     * Displayed as 'Fulfilled'. Every line item in the order has been fulfilled.
+     */
+<span class="fc" id="L10">    FULFILLED,</span>
+    
+    /**
+     * Displayed as 'In transit'. Some line items in the order have been fulfilled.
+     */
+<span class="fc" id="L15">    IN_TRANSIT,</span>
+    
+    /**
+     * Displayed as 'On hold'. A request for manual action such as calling the customer has been sent to the merchant.
+     */
+<span class="fc" id="L20">    ON_HOLD,</span>
+    
+    /**
+     * Displayed as 'Open'. None of the line items in the order have been fulfilled.
+     */
+<span class="fc" id="L25">    OPEN,</span>
+    
+    /**
+     * Displayed as 'Partially fulfilled'. Some line items in the order have been fulfilled.
+     */
+<span class="fc" id="L30">    PARTIALLY_FULFILLED,</span>
+    
+    /**
+     * Displayed as 'Pending fulfillment'. A fulfillment service is processing the order.
+     */
+<span class="fc" id="L35">    PENDING_FULFILLMENT,</span>
+    
+    /**
+     * Displayed as 'Restocked'. Every line item in the order has been restocked.
+     */
+<span class="fc" id="L40">    RESTOCKED,</span>
+    
+    /**
+     * Displayed as 'Scheduled'. All line items in the order are scheduled for fulfillment at later time.
+     */
+<span class="fc" id="L45">    SCHEDULED,</span>
+    
+    /**
+     * Displayed as 'Unfulfilled'. None of the line items in the order have been fulfilled.
+     */
+<span class="fc" id="L50">    UNFULFILLED</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
