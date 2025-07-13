@@ -95,7 +95,7 @@ jobs:
         MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
         MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
       run: |
-        ./gradlew publishShopifySdkPublicationToOSSRHRepository \
+        ./gradlew publishAllPublicationsToMavenCentralPortal \
           -PmavenCentralUsername="${MAVEN_CENTRAL_USERNAME}" \
           -PmavenCentralPassword="${MAVEN_CENTRAL_PASSWORD}" \
           -PsigningKeyId=${{ secrets.GPG_KEY_ID }} \
