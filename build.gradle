@@ -259,7 +259,7 @@ signing {
         useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     }
     
-    required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository") }
+    required { gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository") }
     sign publishing.publications.shopifySdk
 }
 
