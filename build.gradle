@@ -97,8 +97,8 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
-    // Use WireMock with Jetty 11 instead of Jetty 12 to avoid conflicts
-    testImplementation 'org.wiremock:wiremock:3.9.2'
+    // Use WireMock standalone version to avoid Jetty conflicts
+    testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.awaitility:awaitility:4.2.0'
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
