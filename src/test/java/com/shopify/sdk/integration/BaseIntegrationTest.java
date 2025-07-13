@@ -44,14 +44,13 @@ public abstract class BaseIntegrationTest {
     
     @BeforeEach
     void clearRequests() {
-        // Clear any queued responses between tests
-        while (mockWebServer.getRequestCount() > 0) {
-            try {
-                mockWebServer.takeRequest(0, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
+        // Clear any pending requests between tests
+        try {
+            while (mockWebServer.takeRequest(0, TimeUnit.SECONDS) != null) {
+                // Continue draining requests
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

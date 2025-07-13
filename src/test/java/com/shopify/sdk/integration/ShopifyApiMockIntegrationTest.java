@@ -19,6 +19,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -36,7 +38,7 @@ import static org.mockito.Mockito.when;
  * Integration tests using mocked Shopify clients.
  * This approach avoids the complexity of MockWebServer while still testing the service layer.
  */
-@SpringBootTest(classes = com.shopify.sdk.TestApplication.class)
+@SpringBootTest
 @TestPropertySource(properties = {
     "shopify.api-key=test-api-key",
     "shopify.api-secret-key=test-api-secret",
@@ -67,6 +69,7 @@ public class ShopifyApiMockIntegrationTest {
     
     private static final String TEST_SHOP = "test-shop.myshopify.com";
     private static final String TEST_ACCESS_TOKEN = "test-access-token";
+    
     
     @BeforeEach
     void setUp() {
