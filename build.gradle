@@ -252,7 +252,7 @@ publishing {
 // Signing configuration
 signing {
     def signingKeyId = findProperty("signingKeyId")
-    def signingPassword = findProperty("signingPassword")
+    def signingPassword = findProperty("signingPassword")  
     def signingKey = findProperty("signingKey")
     
     if (signingKeyId && signingPassword && signingKey) {
@@ -262,11 +262,17 @@ signing {
     sign publishing.publications.shopifySdk
 }
 
-// Disable signing for GitHub Packages
+// Configure signing tasks
 tasks.withType(Sign) {
     onlyIf {
+        // Only sign when publishing to Maven Central
         gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository")
     }
+}
+
+// Make publish task depend on signing
+tasks.named("publishShopifySdkPublicationToOSSRHRepository") {
+    dependsOn "signShopifySdkPublication"
 }
 
 // Task to display publish info
