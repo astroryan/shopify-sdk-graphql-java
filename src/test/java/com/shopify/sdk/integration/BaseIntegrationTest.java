@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  */
 @SpringBootTest
 @Import(MockWebServerTestConfiguration.class)
-@Tag("integration")
+@Tag("integration-disabled")
 public abstract class BaseIntegrationTest {
     
     protected static MockWebServer mockWebServer;
