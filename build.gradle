@@ -203,6 +203,14 @@ publishing {
                 password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
             }
         }
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
     
     publications {
@@ -243,6 +251,15 @@ publishing {
 
 // Signing configuration
 signing {
+    def signingKeyId = findProperty("signingKeyId") ?: findProperty("signing.keyId")
+    def signingPassword = findProperty("signingPassword") ?: findProperty("signing.password")
+    def signingKey = findProperty("signingKey") ?: findProperty("signing.key")
+    
+    if (signingKeyId && signingPassword && signingKey) {
+        useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+    }
+    
+    required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository") }
     sign publishing.publications.shopifySdk
 }
 
