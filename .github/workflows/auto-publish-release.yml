@@ -11,6 +11,9 @@ jobs:
   publish-release:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed to push tags and create releases
+      pull-requests: read
     
     steps:
     - uses: actions/checkout@v4
