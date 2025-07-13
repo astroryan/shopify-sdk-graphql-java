@@ -1,0 +1,142 @@
+name: Auto Publish Release to Maven Central
+
+on:
+  pull_request:
+    branches:
+      - release-maven-central
+    types:
+      - closed
+
+jobs:
+  publish-release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      
+    - name: Extract version from PR or commit
+      id: extract_version
+      run: |
+        # Try to extract version from PR title or commit message
+        # Expected format: "Release v1.2.3" or "release: 1.2.3"
+        if [[ "${{ github.event.pull_request.title }}" =~ [Rr]elease[[:space:]]+v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          VERSION="${BASH_REMATCH[1]}"
+        elif [[ "${{ github.event.head_commit.message }}" =~ [Rr]elease[[:space:]]+v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+          VERSION="${BASH_REMATCH[1]}"
+        else
+          # Fallback: get current version and remove -SNAPSHOT if present
+          CURRENT_VERSION=$(grep "^version = " build.gradle | cut -d"'" -f2)
+          VERSION=${CURRENT_VERSION%-SNAPSHOT}
+        fi
+        
+        echo "Release version: $VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Update version in build.gradle
+      run: |
+        sed -i "s/version = '.*'/version = '${{ steps.extract_version.outputs.version }}'/" build.gradle
+        
+    - name: Prepare GPG Key
+      run: |
+        # Decode base64 GPG key if needed
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d > /tmp/gpg-key.asc
+        echo "DECODED_GPG_KEY<<EOF" >> $GITHUB_ENV
+        cat /tmp/gpg-key.asc >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        rm /tmp/gpg-key.asc
+        
+    - name: Build and test
+      run: |
+        ./gradlew clean test
+        
+    - name: Publish to Maven Central
+      env:
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.DECODED_GPG_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        # Publish and automatically release
+        ./gradlew publishAndReleaseToMavenCentral \
+          --no-configuration-cache \
+          --info
+          
+        echo "✅ Published release version ${{ steps.extract_version.outputs.version }} to Maven Central"
+        
+    - name: Create Git Tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Create and push tag
+        git tag -a "v${{ steps.extract_version.outputs.version }}" -m "Release v${{ steps.extract_version.outputs.version }}"
+        git push origin "v${{ steps.extract_version.outputs.version }}"
+        
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.extract_version.outputs.version }}
+        release_name: Release v${{ steps.extract_version.outputs.version }}
+        body: |
+          ## Shopify Spring SDK v${{ steps.extract_version.outputs.version }}
+          
+          ### Maven Central
+          ```xml
+          <dependency>
+              <groupId>io.github.astroryan</groupId>
+              <artifactId>shopify-spring-sdk</artifactId>
+              <version>${{ steps.extract_version.outputs.version }}</version>
+          </dependency>
+          ```
+          
+          ### Gradle
+          ```gradle
+          implementation 'io.github.astroryan:shopify-spring-sdk:${{ steps.extract_version.outputs.version }}'
+          ```
+          
+          ### Changes
+          See the [commit history](https://github.com/${{ github.repository }}/compare/v${{ steps.extract_version.outputs.previous_version }}...v${{ steps.extract_version.outputs.version }}) for a full list of changes.
+        draft: false
+        prerelease: false
+        
+    - name: Update version for next development
+      if: github.event_name == 'push'
+      run: |
+        # Calculate next development version
+        IFS='.' read -r MAJOR MINOR PATCH <<< "${{ steps.extract_version.outputs.version }}"
+        NEXT_PATCH=$((PATCH + 1))
+        NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}-SNAPSHOT"
+        
+        # Update build.gradle
+        sed -i "s/version = '.*'/version = '$NEXT_VERSION'/" build.gradle
+        
+        # Commit
+        git add build.gradle
+        git commit -m "chore: prepare for next development iteration $NEXT_VERSION"
+        git push
+        
+    - name: Summary
+      run: |
+        echo "## 🚀 Release Published" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Published: v${{ steps.extract_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "📦 [Maven Central](https://central.sonatype.com/artifact/io.github.astroryan/shopify-spring-sdk/${{ steps.extract_version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+        echo "🏷️ [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/v${{ steps.extract_version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "⏳ Note: Artifacts may take up to 30 minutes to appear in Maven Central" >> $GITHUB_STEP_SUMMARY
