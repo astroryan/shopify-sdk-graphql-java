@@ -203,7 +203,7 @@ publishing {
                 password = project.findProperty("mavenCentralPassword") ?: System.getenv("MAVEN_CENTRAL_PASSWORD")
             }
         }
-        maven {
+         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
             credentials {
@@ -249,19 +249,17 @@ publishing {
     }
 }
 
-// Signing configuration - only for Maven Central
-if (project.hasProperty("signingKeyId") || project.hasProperty("signing.keyId")) {
-    signing {
-        def signingKeyId = findProperty("signingKeyId") ?: findProperty("signing.keyId")
-        def signingPassword = findProperty("signingPassword") ?: findProperty("signing.password")
-        def signingKey = findProperty("signingKey") ?: findProperty("signing.key")
-        
-        if (signingKeyId && signingPassword && signingKey) {
-            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-        }
-        
-        sign publishing.publications.shopifySdk
+// Signing configuration
+signing {
+    def signingKeyId = findProperty("signingKeyId")
+    def signingPassword = findProperty("signingPassword")
+    def signingKey = findProperty("signingKey")
+    
+    if (signingKeyId && signingPassword && signingKey) {
+        useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     }
+    
+    sign publishing.publications.shopifySdk
 }
 
 // Disable signing for GitHub Packages
