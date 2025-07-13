@@ -180,7 +180,7 @@ jobs:
         esac
         
     - name: Publish to GitHub Packages
-      run: ./gradlew publish
+      run: ./gradlew publishShopifySdkPublicationToGitHubPackagesRepository
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
