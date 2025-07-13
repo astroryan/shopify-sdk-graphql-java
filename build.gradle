@@ -130,9 +130,13 @@ task integrationTest(type: Test) {
     systemProperty 'shopify.use-ssl', 'false'
     systemProperty 'test.mode', 'true'
     
+    // Set timeout for the entire test suite
+    timeout = Duration.ofMinutes(5)
+    
     testLogging {
         events 'passed', 'skipped', 'failed'
         exceptionFormat 'full'
+        showStandardStreams = true  // Show test output
     }
 }
 

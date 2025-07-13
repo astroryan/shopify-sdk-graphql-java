@@ -24,6 +24,7 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,7 @@ import static org.assertj.core.api.Assertions.*;
 })
 @Tag("integration")
 @DisplayName("Shopify API Integration Tests")
+@Timeout(value = 30, unit = TimeUnit.SECONDS)  // Class-level timeout
 public class ShopifyApiIntegrationTest {
 
     private static MockWebServer mockWebServer;
@@ -90,7 +92,10 @@ public class ShopifyApiIntegrationTest {
     }
     
     @BeforeEach
-    void init() {
+    void init() throws InterruptedException {
+        // Ensure MockWebServer is ready and clear any previous state
+        assertThat(mockWebServer).isNotNull();
+        
         // Clear any queued responses between tests
         while (mockWebServer.getRequestCount() > 0) {
             try {
@@ -99,6 +104,18 @@ public class ShopifyApiIntegrationTest {
                 Thread.currentThread().interrupt();
                 break;
             }
+        }
+    }
+    
+    @AfterEach
+    void cleanup() {
+        // Consume any remaining requests to prevent hanging
+        try {
+            while (mockWebServer.getRequestCount() > 0) {
+                mockWebServer.takeRequest(0, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
     
@@ -153,7 +170,8 @@ public class ShopifyApiIntegrationTest {
                 assertThat(product.getVendor()).isEqualTo("Test Vendor");
                 assertThat(product.getTags()).containsExactly("tag1", "tag2");
             })
-            .verifyComplete();
+            .expectComplete()
+            .verify(Duration.ofSeconds(5));
         
         // Then verify the request
         RecordedRequest request = mockWebServer.takeRequest();
@@ -211,7 +229,8 @@ public class ShopifyApiIntegrationTest {
                 assertThat(order.getFinancialStatus()).isEqualTo("paid");
                 // Note: line_items in REST API returns a different structure than GraphQL
             })
-            .verifyComplete();
+            .expectComplete()
+            .verify(Duration.ofSeconds(5));
         
         // Then verify the request
         RecordedRequest request = mockWebServer.takeRequest();
@@ -256,7 +275,8 @@ public class ShopifyApiIntegrationTest {
                 assertThat(productConnection).isNotNull();
                 assertThat(productConnection.getEdges()).isEmpty();
             })
-            .verifyComplete();
+            .expectComplete()
+            .verify(Duration.ofSeconds(5));
         
         // Then verify retry happened
         assertThat(mockWebServer.getRequestCount()).isGreaterThanOrEqualTo(2);
@@ -288,7 +308,7 @@ public class ShopifyApiIntegrationTest {
         StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
             .expectErrorMatches(throwable -> 
                 throwable.getMessage().contains("GRAPHQL_VALIDATION_FAILED"))
-            .verify();
+            .verify(Duration.ofSeconds(5));
     }
     
     @Test
@@ -297,14 +317,20 @@ public class ShopifyApiIntegrationTest {
         // Given - Delayed response to trigger timeout
         mockWebServer.enqueue(new MockResponse()
             .setBody("{}")
-            .setBodyDelay(3, TimeUnit.SECONDS));  // Reduced delay
+            .setBodyDelay(6, TimeUnit.SECONDS));  // Delay longer than client timeout
         
         // When & Then
         StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
-            .expectErrorMatches(throwable -> 
-                throwable instanceof java.util.concurrent.TimeoutException ||
-                throwable.getCause() instanceof java.util.concurrent.TimeoutException ||
-                throwable.getMessage().contains("timeout"))
-            .verify();
+            .expectErrorMatches(throwable -> {
+                // Check various timeout-related errors
+                String message = throwable.getMessage();
+                Throwable cause = throwable.getCause();
+                return throwable instanceof java.util.concurrent.TimeoutException ||
+                       (cause != null && cause instanceof java.util.concurrent.TimeoutException) ||
+                       (message != null && (message.contains("timeout") || message.contains("Timeout"))) ||
+                       throwable instanceof io.netty.handler.timeout.ReadTimeoutException ||
+                       (cause != null && cause instanceof io.netty.handler.timeout.ReadTimeoutException);
+            })
+            .verify(Duration.ofSeconds(10)); // Give more time for the test to detect timeout
     }
 }

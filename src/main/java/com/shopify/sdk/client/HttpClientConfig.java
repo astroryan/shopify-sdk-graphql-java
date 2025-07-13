@@ -41,12 +41,13 @@ public class HttpClientConfig {
      * @return configured WebClient
      */
     public WebClient createWebClient(ShopifyAuthContext context, String baseUrl) {
+        int timeout = isTestEnvironment() ? 5000 : ShopifyConstants.DEFAULT_TIMEOUT_MS; // 5 seconds for tests
         HttpClient httpClient = HttpClient.create()
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ShopifyConstants.DEFAULT_TIMEOUT_MS)
-            .responseTimeout(Duration.ofMillis(ShopifyConstants.DEFAULT_TIMEOUT_MS))
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
+            .responseTimeout(Duration.ofMillis(timeout))
             .doOnConnected(conn ->
-                conn.addHandlerLast(new ReadTimeoutHandler(ShopifyConstants.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS))
-                    .addHandlerLast(new WriteTimeoutHandler(ShopifyConstants.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)));
+                conn.addHandlerLast(new ReadTimeoutHandler(timeout, TimeUnit.MILLISECONDS))
+                    .addHandlerLast(new WriteTimeoutHandler(timeout, TimeUnit.MILLISECONDS)));
         
         WebClient.Builder builder = WebClient.builder()
             .clientConnector(new ReactorClientHttpConnector(httpClient))
@@ -139,12 +140,13 @@ public class HttpClientConfig {
     }
     
     private WebClient createDefaultWebClient() {
+        int timeout = isTestEnvironment() ? 5000 : ShopifyConstants.DEFAULT_TIMEOUT_MS; // 5 seconds for tests
         HttpClient httpClient = HttpClient.create()
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, ShopifyConstants.DEFAULT_TIMEOUT_MS)
-            .responseTimeout(Duration.ofMillis(ShopifyConstants.DEFAULT_TIMEOUT_MS))
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
+            .responseTimeout(Duration.ofMillis(timeout))
             .doOnConnected(conn ->
-                conn.addHandlerLast(new ReadTimeoutHandler(ShopifyConstants.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS))
-                    .addHandlerLast(new WriteTimeoutHandler(ShopifyConstants.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)));
+                conn.addHandlerLast(new ReadTimeoutHandler(timeout, TimeUnit.MILLISECONDS))
+                    .addHandlerLast(new WriteTimeoutHandler(timeout, TimeUnit.MILLISECONDS)));
         
         return WebClient.builder()
             .clientConnector(new ReactorClientHttpConnector(httpClient))

@@ -129,6 +129,7 @@ public class MockWebServerTestConfiguration {
     @Primary
     public RestClient testRestClient(HttpClientConfig httpClientConfig, ObjectMapper objectMapper) {
         // Custom RestClient for tests that uses HTTP without forcing HTTPS
+        System.out.println("Creating test RestClient bean");
         return new RestClient() {
             @Override
             public Mono<JsonNode> get(String shop, String accessToken, String endpoint, Map<String, Object> queryParams) {
