@@ -393,7 +393,12 @@ sourceSets {
 
 // Publishing configuration for vanniktech plugin
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    // Use different hosts based on version type
+    if (version.toString().endsWith("-SNAPSHOT")) {
+        publishToMavenCentral(SonatypeHost.S01)  // Sonatype OSS for snapshots
+    } else {
+        publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)  // Central Portal for releases
+    }
     signAllPublications()
     
     coordinates("io.github.astroryan", "shopify-spring-sdk", version)
