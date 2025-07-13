@@ -19,12 +19,8 @@ import org.springframework.context.annotation.Bean;
 @TestConfiguration
 public class IntegrationTestConfiguration {
     
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        return mapper;
-    }
+    // ObjectMapper bean removed to avoid conflicts with ShopifyTestConfiguration
+    // which already provides a @Primary ObjectMapper bean
     
     @Bean
     public ShopifyAuthContext shopifyAuthContext() {
