@@ -1,14 +1,15 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.2.0'
+    id 'org.springframework.boot' version '3.3.9'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'java-library'
     id 'jacoco'
     id 'maven-publish'
+    id 'signing'
 }
 
-group = 'com.shopify'
-version = '1.2.0'
+group = 'io.github.astroryan'
+version = '1.2.0-SNAPSHOT-40'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -54,6 +55,8 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     
+    // Jackson version management - ensure consistent versions
+    implementation platform("com.fasterxml.jackson:jackson-bom:${jacksonVersion}")
 
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter'
@@ -97,7 +100,6 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
-    testImplementation 'com.github.tomakehurst:wiremock-jre8:3.0.1'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.awaitility:awaitility:4.2.0'
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
@@ -109,7 +111,7 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform {
         // 기본 테스트에서는 integration 태그 제외
-        excludeTags 'integration'
+        excludeTags 'integration', 'integration-disabled'
     }
     finalizedBy jacocoTestReport
     
@@ -117,23 +119,27 @@ tasks.named('test') {
     jvmArgs '-Dnet.bytebuddy.experimental=true'
 }
 
-// 통합 테스트 태스크 (Shopify Store 필요)
+// 통합 테스트 태스크 (MockWebServer 기반)
 task integrationTest(type: Test) {
     useJUnitPlatform {
         includeTags 'integration'
     }
     
-    // 환경변수 체크
-    doFirst {
-        if (!System.getenv('SHOPIFY_TEST_STORE_DOMAIN')) {
-            println 'Skipping integration tests: SHOPIFY_TEST_STORE_DOMAIN not set'
-            throw new StopExecutionException('Integration tests require Shopify store credentials')
-        }
-    }
+    // Enable experimental Byte Buddy for Java compatibility
+    jvmArgs '-Dnet.bytebuddy.experimental=true'
+    
+    // Set system properties for test environment
+    systemProperty 'spring.profiles.active', 'test'
+    systemProperty 'shopify.use-ssl', 'false'
+    systemProperty 'test.mode', 'true'
+    
+    // Set timeout for the entire test suite
+    timeout = Duration.ofMinutes(5)
     
     testLogging {
         events 'passed', 'skipped', 'failed'
         exceptionFormat 'full'
+        showStandardStreams = true  // Show test output
     }
 }
 
@@ -188,11 +194,13 @@ sourceSets {
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-graphql-java")
+            name = "OSSRH"
+            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+                username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+                password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
             }
         }
     }
@@ -201,10 +209,12 @@ publishing {
         shopifySdk(MavenPublication) {
             from components.java
             
+            artifactId = 'shopify-spring-sdk'
+            
             pom {
                 name = 'Shopify Spring SDK'
                 description = 'A comprehensive Spring Boot SDK for Shopify Admin GraphQL API'
-                url = 'https://github.com/astroryan/shopify-sdk-graphql-java'
+                url = 'https://github.com/astroryan/shopify-sdk-java'
                 
                 licenses {
                     license {
@@ -222,19 +232,24 @@ publishing {
                 }
                 
                 scm {
-                    connection = 'scm:git:git://github.com/astroryan/shopify-sdk-graphql-java.git'
-                    developerConnection = 'scm:git:ssh://github.com:astroryan/shopify-sdk-graphql-java.git'
-                    url = 'https://github.com/astroryan/shopify-sdk-graphql-java'
+                    connection = 'scm:git:git://github.com/astroryan/shopify-sdk-java.git'
+                    developerConnection = 'scm:git:ssh://github.com:astroryan/shopify-sdk-java.git'
+                    url = 'https://github.com/astroryan/shopify-sdk-java'
                 }
             }
         }
     }
 }
 
+// Signing configuration
+signing {
+    sign publishing.publications.shopifySdk
+}
+
 // Task to display publish info
 task publishInfo {
     doLast {
         println "Publishing ${project.group}:${project.name}:${project.version}"
-        println "To GitHub Packages: https://github.com/astroryan/shopify-sdk-graphql-java"
+        println "To Maven Central via OSSRH"
     }
 }

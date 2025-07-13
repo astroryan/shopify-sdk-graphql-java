@@ -4,7 +4,6 @@ import com.shopify.sdk.model.common.ApiVersion;
 import com.shopify.sdk.model.common.LogSeverity;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -13,7 +12,6 @@ import java.util.List;
  * Maps configuration from application.properties/yaml.
  */
 @Data
-@Component
 @ConfigurationProperties(prefix = "shopify")
 public class ShopifyProperties {
     

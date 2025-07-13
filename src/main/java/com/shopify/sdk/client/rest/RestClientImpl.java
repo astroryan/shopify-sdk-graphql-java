@@ -107,14 +107,30 @@ public class RestClientImpl implements RestClient {
     }
     
     private String buildShopifyUrl(String shop, String endpoint) {
-        String baseUrl = String.format("https://%s.myshopify.com/admin/api/2024-01", 
-            shop.replace(".myshopify.com", ""));
+        String protocol = isTestEnvironment() ? "http" : "https";
+        
+        // In test environment, shop is already the full host:port
+        String baseUrl;
+        if (isTestEnvironment() && shop.contains(":")) {
+            baseUrl = String.format("%s://%s/admin/api/2024-01", protocol, shop);
+        } else {
+            baseUrl = String.format("%s://%s.myshopify.com/admin/api/2024-01", 
+                protocol, shop.replace(".myshopify.com", ""));
+        }
         
         if (!endpoint.startsWith("/")) {
             endpoint = "/" + endpoint;
         }
         
         return baseUrl + endpoint;
+    }
+    
+    private boolean isTestEnvironment() {
+        // Check if we're in a test environment
+        String activeProfiles = System.getProperty("spring.profiles.active", "");
+        return activeProfiles.contains("test") || 
+               "false".equals(System.getProperty("shopify.use-ssl")) ||
+               System.getProperty("test.mode") != null;
     }
     
     private JsonNode parseResponse(String responseBody) {
