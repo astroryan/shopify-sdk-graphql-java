@@ -72,13 +72,22 @@ jobs:
           echo "Make sure you're using User Token credentials from central.sonatype.com"
         fi
         
+    - name: Prepare GPG Key
+      run: |
+        # Decode base64 GPG key if needed
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d > /tmp/gpg-key.asc
+        echo "DECODED_GPG_KEY<<EOF" >> $GITHUB_ENV
+        cat /tmp/gpg-key.asc >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        rm /tmp/gpg-key.asc
+        
     - name: Build and publish to Maven Central
       env:
         # Maven Central credentials
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
         ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         # GPG signing credentials - vanniktech plugin format
-        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.DECODED_GPG_KEY }}
         ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
         ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
       run: |
