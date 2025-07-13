@@ -67,6 +67,13 @@ jobs:
     - name: Run tests
       run: ./gradlew clean test
       
+    - name: Debug credentials
+      env:
+        MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      run: |
+        echo "Maven Central username length: ${#MAVEN_CENTRAL_USERNAME}"
+        echo "GPG Key ID: ${{ secrets.GPG_KEY_ID }}"
+        
     - name: Build and publish to Maven Central
       env:
         MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -78,7 +85,7 @@ jobs:
           -PsigningKeyId=${{ secrets.GPG_KEY_ID }} \
           -PsigningPassword=${{ secrets.GPG_PASSPHRASE }} \
           -PsigningKey="$GPG_SIGNING_KEY" \
-          --info
+          --info --stacktrace
           
     - name: Create Release Notes
       if: github.event.inputs.release_type == 'release'
