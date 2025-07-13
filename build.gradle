@@ -5,10 +5,11 @@ plugins {
     id 'java-library'
     id 'jacoco'
     id 'maven-publish'
+    id 'signing'
 }
 
-group = 'com.shopify'
-version = '1.2.0'
+group = 'io.github.astroryan'
+version = '1.2.0-SNAPSHOT-40'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -55,7 +56,7 @@ dependencies {
     }
     
     // Jackson version management - ensure consistent versions
-    implementation enforcedPlatform("com.fasterxml.jackson:jackson-bom:${jacksonVersion}")
+    implementation platform("com.fasterxml.jackson:jackson-bom:${jacksonVersion}")
 
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter'
@@ -193,11 +194,13 @@ sourceSets {
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
+            name = "OSSRH"
+            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+                username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+                password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
             }
         }
     }
@@ -205,6 +208,8 @@ publishing {
     publications {
         shopifySdk(MavenPublication) {
             from components.java
+            
+            artifactId = 'shopify-spring-sdk'
             
             pom {
                 name = 'Shopify Spring SDK'
@@ -236,10 +241,15 @@ publishing {
     }
 }
 
+// Signing configuration
+signing {
+    sign publishing.publications.shopifySdk
+}
+
 // Task to display publish info
 task publishInfo {
     doLast {
         println "Publishing ${project.group}:${project.name}:${project.version}"
-        println "To GitHub Packages: https://github.com/astroryan/shopify-sdk-java"
+        println "To Maven Central via OSSRH"
     }
 }
