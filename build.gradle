@@ -249,18 +249,26 @@ publishing {
     }
 }
 
-// Signing configuration
-signing {
-    def signingKeyId = findProperty("signingKeyId") ?: findProperty("signing.keyId")
-    def signingPassword = findProperty("signingPassword") ?: findProperty("signing.password")
-    def signingKey = findProperty("signingKey") ?: findProperty("signing.key")
-    
-    if (signingKeyId && signingPassword && signingKey) {
-        useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+// Signing configuration - only for Maven Central
+if (project.hasProperty("signingKeyId") || project.hasProperty("signing.keyId")) {
+    signing {
+        def signingKeyId = findProperty("signingKeyId") ?: findProperty("signing.keyId")
+        def signingPassword = findProperty("signingPassword") ?: findProperty("signing.password")
+        def signingKey = findProperty("signingKey") ?: findProperty("signing.key")
+        
+        if (signingKeyId && signingPassword && signingKey) {
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        }
+        
+        sign publishing.publications.shopifySdk
     }
-    
-    required { gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository") }
-    sign publishing.publications.shopifySdk
+}
+
+// Disable signing for GitHub Packages
+tasks.withType(Sign) {
+    onlyIf {
+        gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository")
+    }
 }
 
 // Task to display publish info
