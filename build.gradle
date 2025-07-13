@@ -97,8 +97,6 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
-    // Use WireMock standalone version to avoid Jetty conflicts
-    testImplementation 'org.wiremock:wiremock-standalone:3.9.2'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.awaitility:awaitility:4.2.0'
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
@@ -118,7 +116,7 @@ tasks.named('test') {
     jvmArgs '-Dnet.bytebuddy.experimental=true'
 }
 
-// 통합 테스트 태스크 (Shopify Store 필요)
+// 통합 테스트 태스크 (MockWebServer 기반)
 task integrationTest(type: Test) {
     useJUnitPlatform {
         includeTags 'integration'
@@ -126,14 +124,6 @@ task integrationTest(type: Test) {
     
     // Enable experimental Byte Buddy for Java compatibility
     jvmArgs '-Dnet.bytebuddy.experimental=true'
-    
-    // 환경변수 체크
-    doFirst {
-        if (!System.getenv('SHOPIFY_TEST_STORE_DOMAIN')) {
-            println 'Skipping integration tests: SHOPIFY_TEST_STORE_DOMAIN not set'
-            throw new StopExecutionException('Integration tests require Shopify store credentials')
-        }
-    }
     
     testLogging {
         events 'passed', 'skipped', 'failed'
