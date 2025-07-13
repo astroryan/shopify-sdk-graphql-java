@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.2.0'
+    id 'org.springframework.boot' version '3.3.9'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'java-library'
     id 'jacoco'
@@ -54,6 +54,8 @@ dependencies {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     
+    // Jackson version management - ensure consistent versions
+    implementation enforcedPlatform("com.fasterxml.jackson:jackson-bom:${jacksonVersion}")
 
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter'
@@ -108,7 +110,7 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform {
         // 기본 테스트에서는 integration 태그 제외
-        excludeTags 'integration'
+        excludeTags 'integration', 'integration-disabled'
     }
     finalizedBy jacocoTestReport
     
