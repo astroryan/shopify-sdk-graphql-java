@@ -1,0 +1,104 @@
+name: Auto Publish Snapshot to Maven Central
+
+on:
+  pull_request:
+    branches:
+      - snapshot-maven-central
+    types:
+      - closed
+
+jobs:
+  publish-snapshot:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      
+    - name: Get current version
+      id: get_version
+      run: |
+        CURRENT_VERSION=$(grep "^version = " build.gradle | cut -d"'" -f2 | cut -d'-' -f1)
+        echo "Current version: $CURRENT_VERSION"
+        echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Calculate next snapshot version
+      id: next_version
+      run: |
+        CURRENT_VERSION="${{ steps.get_version.outputs.version }}"
+        
+        # Extract major, minor, patch
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+        
+        # Increment patch version for snapshot
+        NEXT_PATCH=$((PATCH + 1))
+        NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}-SNAPSHOT"
+        
+        echo "Next snapshot version: $NEXT_VERSION"
+        echo "snapshot_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Update version in build.gradle
+      run: |
+        sed -i "s/version = '.*'/version = '${{ steps.next_version.outputs.snapshot_version }}'/" build.gradle
+        
+    - name: Prepare GPG Key
+      run: |
+        # Decode base64 GPG key if needed
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d > /tmp/gpg-key.asc
+        echo "DECODED_GPG_KEY<<EOF" >> $GITHUB_ENV
+        cat /tmp/gpg-key.asc >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        rm /tmp/gpg-key.asc
+        
+    - name: Build and publish snapshot
+      env:
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.DECODED_GPG_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        ./gradlew clean test
+        
+        # Publish to Maven Central (snapshots are automatically released)
+        ./gradlew publishToMavenCentral \
+          --no-configuration-cache \
+          --info
+          
+        echo "✅ Published snapshot version ${{ steps.next_version.outputs.snapshot_version }} to Maven Central"
+        
+    - name: Commit version update
+      if: github.event_name == 'push'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add build.gradle
+        git diff --staged --quiet || git commit -m "chore: bump snapshot version to ${{ steps.next_version.outputs.snapshot_version }}"
+        git push
+        
+    - name: Summary
+      run: |
+        echo "## 📸 Snapshot Published" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Published: ${{ steps.next_version.outputs.snapshot_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "📦 [Maven Central Snapshots](https://central.sonatype.com/namespace/io.github.astroryan)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Usage" >> $GITHUB_STEP_SUMMARY
+        echo '```xml' >> $GITHUB_STEP_SUMMARY
+        echo '<dependency>' >> $GITHUB_STEP_SUMMARY
+        echo '    <groupId>io.github.astroryan</groupId>' >> $GITHUB_STEP_SUMMARY
+        echo '    <artifactId>shopify-spring-sdk</artifactId>' >> $GITHUB_STEP_SUMMARY
+        echo '    <version>${{ steps.next_version.outputs.snapshot_version }}</version>' >> $GITHUB_STEP_SUMMARY
+        echo '</dependency>' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
