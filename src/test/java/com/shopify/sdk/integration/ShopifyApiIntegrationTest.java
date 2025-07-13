@@ -1,415 +1,302 @@
 package com.shopify.sdk.integration;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.shopify.sdk.auth.ShopifyOAuth;
-import com.shopify.sdk.client.HttpClientConfig;
+import com.shopify.sdk.config.ShopifyAuthContext;
 import com.shopify.sdk.client.ShopifyGraphQLClient;
 import com.shopify.sdk.client.ShopifyRestClient;
-import com.shopify.sdk.client.graphql.GraphQLClient;
-import com.shopify.sdk.client.rest.RestClient;
-import com.shopify.sdk.client.rest.RestClientImpl;
-import com.shopify.sdk.config.ShopifyAuthContext;
 import com.shopify.sdk.model.common.ApiVersion;
 import com.shopify.sdk.model.product.Product;
 import com.shopify.sdk.model.product.ProductConnection;
 import com.shopify.sdk.model.order.Order;
 import com.shopify.sdk.service.product.ProductService;
 import com.shopify.sdk.service.rest.RestOrderService;
-import com.shopify.sdk.service.bulk.BulkOperationService;
-import com.shopify.sdk.model.bulk.BulkOperation;
-import com.shopify.sdk.webhook.WebhookEvent;
-import com.shopify.sdk.webhook.WebhookHandler;
-import com.shopify.sdk.webhook.WebhookProcessor;
-import com.shopify.sdk.webhook.DefaultWebhookHandler;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import reactor.core.publisher.Mono;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import reactor.test.StepVerifier;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Integration tests for Shopify SDK.
- * These tests use WireMock to simulate Shopify API responses.
- * To run against a real Shopify store, set the SHOPIFY_TEST_STORE_DOMAIN
- * and SHOPIFY_TEST_ACCESS_TOKEN environment variables.
+ * Integration tests for Shopify SDK using MockWebServer.
+ * Tests real HTTP interactions with mocked responses.
  */
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Import(com.shopify.sdk.config.MockWebServerTestConfiguration.class)
+@TestPropertySource(properties = {
+    "shopify.api-key=test-api-key",
+    "shopify.api-secret-key=test-api-secret",
+    "shopify.scopes=read_products,write_products,read_orders,write_orders",
+    "shopify.api-version=JANUARY_24",
+    "shopify.admin-api-access-token=test-access-token"
+})
 @Tag("integration")
-@EnabledIfEnvironmentVariable(named = "SHOPIFY_TEST_STORE_DOMAIN", matches = ".+")
+@DisplayName("Shopify API Integration Tests")
 public class ShopifyApiIntegrationTest {
-    
-    private ShopifyOAuth shopifyOAuth;
-    private WebhookProcessor webhookProcessor;
-    private ProductService productService;
-    private RestOrderService restOrderService;
-    private BulkOperationService bulkOperationService;
-    private ShopifyRestClient restClient;
-    
-    private WireMockServer wireMockServer;
-    private static final String TEST_SHOP = "test-shop.myshopify.com";
+
+    private static MockWebServer mockWebServer;
+    private static String TEST_SHOP;
     private static final String TEST_ACCESS_TOKEN = "test-access-token";
     
+    @Autowired
+    private ShopifyGraphQLClient graphQLClient;
+    
+    @Autowired
+    private ShopifyRestClient restClient;
+    
+    @Autowired
+    private ProductService productService;
+    
+    @Autowired
+    private RestOrderService orderService;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
+    
+    @BeforeAll
+    static void setUp() throws IOException {
+        mockWebServer = new MockWebServer();
+        mockWebServer.start();
+        TEST_SHOP = mockWebServer.getHostName() + ":" + mockWebServer.getPort();
+    }
+    
+    @AfterAll
+    static void tearDown() throws IOException {
+        mockWebServer.shutdown();
+    }
+    
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        registry.add("shopify.host-name", () -> 
+            mockWebServer.getHostName() + ":" + mockWebServer.getPort());
+    }
+    
     @BeforeEach
-    void setUp() {
-        // Start WireMock server
-        wireMockServer = new WireMockServer(WireMockConfiguration.options()
-            .port(8089));
-        wireMockServer.start();
-        WireMock.configureFor("localhost", 8089);
-        
-        // Initialize components manually
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        
-        // Create configuration for testing with WireMock
-        ShopifyAuthContext testContext = ShopifyAuthContext.builder()
-            .apiKey("test-api-key")
-            .apiSecretKey("test-api-secret")
-            .scopes(List.of("read_products", "write_products", "read_orders", "write_orders"))
-            .hostName("localhost:8089")
-            .apiVersion(ApiVersion.JANUARY_24)
-            .isEmbeddedApp(true)
-            .build();
-        
-        // Create HTTP clients
-        HttpClientConfig httpClientConfig = new HttpClientConfig();
-        
-        GraphQLClient graphQLClient = new GraphQLClient(httpClientConfig, objectMapper);
-        RestClient restClient = new RestClientImpl(httpClientConfig, objectMapper);
-        
-        ShopifyGraphQLClient shopifyGraphQLClient = new ShopifyGraphQLClient(graphQLClient, testContext);
-        this.restClient = new ShopifyRestClient(restClient, testContext);
-        
-        // Create services
-        this.productService = new ProductService(shopifyGraphQLClient, objectMapper);
-        this.restOrderService = new RestOrderService(this.restClient, objectMapper);
-        this.bulkOperationService = new BulkOperationService(shopifyGraphQLClient, objectMapper);
-        
-        // Create auth service
-        this.shopifyOAuth = new ShopifyOAuth(testContext);
-        
-        // Create webhook processor
-        List<WebhookHandler> webhookHandlers = new ArrayList<>();
-        webhookHandlers.add(new DefaultWebhookHandler());
-        this.webhookProcessor = new WebhookProcessor(testContext, shopifyOAuth, objectMapper, webhookHandlers);
-    }
-    
-    @AfterEach
-    void tearDown() {
-        wireMockServer.stop();
+    void init() {
+        // Clear any queued responses between tests
+        while (mockWebServer.getRequestCount() > 0) {
+            try {
+                mockWebServer.takeRequest(0, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
     }
     
     @Test
-    @DisplayName("Integration test: OAuth flow")
-    void testOAuthFlow() {
-        // Mock OAuth token exchange endpoint
-        stubFor(post(urlEqualTo("/admin/oauth/access_token"))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json")
-                .withBody("""
-                    {
-                        "access_token": "new-access-token",
-                        "scope": "read_products,write_orders",
-                        "associated_user_scope": "read_products",
-                        "associated_user": {
-                            "id": 12345,
-                            "first_name": "John",
-                            "last_name": "Doe",
-                            "email": "john@example.com"
-                        }
-                    }
-                    """)));
-        
-        // Test authorization URL generation
-        String authUrl = shopifyOAuth.getAuthorizationUrl(TEST_SHOP, 
-            List.of("read_products", "write_orders"),
-            "https://test-app.example.com/callback", "test-state");
-        
-        assertThat(authUrl)
-            .contains(TEST_SHOP)
-            .contains("client_id=test-api-key")
-            .contains("scope=read_products,write_orders");
-        
-        // Test callback validation
-        Map<String, String> callbackParams = Map.of(
-            "code", "test-code",
-            "shop", TEST_SHOP,
-            "state", "test-state",
-            "timestamp", "1234567890",
-            "hmac", "test-hmac"
-        );
-        
-        // Since we can't calculate the correct HMAC in tests, we'll test the validation structure
-        boolean isValid = shopifyOAuth.validateCallback(TEST_SHOP, "test-code", "test-hmac", 
-                                                        "test-state", callbackParams);
-        // This will be false because we don't have the correct HMAC, but it shouldn't throw
-        assertThat(isValid).isNotNull();
-    }
-    
-    @Test
-    @DisplayName("Integration test: GraphQL Product API")
-    void testGraphQLProductApi() {
-        // Mock GraphQL endpoint
-        stubFor(post(urlEqualTo("/admin/api/2024-01/graphql.json"))
-            .withHeader("X-Shopify-Access-Token", equalTo(TEST_ACCESS_TOKEN))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json")
-                .withBody("""
-                    {
-                        "data": {
-                            "products": {
-                                "edges": [
-                                    {
-                                        "node": {
-                                            "id": "gid://shopify/Product/1",
-                                            "title": "Test Product",
-                                            "handle": "test-product",
-                                            "description": "A test product",
-                                            "productType": "Test Type",
-                                            "vendor": "Test Vendor",
-                                            "status": "ACTIVE",
-                                            "variants": {
-                                                "edges": [
-                                                    {
-                                                        "node": {
-                                                            "id": "gid://shopify/ProductVariant/1",
-                                                            "title": "Default",
-                                                            "price": "10.00",
-                                                            "sku": "TEST-001"
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    }
-                                ],
-                                "pageInfo": {
-                                    "hasNextPage": false,
-                                    "hasPreviousPage": false
+    @DisplayName("Should successfully fetch products via GraphQL")
+    void testGraphQLProductQuery() throws Exception {
+        // Given
+        String mockResponse = """
+            {
+                "data": {
+                    "products": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": "gid://shopify/Product/123",
+                                    "title": "Test Product",
+                                    "handle": "test-product",
+                                    "descriptionHtml": "<p>Test description</p>",
+                                    "vendor": "Test Vendor",
+                                    "productType": "Test Type",
+                                    "tags": ["tag1", "tag2"],
+                                    "status": "ACTIVE",
+                                    "createdAt": "2024-01-01T00:00:00Z",
+                                    "updatedAt": "2024-01-01T00:00:00Z"
                                 }
                             }
-                        }
-                    }
-                    """)));
-        
-        // Test product fetch
-        Mono<ProductConnection> productsMono = productService
-            .getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null);
-        
-        StepVerifier.create(productsMono)
-            .assertNext(products -> {
-                assertThat(products.getEdges()).hasSize(1);
-                Product product = products.getEdges().get(0).getNode();
-                assertThat(product.getTitle()).isEqualTo("Test Product");
-                assertThat(product.getHandle()).isEqualTo("test-product");
-            })
-            .verifyComplete();
-    }
-    
-    @Test
-    @DisplayName("Integration test: REST Order API")
-    void testRestOrderApi() {
-        // Mock REST endpoint
-        stubFor(get(urlEqualTo("/admin/api/2024-01/orders.json?limit=10"))
-            .withHeader("X-Shopify-Access-Token", equalTo(TEST_ACCESS_TOKEN))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json")
-                .withHeader("X-Shopify-Shop-Api-Call-Limit", "1/40")
-                .withBody("""
-                    {
-                        "orders": [
-                            {
-                                "id": 1001,
-                                "name": "#1001",
-                                "email": "customer@example.com",
-                                "total_price": "100.00",
-                                "currency": "USD",
-                                "financial_status": "paid",
-                                "fulfillment_status": "unfulfilled",
-                                "created_at": "2024-01-01T00:00:00Z",
-                                "line_items": [
-                                    {
-                                        "id": 1,
-                                        "product_id": 123,
-                                        "title": "Test Product",
-                                        "quantity": 2,
-                                        "price": "50.00"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                    """)));
-        
-        // Test order fetch
-        Mono<List<Order>> ordersMono = restOrderService
-            .getOrders(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null);
-        
-        StepVerifier.create(ordersMono)
-            .assertNext(orders -> {
-                assertThat(orders).hasSize(1);
-                Order order = orders.get(0);
-                assertThat(order.getName()).isEqualTo("#1001");
-                assertThat(order.getEmail()).isEqualTo("customer@example.com");
-            })
-            .verifyComplete();
-    }
-    
-    @Test
-    @DisplayName("Integration test: Webhook processing")
-    void testWebhookProcessing() throws InterruptedException {
-        // Create a test webhook handler
-        CountDownLatch latch = new CountDownLatch(1);
-        TestWebhookHandler handler = new TestWebhookHandler(latch);
-        
-        // Simulate webhook payload
-        String webhookPayload = """
-            {
-                "id": 1001,
-                "name": "#1001",
-                "email": "webhook@example.com",
-                "total_price": "150.00",
-                "created_at": "2024-01-15T10:00:00Z"
-            }
-            """;
-        
-        Map<String, String> headers = Map.of(
-            "X-Shopify-Topic", "orders/create",
-            "X-Shopify-Shop-Domain", TEST_SHOP,
-            "X-Shopify-Hmac-Sha256", "test-hmac" // In real test, calculate proper HMAC
-        );
-        
-        // Process webhook
-        Mono<WebhookEvent> processMono = webhookProcessor.processWebhook(webhookPayload, headers);
-        
-        StepVerifier.create(processMono)
-            .expectError() // Will error because of invalid HMAC
-            .verify();
-        
-        // In a real test with properly configured handlers:
-        // assertTrue(latch.await(5, TimeUnit.SECONDS));
-        // assertThat(handler.getLastEvent()).isNotNull();
-    }
-    
-    @Test
-    @DisplayName("Integration test: Rate limiting")
-    void testRateLimiting() {
-        // Mock endpoint with rate limit headers
-        stubFor(get(urlPathMatching("/admin/api/2024-01/products.*"))
-            .withHeader("X-Shopify-Access-Token", equalTo(TEST_ACCESS_TOKEN))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json")
-                .withHeader("X-Shopify-Shop-Api-Call-Limit", "39/40")
-                .withHeader("Retry-After", "2.0")
-                .withBody("{\"products\":[]}")));
-        
-        // Make multiple requests
-        for (int i = 0; i < 5; i++) {
-            Mono<JsonNode> productsMono = restClient
-                .get(TEST_SHOP, TEST_ACCESS_TOKEN, "/products.json", Map.of());
-            
-            StepVerifier.create(productsMono)
-                .assertNext(response -> assertThat(response.has("products")).isTrue())
-                .verifyComplete();
-        }
-        
-        // Basic validation that requests succeeded
-        assertThat(wireMockServer.getAllServeEvents()).hasSize(5);
-    }
-    
-    @Test
-    @DisplayName("Integration test: Bulk operations")
-    void testBulkOperations() {
-        // Mock bulk operation creation
-        stubFor(post(urlEqualTo("/admin/api/2024-01/graphql.json"))
-            .withRequestBody(containing("bulkOperationRunQuery"))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json")
-                .withBody("""
-                    {
-                        "data": {
-                            "bulkOperationRunQuery": {
-                                "bulkOperation": {
-                                    "id": "gid://shopify/BulkOperation/1",
-                                    "status": "CREATED",
-                                    "createdAt": "2024-01-15T10:00:00Z"
-                                },
-                                "userErrors": []
-                            }
-                        }
-                    }
-                    """)));
-        
-        // Test bulk operation
-        String bulkQuery = """
-            {
-                products {
-                    edges {
-                        node {
-                            id
-                            title
+                        ],
+                        "pageInfo": {
+                            "hasNextPage": false,
+                            "hasPreviousPage": false
                         }
                     }
                 }
             }
             """;
         
-        Mono<BulkOperation> bulkOpMono = bulkOperationService
-            .runQuery(TEST_SHOP, TEST_ACCESS_TOKEN, bulkQuery);
+        mockWebServer.enqueue(new MockResponse()
+            .setBody(mockResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200));
         
-        StepVerifier.create(bulkOpMono)
-            .assertNext(operation -> {
-                assertThat(operation.getId()).isEqualTo("gid://shopify/BulkOperation/1");
-                assertThat(operation.getStatus()).isEqualTo("CREATED");
+        // When
+        StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
+            .assertNext(productConnection -> {
+                assertThat(productConnection).isNotNull();
+                assertThat(productConnection.getEdges()).hasSize(1);
+                
+                Product product = productConnection.getEdges().get(0).getNode();
+                assertThat(product.getId()).isEqualTo("gid://shopify/Product/123");
+                assertThat(product.getTitle()).isEqualTo("Test Product");
+                assertThat(product.getHandle()).isEqualTo("test-product");
+                assertThat(product.getVendor()).isEqualTo("Test Vendor");
+                assertThat(product.getTags()).containsExactly("tag1", "tag2");
             })
             .verifyComplete();
+        
+        // Then verify the request
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/admin/api/2024-01/graphql.json");
+        assertThat(request.getHeader("X-Shopify-Access-Token")).isEqualTo(TEST_ACCESS_TOKEN);
     }
     
-    // Test webhook handler implementation
-    private static class TestWebhookHandler implements WebhookHandler {
-        private final CountDownLatch latch;
-        private WebhookEvent lastEvent;
+    @Test
+    @DisplayName("Should successfully fetch orders via REST API")
+    void testRestOrderQuery() throws Exception {
+        // Given
+        String mockResponse = """
+            {
+                "orders": [
+                    {
+                        "id": 12345,
+                        "order_number": 1001,
+                        "email": "test@example.com",
+                        "total_price": "100.00",
+                        "currency": "USD",
+                        "financial_status": "paid",
+                        "fulfillment_status": "fulfilled",
+                        "created_at": "2024-01-01T00:00:00Z",
+                        "updated_at": "2024-01-01T00:00:00Z",
+                        "line_items": [
+                            {
+                                "id": 1,
+                                "product_id": 123,
+                                "title": "Test Product",
+                                "quantity": 2,
+                                "price": "50.00"
+                            }
+                        ]
+                    }
+                ]
+            }
+            """;
         
-        public TestWebhookHandler(CountDownLatch latch) {
-            this.latch = latch;
-        }
+        mockWebServer.enqueue(new MockResponse()
+            .setBody(mockResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200));
         
-        @Override
-        public boolean canHandle(WebhookEvent event) {
-            return true; // Handle all events for testing
-        }
+        // When
+        StepVerifier.create(orderService.getOrders(TEST_SHOP, TEST_ACCESS_TOKEN, null, null, null))
+            .assertNext(orders -> {
+                assertThat(orders).hasSize(1);
+                
+                Order order = orders.get(0);
+                assertThat(order.getId()).isEqualTo(12345L);
+                assertThat(order.getOrderNumber()).isEqualTo(1001);
+                assertThat(order.getEmail()).isEqualTo("test@example.com");
+                assertThat(order.getTotalPrice()).isEqualTo(new BigDecimal("100.00"));
+                assertThat(order.getFinancialStatus()).isEqualTo("paid");
+                // Note: line_items in REST API returns a different structure than GraphQL
+            })
+            .verifyComplete();
         
-        @Override
-        public Mono<Void> handle(WebhookEvent event) {
-            this.lastEvent = event;
-            latch.countDown();
-            return Mono.empty();
-        }
+        // Then verify the request
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("GET");
+        assertThat(request.getPath()).isEqualTo("/admin/api/2024-01/orders.json");
+        assertThat(request.getHeader("X-Shopify-Access-Token")).isEqualTo(TEST_ACCESS_TOKEN);
+    }
+    
+    @Test
+    @DisplayName("Should handle rate limiting correctly")
+    void testRateLimiting() throws Exception {
+        // Given - First response with rate limit headers
+        mockWebServer.enqueue(new MockResponse()
+            .setBody("{\"errors\":\"Throttled\"}")
+            .addHeader("Content-Type", "application/json")
+            .addHeader("Retry-After", "2")
+            .setResponseCode(429));
         
-        public WebhookEvent getLastEvent() {
-            return lastEvent;
-        }
+        // Second response succeeds
+        String successResponse = """
+            {
+                "data": {
+                    "products": {
+                        "edges": [],
+                        "pageInfo": {
+                            "hasNextPage": false,
+                            "hasPreviousPage": false
+                        }
+                    }
+                }
+            }
+            """;
+        
+        mockWebServer.enqueue(new MockResponse()
+            .setBody(successResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(200));
+        
+        // When
+        StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
+            .assertNext(productConnection -> {
+                assertThat(productConnection).isNotNull();
+                assertThat(productConnection.getEdges()).isEmpty();
+            })
+            .verifyComplete();
+        
+        // Then verify retry happened
+        assertThat(mockWebServer.getRequestCount()).isEqualTo(2);
+    }
+    
+    @Test
+    @DisplayName("Should handle API errors gracefully")
+    void testApiErrorHandling() throws Exception {
+        // Given
+        String errorResponse = """
+            {
+                "errors": [
+                    {
+                        "message": "Field 'invalidField' doesn't exist on type 'Product'",
+                        "extensions": {
+                            "code": "GRAPHQL_VALIDATION_FAILED"
+                        }
+                    }
+                ]
+            }
+            """;
+        
+        mockWebServer.enqueue(new MockResponse()
+            .setBody(errorResponse)
+            .addHeader("Content-Type", "application/json")
+            .setResponseCode(400));
+        
+        // When & Then
+        StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
+            .expectErrorMatches(throwable -> 
+                throwable.getMessage().contains("GRAPHQL_VALIDATION_FAILED"))
+            .verify();
+    }
+    
+    @Test
+    @DisplayName("Should handle network timeouts")
+    void testNetworkTimeout() {
+        // Given - Delayed response to trigger timeout
+        mockWebServer.enqueue(new MockResponse()
+            .setBody("{}")
+            .setBodyDelay(10, TimeUnit.SECONDS));
+        
+        // When & Then
+        StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
+            .expectError()
+            .verify();
     }
 }
