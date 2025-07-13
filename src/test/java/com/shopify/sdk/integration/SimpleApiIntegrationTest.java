@@ -33,11 +33,9 @@ public class SimpleApiIntegrationTest extends BaseIntegrationTest {
             .addHeader("Content-Type", "application/json")
             .setResponseCode(200));
         
-        // When
-        var request = mockWebServer.takeRequest();
-        
         // Then
         assertThat(mockWebServer.getPort()).isPositive();
         assertThat(mockWebServer.getHostName()).isNotBlank();
+        assertThat(mockWebServer.getRequestCount()).isEqualTo(0);
     }
 }
