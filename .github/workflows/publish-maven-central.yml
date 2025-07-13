@@ -1,0 +1,97 @@
+name: Publish to Maven Central
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.1.1)'
+        required: true
+        type: string
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - release
+          - snapshot
+        default: release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      
+    - name: Import GPG key
+      env:
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
+        echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+        gpgconf --kill gpg-agent
+        
+    - name: Update version
+      if: github.event.inputs.release_type == 'release'
+      run: |
+        sed -i "s/version = '.*'/version = '${{ github.event.inputs.version }}'/" build.gradle
+        
+    - name: Update SNAPSHOT version
+      if: github.event.inputs.release_type == 'snapshot'
+      run: |
+        sed -i "s/version = '.*'/version = '${{ github.event.inputs.version }}-SNAPSHOT'/" build.gradle
+        
+    - name: Run tests
+      run: ./gradlew clean test
+      
+    - name: Build and publish to Maven Central
+      env:
+        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        ./gradlew publish \
+          -Psigning.gnupg.keyName=${{ secrets.GPG_KEY_ID }} \
+          -Psigning.gnupg.passphrase=${{ secrets.GPG_PASSPHRASE }} \
+          -Psigning.gnupg.executable=gpg
+          
+    - name: Create Release Notes
+      if: github.event.inputs.release_type == 'release'
+      run: |
+        echo "## Shopify Spring SDK v${{ github.event.inputs.version }}" > release_notes.md
+        echo "" >> release_notes.md
+        echo "### Maven Central" >> release_notes.md
+        echo '```xml' >> release_notes.md
+        echo '<dependency>' >> release_notes.md
+        echo '    <groupId>io.github.astroryan</groupId>' >> release_notes.md
+        echo '    <artifactId>shopify-spring-sdk</artifactId>' >> release_notes.md
+        echo '    <version>${{ github.event.inputs.version }}</version>' >> release_notes.md
+        echo '</dependency>' >> release_notes.md
+        echo '```' >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Gradle" >> release_notes.md
+        echo '```gradle' >> release_notes.md
+        echo 'implementation "io.github.astroryan:shopify-spring-sdk:${{ github.event.inputs.version }}"' >> release_notes.md
+        echo '```' >> release_notes.md
+        
+    - name: Summary
+      run: |
+        echo "## 🚀 Maven Central Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.event.inputs.release_type }}" = "release" ]; then
+          echo "✅ Published Release: v${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "📦 [Maven Central](https://central.sonatype.com/artifact/io.github.astroryan/shopify-spring-sdk/${{ github.event.inputs.version }})" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ Published Snapshot: v${{ github.event.inputs.version }}-SNAPSHOT" >> $GITHUB_STEP_SUMMARY
+          echo "📦 [OSSRH Snapshots](https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/astroryan/shopify-spring-sdk/)" >> $GITHUB_STEP_SUMMARY
+        fi
