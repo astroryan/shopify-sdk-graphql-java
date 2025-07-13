@@ -35,15 +35,21 @@ jobs:
     - name: Setup GPG
       env:
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       run: |
         # Import GPG key
         echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
         
+        # Configure GPG
+        echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+        echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+        gpgconf --kill gpg-agent
+        
         # List keys to verify import
         gpg --list-secret-keys
         
-        # Export the signing key in ASCII armor format
-        GPG_SIGNING_KEY=$(gpg --armor --export-secret-keys ${{ secrets.GPG_KEY_ID }})
+        # Export the signing key in ASCII armor format with loopback pinentry
+        GPG_SIGNING_KEY=$(echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --export-secret-keys ${{ secrets.GPG_KEY_ID }})
         echo "GPG_SIGNING_KEY<<EOF" >> $GITHUB_ENV
         echo "$GPG_SIGNING_KEY" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
