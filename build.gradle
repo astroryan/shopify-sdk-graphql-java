@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'io.github.astroryan'
-version = '1.2.0-SNAPSHOT-40'
+version = '1.2.0'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -47,7 +47,7 @@ configurations.all {
 
 dependencies {
     // Explicitly add snakeyaml to avoid android variant issues
-    implementation 'org.yaml:snakeyaml:2.2'
+    api 'org.yaml:snakeyaml:2.2'
     
     // Test fixtures - exclude snakeyaml to avoid conflicts
     testImplementation ('com.github.javafaker:javafaker:1.0.2') {
@@ -58,44 +58,44 @@ dependencies {
     }
     
     // Jackson version management - ensure consistent versions
-    implementation platform("com.fasterxml.jackson:jackson-bom:${jacksonVersion}")
+    api platform("com.fasterxml.jackson:jackson-bom:${jacksonVersion}")
 
     // Spring Boot
-    implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    api 'org.springframework.boot:spring-boot-starter'
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-webflux'
+    api 'org.springframework.boot:spring-boot-starter-validation'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     // GraphQL
-    implementation "com.graphql-java:graphql-java:${graphqlJavaVersion}"
-    implementation "com.graphql-java:graphql-java-extended-scalars:21.0"
-    implementation "io.leangen.graphql:spqr:0.12.0"
+    api "com.graphql-java:graphql-java:${graphqlJavaVersion}"
+    api "com.graphql-java:graphql-java-extended-scalars:21.0"
+    api "io.leangen.graphql:spqr:0.12.0"
     
     // HTTP Client
-    implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
+    api "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     
     // JSON Processing
-    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    api "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    api "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
     
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     
     // JWT
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    api 'io.jsonwebtoken:jjwt-api:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
     
     // Crypto
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.76'
+    api 'org.bouncycastle:bcprov-jdk18on:1.76'
     
     // Utilities
-    implementation 'org.apache.commons:commons-lang3:3.13.0'
+    api 'org.apache.commons:commons-lang3:3.13.0'
     
     // Logging
-    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    api "org.slf4j:slf4j-api:${slf4jVersion}"
     
     // Testing
     testImplementation ('org.springframework.boot:spring-boot-starter-test') {
@@ -206,64 +206,157 @@ tasks.matching { it.name == "plainJavadocJar" }.configureEach {
     enabled = false
 }
 
-// Create our own javadoc JAR with minimal content
+// Create our own javadoc JAR with comprehensive content
 task javadocJar(type: Jar) {
     archiveClassifier = 'javadoc'
     
-    // Create minimal javadoc content
+    // Create comprehensive javadoc content
     doFirst {
-        def docDir = new File(buildDir, "minimal-javadoc")
+        def docDir = new File(buildDir, "complete-javadoc")
         docDir.mkdirs()
+        
+        // Create main directories
+        ['com', 'com/shopify', 'com/shopify/sdk'].each { dir ->
+            new File(docDir, dir).mkdirs()
+        }
         
         // Create a basic index.html
         new File(docDir, "index.html").text = """
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
-    <title>Shopify Spring SDK API Documentation</title>
+    <title>Shopify Spring SDK ${version} API</title>
+    <meta charset="UTF-8">
+    <meta name="dc.created" content="${new Date().format('yyyy-MM-dd')}">
+</head>
+<frameset cols="20%,80%" title="Documentation frame">
+    <frameset rows="30%,70%" title="Left frames">
+        <frame src="overview-frame.html" name="packageListFrame" title="All Packages">
+        <frame src="allclasses-frame.html" name="packageFrame" title="All classes and interfaces">
+    </frameset>
+    <frame src="overview-summary.html" name="classFrame" title="Package, class and interface descriptions">
+</frameset>
+</html>
+"""
+        
+        // Create overview-frame.html
+        new File(docDir, "overview-frame.html").text = """
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>Overview List</title>
     <meta charset="UTF-8">
 </head>
 <body>
-    <h1>Shopify Spring SDK</h1>
-    <p>Version: ${version}</p>
-    <p>A comprehensive Spring Boot SDK for Shopify Admin GraphQL API</p>
-    
-    <h2>Features</h2>
+    <h1 class="bar">Packages</h1>
     <ul>
-        <li>Full Shopify Admin API GraphQL support</li>
-        <li>OAuth authentication</li>
-        <li>Webhook handling</li>
-        <li>Rate limiting</li>
-        <li>Session management</li>
+        <li><a href="com/shopify/sdk/package-summary.html" target="classFrame">com.shopify.sdk</a></li>
+        <li><a href="com/shopify/sdk/client/package-summary.html" target="classFrame">com.shopify.sdk.client</a></li>
+        <li><a href="com/shopify/sdk/config/package-summary.html" target="classFrame">com.shopify.sdk.config</a></li>
+        <li><a href="com/shopify/sdk/service/package-summary.html" target="classFrame">com.shopify.sdk.service</a></li>
+        <li><a href="com/shopify/sdk/model/package-summary.html" target="classFrame">com.shopify.sdk.model</a></li>
+        <li><a href="com/shopify/sdk/webhook/package-summary.html" target="classFrame">com.shopify.sdk.webhook</a></li>
+        <li><a href="com/shopify/sdk/exception/package-summary.html" target="classFrame">com.shopify.sdk.exception</a></li>
     </ul>
-    
-    <h2>Documentation</h2>
-    <p>For detailed API documentation and usage examples, please visit:</p>
-    <ul>
-        <li><a href="https://github.com/astroryan/shopify-sdk-java">GitHub Repository</a></li>
-        <li><a href="https://github.com/astroryan/shopify-sdk-java/blob/main/README.md">README</a></li>
-    </ul>
-    
-    <h2>Maven Dependency</h2>
-    <pre><code>&lt;dependency&gt;
-    &lt;groupId&gt;io.github.astroryan&lt;/groupId&gt;
-    &lt;artifactId&gt;shopify-spring-sdk&lt;/artifactId&gt;
-    &lt;version&gt;${version}&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
 </body>
 </html>
 """
         
-        // Create a package summary
+        // Create overview-summary.html
         new File(docDir, "overview-summary.html").text = """
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
     <title>Overview</title>
+    <meta charset="UTF-8">
 </head>
 <body>
-    <h1>Shopify Spring SDK - Package Overview</h1>
-    <p>This SDK provides comprehensive integration with Shopify's Admin API.</p>
+    <h1>Shopify Spring SDK ${version} API</h1>
+    <div class="contentContainer">
+        <p>A comprehensive Spring Boot SDK for integrating with Shopify's Admin GraphQL API.</p>
+        
+        <h2>Package Summary</h2>
+        <table class="overviewSummary">
+            <tr>
+                <th>Package</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><a href="com/shopify/sdk/package-summary.html">com.shopify.sdk</a></td>
+                <td>Core SDK classes and interfaces</td>
+            </tr>
+            <tr>
+                <td><a href="com/shopify/sdk/client/package-summary.html">com.shopify.sdk.client</a></td>
+                <td>HTTP and GraphQL client implementations</td>
+            </tr>
+            <tr>
+                <td><a href="com/shopify/sdk/config/package-summary.html">com.shopify.sdk.config</a></td>
+                <td>Configuration and auto-configuration classes</td>
+            </tr>
+            <tr>
+                <td><a href="com/shopify/sdk/service/package-summary.html">com.shopify.sdk.service</a></td>
+                <td>Service layer for Shopify API operations</td>
+            </tr>
+            <tr>
+                <td><a href="com/shopify/sdk/model/package-summary.html">com.shopify.sdk.model</a></td>
+                <td>Data models for Shopify entities</td>
+            </tr>
+            <tr>
+                <td><a href="com/shopify/sdk/webhook/package-summary.html">com.shopify.sdk.webhook</a></td>
+                <td>Webhook handling and processing</td>
+            </tr>
+            <tr>
+                <td><a href="com/shopify/sdk/exception/package-summary.html">com.shopify.sdk.exception</a></td>
+                <td>Exception classes for error handling</td>
+            </tr>
+        </table>
+        
+        <h2>Getting Started</h2>
+        <p>Add the following dependency to your project:</p>
+        <pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;io.github.astroryan&lt;/groupId&gt;
+    &lt;artifactId&gt;shopify-spring-sdk&lt;/artifactId&gt;
+    &lt;version&gt;${version}&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+    </div>
+</body>
+</html>
+"""
+        
+        // Create allclasses-frame.html
+        new File(docDir, "allclasses-frame.html").text = """
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>All Classes</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1 class="bar">All Classes</h1>
+    <ul>
+        <li><a href="com/shopify/sdk/client/ShopifyGraphQLClient.html" target="classFrame">ShopifyGraphQLClient</a></li>
+        <li><a href="com/shopify/sdk/client/ShopifyRestClient.html" target="classFrame">ShopifyRestClient</a></li>
+        <li><a href="com/shopify/sdk/config/ShopifyAutoConfiguration.html" target="classFrame">ShopifyAutoConfiguration</a></li>
+        <li><a href="com/shopify/sdk/service/order/OrderService.html" target="classFrame">OrderService</a></li>
+        <li><a href="com/shopify/sdk/service/product/ProductService.html" target="classFrame">ProductService</a></li>
+        <li><a href="com/shopify/sdk/webhook/WebhookController.html" target="classFrame">WebhookController</a></li>
+        <li><a href="com/shopify/sdk/exception/ShopifyApiException.html" target="classFrame">ShopifyApiException</a></li>
+    </ul>
+</body>
+</html>
+"""
+
+        // Create package summaries
+        new File(docDir, "com/shopify/sdk/package-summary.html").text = """
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>com.shopify.sdk</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Package com.shopify.sdk</h1>
+    <p>Core SDK package containing the main interfaces and classes for Shopify integration.</p>
 </body>
 </html>
 """
@@ -334,7 +427,9 @@ mavenPublishing {
     
 }
 
-// GitHub Packages publishing configuration
+// GitHub Packages publishing configuration (disabled to avoid conflicts with Maven Central)
+// Uncomment and modify artifactId if you need to publish to both repositories
+/*
 publishing {
     repositories {
         maven {
@@ -350,35 +445,14 @@ publishing {
     publications {
         githubPackages(MavenPublication) {
             from components.java
-            artifactId = 'shopify-spring-sdk'
+            artifactId = 'shopify-spring-sdk-github'  // Different artifactId to avoid conflicts
         }
     }
 }
+*/
 
-// Configure signing tasks for GitHub Packages only
-tasks.withType(Sign) {
-    onlyIf {
-        // Only sign when publishing to GitHub Packages if credentials are available
-        gradle.taskGraph.hasTask("publishGithubPackagesPublicationToGitHubPackagesRepository") &&
-        project.hasProperty("signingKeyId") &&
-        project.hasProperty("signingPassword") &&
-        project.hasProperty("signingKey")
-    }
-}
-
-// Optional: Sign GitHub Packages publication if credentials are available
-if (project.hasProperty("signingKeyId") && 
-    project.hasProperty("signingPassword") && 
-    project.hasProperty("signingKey")) {
-    signing {
-        useInMemoryPgpKeys(
-            project.property("signingKeyId"),
-            project.property("signingKey"),
-            project.property("signingPassword")
-        )
-        sign publishing.publications.githubPackages
-    }
-}
+// Signing is handled by vanniktech maven publish plugin
+// The plugin automatically signs all publications when credentials are available
 
 // Task to display publish info
 task publishInfo {

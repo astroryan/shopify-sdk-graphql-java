@@ -48,8 +48,8 @@ jobs:
         # List keys to verify import
         gpg --list-secret-keys
         
-        # Export the signing key in ASCII armor format with loopback pinentry
-        GPG_SIGNING_KEY=$(echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --export-secret-keys ${{ secrets.GPG_KEY_ID }})
+        # Export the signing key in ASCII armor format
+        export GPG_SIGNING_KEY=$(gpg --armor --export-secret-keys ${{ secrets.GPG_KEY_ID }})
         echo "GPG_SIGNING_KEY<<EOF" >> $GITHUB_ENV
         echo "$GPG_SIGNING_KEY" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
@@ -98,9 +98,22 @@ jobs:
         ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
         ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
       run: |
-        ./gradlew publishAllPublicationsToMavenCentralRepository \
+        # First publish and sign locally to verify
+        ./gradlew publishToMavenLocal \
+          --no-configuration-cache \
+          --info
+        
+        # Check if signing worked
+        echo "Checking for signed artifacts in local repository..."
+        ls -la ~/.m2/repository/io/github/astroryan/shopify-spring-sdk/*/
+        
+        # If signing worked locally, publish to Maven Central (staging)
+        ./gradlew publishToMavenCentral \
           --no-configuration-cache \
           --info --stacktrace
+          
+        echo "✅ Published to Maven Central staging repository"
+        echo "Please visit https://central.sonatype.com/ to verify and release the deployment"
           
     - name: Create Release Notes
       if: github.event.inputs.release_type == 'release'
