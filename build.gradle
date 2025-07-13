@@ -4,9 +4,8 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.4'
     id 'java-library'
     id 'jacoco'
-    id 'maven-publish'
+    id 'com.vanniktech.maven.publish' version '0.28.0'
     id 'signing'
-    id 'com.gradleup.nmcp' version '0.0.8'
 }
 
 group = 'io.github.astroryan'
@@ -191,20 +190,47 @@ sourceSets {
     }
 }
 
-// Publishing configuration
+// Publishing configuration for vanniktech plugin
+import com.vanniktech.maven.publish.SonatypeHost
+
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
+    
+    coordinates("io.github.astroryan", "shopify-spring-sdk", version)
+    
+    pom {
+        name = 'Shopify Spring SDK'
+        description = 'A comprehensive Spring Boot SDK for Shopify Admin GraphQL API'
+        url = 'https://github.com/astroryan/shopify-sdk-java'
+        
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+        
+        developers {
+            developer {
+                id = 'astroryan'
+                name = 'Ryan Kim'
+                email = 'ryan@example.com'
+            }
+        }
+        
+        scm {
+            connection = 'scm:git:git://github.com/astroryan/shopify-sdk-java.git'
+            developerConnection = 'scm:git:ssh://github.com:astroryan/shopify-sdk-java.git'
+            url = 'https://github.com/astroryan/shopify-sdk-java'
+        }
+    }
+}
+
+// GitHub Packages publishing configuration
 publishing {
     repositories {
         maven {
-            name = "OSSRH"
-            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            credentials {
-                username = project.findProperty("mavenCentralUsername") ?: System.getenv("MAVEN_CENTRAL_USERNAME")
-                password = project.findProperty("mavenCentralPassword") ?: System.getenv("MAVEN_CENTRAL_PASSWORD")
-            }
-        }
-         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/astroryan/shopify-sdk-java")
             credentials {
@@ -215,73 +241,35 @@ publishing {
     }
     
     publications {
-        shopifySdk(MavenPublication) {
+        githubPackages(MavenPublication) {
             from components.java
-            
             artifactId = 'shopify-spring-sdk'
-            
-            pom {
-                name = 'Shopify Spring SDK'
-                description = 'A comprehensive Spring Boot SDK for Shopify Admin GraphQL API'
-                url = 'https://github.com/astroryan/shopify-sdk-java'
-                
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                
-                developers {
-                    developer {
-                        id = 'astroryan'
-                        name = 'Ryan Kim'
-                        email = 'ryan@example.com'
-                    }
-                }
-                
-                scm {
-                    connection = 'scm:git:git://github.com/astroryan/shopify-sdk-java.git'
-                    developerConnection = 'scm:git:ssh://github.com:astroryan/shopify-sdk-java.git'
-                    url = 'https://github.com/astroryan/shopify-sdk-java'
-                }
-            }
         }
     }
 }
 
-// Signing configuration
-signing {
-    def signingKeyId = findProperty("signingKeyId")
-    def signingPassword = findProperty("signingPassword")  
-    def signingKey = findProperty("signingKey")
-    
-    if (signingKeyId && signingPassword && signingKey) {
-        useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-    }
-    
-    sign publishing.publications.shopifySdk
-}
-
-// Configure signing tasks
+// Configure signing tasks for GitHub Packages only
 tasks.withType(Sign) {
     onlyIf {
-        // Only sign when publishing to Maven Central
-        gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository")
+        // Only sign when publishing to GitHub Packages if credentials are available
+        gradle.taskGraph.hasTask("publishGithubPackagesPublicationToGitHubPackagesRepository") &&
+        project.hasProperty("signingKeyId") &&
+        project.hasProperty("signingPassword") &&
+        project.hasProperty("signingKey")
     }
 }
 
-// Make publish task depend on signing
-tasks.named("publishShopifySdkPublicationToOSSRHRepository") {
-    dependsOn "signShopifySdkPublication"
-}
-
-// Configure nmcp plugin for Maven Central Portal
-nmcp {
-    publishAllPublications {
-        username = project.findProperty("mavenCentralUsername") ?: System.getenv("MAVEN_CENTRAL_USERNAME")
-        password = project.findProperty("mavenCentralPassword") ?: System.getenv("MAVEN_CENTRAL_PASSWORD")
-        publicationType = "USER_MANAGED" // or "AUTOMATIC"
+// Optional: Sign GitHub Packages publication if credentials are available
+if (project.hasProperty("signingKeyId") && 
+    project.hasProperty("signingPassword") && 
+    project.hasProperty("signingKey")) {
+    signing {
+        useInMemoryPgpKeys(
+            project.property("signingKeyId"),
+            project.property("signingKey"),
+            project.property("signingPassword")
+        )
+        sign publishing.publications.githubPackages
     }
 }
 
