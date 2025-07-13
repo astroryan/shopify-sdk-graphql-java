@@ -69,13 +69,16 @@ jobs:
       
     - name: Build and publish to Maven Central
       env:
-        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+        MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
       run: |
         ./gradlew publishShopifySdkPublicationToOSSRHRepository \
+          -PmavenCentralUsername="${MAVEN_CENTRAL_USERNAME}" \
+          -PmavenCentralPassword="${MAVEN_CENTRAL_PASSWORD}" \
           -PsigningKeyId=${{ secrets.GPG_KEY_ID }} \
           -PsigningPassword=${{ secrets.GPG_PASSPHRASE }} \
-          -PsigningKey="$GPG_SIGNING_KEY"
+          -PsigningKey="$GPG_SIGNING_KEY" \
+          --info
           
     - name: Create Release Notes
       if: github.event.inputs.release_type == 'release'
