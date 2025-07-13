@@ -2,7 +2,6 @@ package com.shopify.sdk.integration;
 
 import com.shopify.sdk.client.ShopifyGraphQLClient;
 import com.shopify.sdk.client.ShopifyRestClient;
-import com.shopify.sdk.config.ShopifyTestConfiguration;
 import com.shopify.sdk.client.graphql.GraphQLResponse;
 import com.shopify.sdk.model.order.Order;
 import com.shopify.sdk.model.order.OrderFinancialStatus;
@@ -13,16 +12,17 @@ import com.shopify.sdk.model.product.ProductConnection;
 import com.shopify.sdk.model.product.ProductEdge;
 import com.shopify.sdk.service.product.ProductService;
 import com.shopify.sdk.service.rest.RestOrderService;
+import com.shopify.sdk.session.SessionStore;
+import com.shopify.sdk.session.InMemorySessionStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -41,7 +41,6 @@ import static org.mockito.Mockito.when;
  * This approach avoids the complexity of MockWebServer while still testing the service layer.
  */
 @SpringBootTest
-@Import(ShopifyTestConfiguration.class)
 @TestPropertySource(properties = {
     "shopify.api-key=test-api-key",
     "shopify.api-secret-key=test-api-secret",
@@ -54,6 +53,15 @@ import static org.mockito.Mockito.when;
 @Tag("integration")
 @DisplayName("Shopify API Mock Integration Tests")
 public class ShopifyApiMockIntegrationTest {
+    
+    // Provide the missing SessionStore bean
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        public SessionStore sessionStore() {
+            return new InMemorySessionStore();
+        }
+    }
 
     @MockBean
     private ShopifyGraphQLClient graphQLClient;
