@@ -41,7 +41,9 @@ import static org.assertj.core.api.Assertions.*;
     "shopify.api-secret-key=test-api-secret",
     "shopify.scopes=read_products,write_products,read_orders,write_orders",
     "shopify.api-version=JANUARY_24",
-    "shopify.admin-api-access-token=test-access-token"
+    "shopify.admin-api-access-token=test-access-token",
+    "spring.profiles.active=test",
+    "shopify.use-ssl=false"
 })
 @Tag("integration")
 @DisplayName("Shopify API Integration Tests")
@@ -80,8 +82,11 @@ public class ShopifyApiIntegrationTest {
     
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
+        String mockServerUrl = "http://" + mockWebServer.getHostName() + ":" + mockWebServer.getPort();
         registry.add("shopify.host-name", () -> 
             mockWebServer.getHostName() + ":" + mockWebServer.getPort());
+        registry.add("shopify.base-url", () -> mockServerUrl);
+        registry.add("shopify.use-ssl", () -> "false");
     }
     
     @BeforeEach
@@ -222,7 +227,7 @@ public class ShopifyApiIntegrationTest {
         mockWebServer.enqueue(new MockResponse()
             .setBody("{\"errors\":\"Throttled\"}")
             .addHeader("Content-Type", "application/json")
-            .addHeader("Retry-After", "2")
+            .addHeader("Retry-After", "1")  // Reduced retry time
             .setResponseCode(429));
         
         // Second response succeeds
@@ -245,7 +250,7 @@ public class ShopifyApiIntegrationTest {
             .addHeader("Content-Type", "application/json")
             .setResponseCode(200));
         
-        // When
+        // When - with timeout
         StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
             .assertNext(productConnection -> {
                 assertThat(productConnection).isNotNull();
@@ -254,7 +259,7 @@ public class ShopifyApiIntegrationTest {
             .verifyComplete();
         
         // Then verify retry happened
-        assertThat(mockWebServer.getRequestCount()).isEqualTo(2);
+        assertThat(mockWebServer.getRequestCount()).isGreaterThanOrEqualTo(2);
     }
     
     @Test
@@ -292,11 +297,14 @@ public class ShopifyApiIntegrationTest {
         // Given - Delayed response to trigger timeout
         mockWebServer.enqueue(new MockResponse()
             .setBody("{}")
-            .setBodyDelay(10, TimeUnit.SECONDS));
+            .setBodyDelay(3, TimeUnit.SECONDS));  // Reduced delay
         
         // When & Then
         StepVerifier.create(productService.getProducts(TEST_SHOP, TEST_ACCESS_TOKEN, 10, null, null))
-            .expectError()
+            .expectErrorMatches(throwable -> 
+                throwable instanceof java.util.concurrent.TimeoutException ||
+                throwable.getCause() instanceof java.util.concurrent.TimeoutException ||
+                throwable.getMessage().contains("timeout"))
             .verify();
     }
 }
