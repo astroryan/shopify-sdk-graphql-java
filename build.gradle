@@ -125,6 +125,11 @@ task integrationTest(type: Test) {
     // Enable experimental Byte Buddy for Java compatibility
     jvmArgs '-Dnet.bytebuddy.experimental=true'
     
+    // Set system properties for test environment
+    systemProperty 'spring.profiles.active', 'test'
+    systemProperty 'shopify.use-ssl', 'false'
+    systemProperty 'test.mode', 'true'
+    
     testLogging {
         events 'passed', 'skipped', 'failed'
         exceptionFormat 'full'

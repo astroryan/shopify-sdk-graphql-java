@@ -97,11 +97,21 @@ public class HttpClientConfig {
     }
     
     private String buildAdminApiUrl(String shop, String apiVersion) {
-        return String.format("https://%s/admin/api/%s", shop, apiVersion);
+        String protocol = isTestEnvironment() ? "http" : "https";
+        return String.format("%s://%s/admin/api/%s", protocol, shop, apiVersion);
     }
     
     private String buildStorefrontApiUrl(String shop, String apiVersion) {
-        return String.format("https://%s/api/%s/graphql", shop, apiVersion);
+        String protocol = isTestEnvironment() ? "http" : "https";
+        return String.format("%s://%s/api/%s/graphql", protocol, shop, apiVersion);
+    }
+    
+    private boolean isTestEnvironment() {
+        // Check if we're in a test environment
+        String activeProfiles = System.getProperty("spring.profiles.active", "");
+        return activeProfiles.contains("test") || 
+               "false".equals(System.getProperty("shopify.use-ssl")) ||
+               System.getProperty("test.mode") != null;
     }
     
     /**

@@ -104,6 +104,10 @@ public class GraphQLClient {
             
             return requestSpec
                 .retrieve()
+                .onStatus(status -> status.value() == 429, response -> 
+                    Mono.error(new ShopifyHttpException(429, "Rate limited")))
+                .onStatus(status -> status.is5xxServerError(), response -> 
+                    Mono.error(new ShopifyHttpException(response.statusCode().value(), "Server error")))
                 .bodyToMono(String.class)
                 .map(this::parseResponse)
                 .flatMap(this::validateResponse)
@@ -139,6 +143,11 @@ public class GraphQLClient {
         if (throwable instanceof ShopifyHttpException) {
             ShopifyHttpException httpEx = (ShopifyHttpException) throwable;
             return httpEx.isRateLimited() || httpEx.isServerError();
+        }
+        if (throwable instanceof WebClientResponseException) {
+            WebClientResponseException webEx = (WebClientResponseException) throwable;
+            int status = webEx.getStatusCode().value();
+            return status == 429 || (status >= 500 && status < 600);
         }
         return false;
     }
