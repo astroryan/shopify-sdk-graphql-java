@@ -264,6 +264,13 @@ if (project.hasProperty("signingKeyId") || project.hasProperty("signing.keyId"))
     }
 }
 
+// Disable signing for GitHub Packages
+tasks.withType(Sign) {
+    onlyIf {
+        gradle.taskGraph.hasTask("publishShopifySdkPublicationToOSSRHRepository")
+    }
+}
+
 // Task to display publish info
 task publishInfo {
     doLast {
