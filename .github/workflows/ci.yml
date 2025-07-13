@@ -121,7 +121,7 @@ jobs:
       github.event_name == 'release' ||
       github.event_name == 'workflow_dispatch'
     permissions:
-      contents: read
+      contents: write
       packages: write
       
     steps:
@@ -187,6 +187,10 @@ jobs:
     - name: Create GitHub Release for production
       if: github.event.pull_request.base.ref == 'release'
       run: |
+        # Configure git
+        git config user.name github-actions[bot]
+        git config user.email github-actions[bot]@users.noreply.github.com
+        
         # Make release script executable
         chmod +x .github/scripts/generate-release-notes.sh
         
