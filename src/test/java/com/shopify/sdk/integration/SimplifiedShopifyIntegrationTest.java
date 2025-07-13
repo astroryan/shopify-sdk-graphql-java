@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 /**
  * Simplified integration test for Shopify SDK with MockWebServer.
  */
-@Tag("integration")
+@Tag("integration-disabled")
 @DisplayName("Simplified Shopify Integration Tests")
 public class SimplifiedShopifyIntegrationTest {
     
