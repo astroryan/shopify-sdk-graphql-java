@@ -2,13 +2,20 @@ package com.shopify.sdk.session;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -21,11 +28,56 @@ import java.util.stream.Collectors;
 @ConditionalOnMissingBean(SessionStore.class)
 public class InMemorySessionStore implements SessionStore {
     
+    private static final int MAX_SESSIONS = 10000; // Maximum number of sessions to prevent unbounded growth
+    private static final long CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    
     private final ConcurrentHashMap<String, ShopifySession> sessions = new ConcurrentHashMap<>();
+    private final AtomicInteger sessionCount = new AtomicInteger(0);
+    private final ScheduledExecutorService cleanupExecutor = new ScheduledThreadPoolExecutor(1);
+    
+    @PostConstruct
+    public void init() {
+        // Schedule automatic cleanup of expired sessions
+        cleanupExecutor.scheduleWithFixedDelay(
+            this::cleanupExpiredSessions,
+            CLEANUP_INTERVAL_MS,
+            CLEANUP_INTERVAL_MS,
+            TimeUnit.MILLISECONDS
+        );
+        log.info("InMemorySessionStore initialized with automatic cleanup every {} minutes", 
+                 CLEANUP_INTERVAL_MS / 60000);
+    }
+    
+    @PreDestroy
+    public void destroy() {
+        cleanupExecutor.shutdown();
+        try {
+            if (!cleanupExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                cleanupExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            cleanupExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        log.info("InMemorySessionStore cleanup executor shut down");
+    }
     
     @Override
     public Mono<Void> storeSession(ShopifySession session) {
         return Mono.fromRunnable(() -> {
+            // Check if we've hit the maximum session limit
+            if (sessionCount.get() >= MAX_SESSIONS) {
+                // Force cleanup of expired sessions
+                cleanupExpiredSessions();
+                
+                // If still at limit, reject new session
+                if (sessionCount.get() >= MAX_SESSIONS) {
+                    throw new IllegalStateException(
+                        "Session store has reached maximum capacity of " + MAX_SESSIONS + " sessions"
+                    );
+                }
+            }
+            
             if (session.getId() == null) {
                 session.setId(ShopifySession.createSessionId(session.getShop(), session.isOnline(), session.getUserId()));
             }
@@ -35,8 +87,12 @@ public class InMemorySessionStore implements SessionStore {
             }
             session.setUpdatedAt(Instant.now());
             
-            sessions.put(session.getId(), session);
-            log.debug("Stored session: {}", session.getId());
+            ShopifySession existing = sessions.put(session.getId(), session);
+            if (existing == null) {
+                sessionCount.incrementAndGet();
+            }
+            
+            log.debug("Stored session: {} (total sessions: {})", session.getId(), sessionCount.get());
         });
     }
     
@@ -61,7 +117,8 @@ public class InMemorySessionStore implements SessionStore {
         return Mono.fromRunnable(() -> {
             ShopifySession removed = sessions.remove(sessionId);
             if (removed != null) {
-                log.debug("Deleted session: {}", sessionId);
+                sessionCount.decrementAndGet();
+                log.debug("Deleted session: {} (total sessions: {})", sessionId, sessionCount.get());
             }
         });
     }
@@ -78,6 +135,7 @@ public class InMemorySessionStore implements SessionStore {
                 
             for (String sessionId : sessionsToDelete) {
                 sessions.remove(sessionId);
+                sessionCount.decrementAndGet();
             }
             
             log.debug("Deleted {} sessions for shop: {}", sessionsToDelete.size(), shop);
@@ -113,6 +171,7 @@ public class InMemorySessionStore implements SessionStore {
                 
             for (String sessionId : expiredSessions) {
                 sessions.remove(sessionId);
+                sessionCount.decrementAndGet();
             }
             
             log.debug("Deleted {} expired sessions", expiredSessions.size());
@@ -165,7 +224,28 @@ public class InMemorySessionStore implements SessionStore {
      */
     public void clearAllSessions() {
         sessions.clear();
+        sessionCount.set(0);
         log.debug("Cleared all sessions");
+    }
+    
+    /**
+     * Scheduled cleanup of expired sessions.
+     */
+    @Scheduled(fixedDelay = CLEANUP_INTERVAL_MS)
+    public void cleanupExpiredSessions() {
+        deleteExpiredSessions()
+            .subscribe(count -> {
+                if (count > 0) {
+                    log.info("Cleaned up {} expired sessions (remaining: {})", count, sessionCount.get());
+                }
+            });
+    }
+    
+    /**
+     * Gets current session count.
+     */
+    public int getCurrentSessionCount() {
+        return sessionCount.get();
     }
     
     private String normalizeShop(String shop) {

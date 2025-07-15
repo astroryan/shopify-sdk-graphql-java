@@ -2,10 +2,15 @@ package com.shopify.sdk.auth;
 
 import com.shopify.sdk.config.ShopifyAuthContext;
 import com.shopify.sdk.exception.ShopifyApiException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.HttpClientService;
+import com.shopify.sdk.client.ShopifyHttpRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,6 +29,8 @@ import java.util.*;
 public class ShopifyOAuth {
     
     private final ShopifyAuthContext context;
+    private final HttpClientService httpClientService;
+    private final ObjectMapper objectMapper;
     
     /**
      * Generates the OAuth authorization URL for Shopify app installation.
@@ -64,15 +71,57 @@ public class ShopifyOAuth {
             throw new ShopifyApiException("Authorization code cannot be null or empty");
         }
         
-        // This would typically make an HTTP request to Shopify's token endpoint
-        // For now, we'll return a placeholder structure
         log.info("Exchanging authorization code for access token for shop: {}", shop);
         
-        // TODO: Implement actual HTTP request to /admin/oauth/access_token
-        return AccessTokenResponse.builder()
-            .accessToken("placeholder_token")
-            .scope("read_products,write_products")
-            .build();
+        String normalizedShop = normalizeShopDomain(shop);
+        String tokenUrl = String.format("https://%s/admin/oauth/access_token", normalizedShop);
+        
+        // Build request body
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("client_id", context.getApiKey());
+        requestBody.put("client_secret", context.getApiSecret());
+        requestBody.put("code", code);
+        
+        try {
+            ShopifyHttpRequest request = ShopifyHttpRequest.builder()
+                .url(tokenUrl)
+                .method(HttpMethod.POST)
+                .body(objectMapper.writeValueAsString(requestBody))
+                .headers(Map.of(
+                    "Content-Type", "application/json",
+                    "Accept", "application/json"
+                ))
+                .build();
+            
+            return httpClientService.execute(context, request)
+                .flatMap(response -> {
+                    if (response.getStatusCode() != 200) {
+                        return Mono.error(new ShopifyApiException(
+                            "Failed to exchange code for token: " + response.getBody()
+                        ));
+                    }
+                    
+                    try {
+                        Map<String, Object> responseData = objectMapper.readValue(
+                            response.getBody(), 
+                            Map.class
+                        );
+                        
+                        return Mono.just(AccessTokenResponse.builder()
+                            .accessToken((String) responseData.get("access_token"))
+                            .scope((String) responseData.get("scope"))
+                            .build());
+                    } catch (Exception e) {
+                        return Mono.error(new ShopifyApiException(
+                            "Failed to parse token response", e
+                        ));
+                    }
+                })
+                .block(); // Block for now to maintain compatibility
+                
+        } catch (Exception e) {
+            throw new ShopifyApiException("Failed to exchange authorization code", e);
+        }
     }
     
     /**

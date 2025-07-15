@@ -45,6 +45,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.List;
 
@@ -53,6 +54,7 @@ import java.util.List;
  */
 @Configuration
 @EnableConfigurationProperties(ShopifyProperties.class)
+@EnableScheduling
 public class ShopifyAutoConfiguration {
     
     @Bean
@@ -143,8 +145,8 @@ public class ShopifyAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    public ShopifyOAuth shopifyOAuth(ShopifyAuthContext context) {
-        return new ShopifyOAuth(context);
+    public ShopifyOAuth shopifyOAuth(ShopifyAuthContext context, HttpClientService httpClientService, ObjectMapper objectMapper) {
+        return new ShopifyOAuth(context, httpClientService, objectMapper);
     }
     
     @Bean

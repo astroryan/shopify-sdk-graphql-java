@@ -1,5 +1,9 @@
 package com.shopify.sdk.auth;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopify.sdk.client.HttpClientService;
+import com.shopify.sdk.client.ShopifyHttpRequest;
+import com.shopify.sdk.client.ShopifyHttpResponse;
 import com.shopify.sdk.config.ShopifyAuthContext;
 import com.shopify.sdk.exception.ShopifyAuthException;
 import com.shopify.sdk.exception.ShopifyApiException;
@@ -8,6 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.http.HttpStatus;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,8 +28,18 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ShopifyOAuthTest {
+    
+    @Mock
+    private HttpClientService httpClientService;
+    
+    @Mock
+    private ObjectMapper objectMapper;
     
     private ShopifyOAuth shopifyOAuth;
     private ShopifyAuthContext authContext;
@@ -35,7 +54,7 @@ class ShopifyOAuthTest {
             .webhookSecret("test-webhook-secret")
             .build();
         
-        shopifyOAuth = new ShopifyOAuth(authContext);
+        shopifyOAuth = new ShopifyOAuth(authContext, httpClientService, objectMapper);
     }
     
     @Test
@@ -106,15 +125,35 @@ class ShopifyOAuthTest {
     
     @Test
     @DisplayName("Should exchange code for access token")
-    void testExchangeCodeForToken() {
+    void testExchangeCodeForToken() throws Exception {
         String shop = "test-shop.myshopify.com";
         String code = "test-authorization-code";
+        
+        // Mock the HTTP response
+        ShopifyHttpResponse mockResponse = new ShopifyHttpResponse(
+            HttpStatus.OK,
+            Map.of("Content-Type", "application/json"),
+            "{\"access_token\":\"test-access-token\",\"scope\":\"read_products,write_orders\"}"
+        );
+        
+        // Mock the HTTP client service
+        when(httpClientService.execute(eq(authContext), any(ShopifyHttpRequest.class)))
+            .thenReturn(Mono.just(mockResponse));
+        
+        // Mock ObjectMapper
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(objectMapper.readValue(anyString(), eq(Map.class)))
+            .thenReturn(Map.of(
+                "access_token", "test-access-token",
+                "scope", "read_products,write_orders"
+            ));
         
         // Test exchange code for token
         AccessTokenResponse response = shopifyOAuth.exchangeCodeForToken(shop, code);
         
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isNotNull();
+        assertThat(response.getAccessToken()).isEqualTo("test-access-token");
+        assertThat(response.getScope()).isEqualTo("read_products,write_orders");
     }
     
     @Test

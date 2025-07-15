@@ -22,6 +22,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtTokenValidator {
     
+    private static final long FUTURE_TOKEN_TOLERANCE_MILLIS = 30 * 1000; // 30 seconds
+    private static final long TOKEN_EXPIRATION_SECONDS = 3600; // 1 hour
+    
     private final ShopifyAuthContext context;
     
     /**
@@ -147,7 +150,7 @@ public class JwtTokenValidator {
             .setSubject(userId != null ? userId.toString() : "1")
             .setAudience(context.getApiKey())
             .setIssuedAt(Date.from(Instant.now()))
-            .setExpiration(Date.from(Instant.now().plusSeconds(3600)))
+            .setExpiration(Date.from(Instant.now().plusSeconds(TOKEN_EXPIRATION_SECONDS)))
             .claim("dest", "https://" + shop)
             .signWith(key, SignatureAlgorithm.HS256);
             
@@ -178,7 +181,7 @@ public class JwtTokenValidator {
         
         // Validate issued at time (not too far in the future)
         Date issuedAt = claims.getIssuedAt();
-        if (issuedAt != null && issuedAt.after(new Date(System.currentTimeMillis() + 300000))) { // 5 minutes tolerance
+        if (issuedAt != null && issuedAt.after(new Date(System.currentTimeMillis() + FUTURE_TOKEN_TOLERANCE_MILLIS))) {
             throw new ShopifyApiException("Token issued too far in the future");
         }
     }

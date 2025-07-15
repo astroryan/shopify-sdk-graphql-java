@@ -10,6 +10,7 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -20,8 +21,26 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class HttpClientConfig {
     
+    private static final int MAX_CONNECTIONS = 100;
+    private static final int MAX_PENDING_ACQUIRE = 500;
+    private static final Duration PENDING_ACQUIRE_TIMEOUT = Duration.ofSeconds(45);
+    private static final Duration MAX_IDLE_TIME = Duration.ofSeconds(30);
+    private static final Duration MAX_LIFE_TIME = Duration.ofMinutes(5);
+    
     private WebClient defaultWebClient;
     private String defaultUserAgent;
+    private final ConnectionProvider connectionProvider;
+    
+    public HttpClientConfig() {
+        this.connectionProvider = ConnectionProvider.builder("shopify-http-pool")
+            .maxConnections(MAX_CONNECTIONS)
+            .pendingAcquireMaxCount(MAX_PENDING_ACQUIRE)
+            .pendingAcquireTimeout(PENDING_ACQUIRE_TIMEOUT)
+            .maxIdleTime(MAX_IDLE_TIME)
+            .maxLifeTime(MAX_LIFE_TIME)
+            .evictInBackground(Duration.ofSeconds(60))
+            .build();
+    }
     
     /**
      * Creates a configured WebClient for Shopify API requests.
@@ -41,18 +60,25 @@ public class HttpClientConfig {
      * @return configured WebClient
      */
     public WebClient createWebClient(ShopifyAuthContext context, String baseUrl) {
-        int timeout = isTestEnvironment() ? 5000 : ShopifyConstants.DEFAULT_TIMEOUT_MS; // 5 seconds for tests
-        HttpClient httpClient = HttpClient.create()
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
-            .responseTimeout(Duration.ofMillis(timeout))
+        int connectTimeout = isTestEnvironment() ? 5000 : 10000; // 10 seconds connect timeout
+        int readTimeout = isTestEnvironment() ? 5000 : 30000; // 30 seconds read timeout
+        
+        HttpClient httpClient = HttpClient.create(connectionProvider)
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+            .responseTimeout(Duration.ofMillis(readTimeout))
             .doOnConnected(conn ->
-                conn.addHandlerLast(new ReadTimeoutHandler(timeout, TimeUnit.MILLISECONDS))
-                    .addHandlerLast(new WriteTimeoutHandler(timeout, TimeUnit.MILLISECONDS)));
+                conn.addHandlerLast(new ReadTimeoutHandler(readTimeout, TimeUnit.MILLISECONDS))
+                    .addHandlerLast(new WriteTimeoutHandler(readTimeout, TimeUnit.MILLISECONDS)))
+            .compress(true) // Enable compression
+            .followRedirect(true); // Follow redirects
         
         WebClient.Builder builder = WebClient.builder()
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .defaultHeader("User-Agent", buildUserAgent(context))
-            .defaultHeader(ShopifyHeader.API_VERSION.getHeaderName(), context.getApiVersion().getVersion());
+            .defaultHeader(ShopifyHeader.API_VERSION.getHeaderName(), context.getApiVersion().getVersion())
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(5 * 1024 * 1024)); // 5MB max response size
         
         if (baseUrl != null) {
             builder.baseUrl(baseUrl);
@@ -140,17 +166,24 @@ public class HttpClientConfig {
     }
     
     private WebClient createDefaultWebClient() {
-        int timeout = isTestEnvironment() ? 5000 : ShopifyConstants.DEFAULT_TIMEOUT_MS; // 5 seconds for tests
-        HttpClient httpClient = HttpClient.create()
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
-            .responseTimeout(Duration.ofMillis(timeout))
+        int connectTimeout = isTestEnvironment() ? 5000 : 10000;
+        int readTimeout = isTestEnvironment() ? 5000 : 30000;
+        
+        HttpClient httpClient = HttpClient.create(connectionProvider)
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+            .responseTimeout(Duration.ofMillis(readTimeout))
             .doOnConnected(conn ->
-                conn.addHandlerLast(new ReadTimeoutHandler(timeout, TimeUnit.MILLISECONDS))
-                    .addHandlerLast(new WriteTimeoutHandler(timeout, TimeUnit.MILLISECONDS)));
+                conn.addHandlerLast(new ReadTimeoutHandler(readTimeout, TimeUnit.MILLISECONDS))
+                    .addHandlerLast(new WriteTimeoutHandler(readTimeout, TimeUnit.MILLISECONDS)))
+            .compress(true)
+            .followRedirect(true);
         
         return WebClient.builder()
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .defaultHeader("User-Agent", getUserAgent())
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(5 * 1024 * 1024))
             .build();
     }
 }
