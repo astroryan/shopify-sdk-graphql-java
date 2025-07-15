@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'io.github.astroryan'
-version = '1.2.0'
+version = '1.2.1'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -69,7 +69,7 @@ dependencies {
 
     // GraphQL
     api "com.graphql-java:graphql-java:${graphqlJavaVersion}"
-    api "com.graphql-java:graphql-java-extended-scalars:21.0"
+    implementation "com.graphql-java:graphql-java-extended-scalars:21.0"
     api "io.leangen.graphql:spqr:0.12.0"
     
     // HTTP Client
