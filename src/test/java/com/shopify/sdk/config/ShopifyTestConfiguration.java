@@ -102,8 +102,8 @@ public class ShopifyTestConfiguration {
     }
     
     @Bean
-    public ShopifyOAuth testShopifyOAuth(ShopifyAuthContext context) {
-        return new ShopifyOAuth(context);
+    public ShopifyOAuth testShopifyOAuth(ShopifyAuthContext context, HttpClientService httpClientService, ObjectMapper objectMapper) {
+        return new ShopifyOAuth(context, httpClientService, objectMapper);
     }
     
     @Bean
